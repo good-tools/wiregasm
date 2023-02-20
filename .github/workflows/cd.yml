@@ -29,6 +29,9 @@ jobs:
     - name: Load Dependencies
       run: npm ci
 
+    - name: Load Semantic Release Dependencies
+      run: npm install @semantic-release/git -D
+
     - name: Release
       id: release
       env:

@@ -58,7 +58,10 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: lib
-        path: built
+        path: |
+          built/bin/wiregasm.js
+          built/bin/wiregasm.wasm
+          built/share/wiregasm/wiregasm.data
         retention-days: 3
 
     # hack to not use node 14 bundled with emsdk
