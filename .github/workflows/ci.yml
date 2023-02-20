@@ -42,8 +42,13 @@ jobs:
       with:
         path: |
           built
-          lib/.*
-          !lib/.sum-*
+          !built/bin/wiregasm.js
+          !built/bin/wiregasm.wasm
+          !built/share/wiregasm/wiregasm.data
+          lib
+          !lib/wiregasm
+          !lib/crossfile.meson
+          !lib/Makefile
         key: lib-${{ hashFiles('patches/**', 'lib/Makefile', 'lib/crossfile.meson') }}
 
     - name: Build WASM lib
