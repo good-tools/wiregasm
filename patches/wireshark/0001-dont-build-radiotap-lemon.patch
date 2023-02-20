@@ -1,0 +1,116 @@
+From 33cc92797e374e6505cf0c0db53f31a9841a2764 Mon Sep 17 00:00:00 2001
+From: Osama Khalid <osama@codinghazard.com>
+Date: Fri, 20 Jan 2023 11:04:54 -0500
+Subject: [PATCH] don't build lemon or radiotap
+
+---
+ CMakeLists.txt                |  7 +++--
+ cmake/modules/FindLEMON.cmake | 58 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 62 insertions(+), 3 deletions(-)
+ create mode 100644 cmake/modules/FindLEMON.cmake
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index a248e2ca0f..cbcb9ddafe 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -361,7 +361,6 @@ set(LOG_RC_VERSION ${LOG_PROJECT_MAJOR_VERSION},${LOG_PROJECT_MINOR_VERSION},${P
+ 
+ message(STATUS "V: ${PROJECT_VERSION}, MaV: ${PROJECT_MAJOR_VERSION}, MiV: ${PROJECT_MINOR_VERSION}, PL: ${PROJECT_PATCH_VERSION}, EV: ${PROJECT_VERSION_EXTENSION}.")
+ 
+-include(UseLemon)
+ include(UseMakePluginReg)
+ include(UseMakeTaps)
+ include(UseExecutableResources)
+@@ -1132,6 +1131,7 @@ find_package(CARES "1.13.0" REQUIRED)
+ find_package(LEX REQUIRED)
+ find_package(Perl)
+ find_package(PCRE2 REQUIRED)
++find_package(LEMON REQUIRED)
+ 
+ find_package(Python3 3.6 REQUIRED)
+ # Several files (including LocatePythonModule) still use the old name
+@@ -1513,14 +1513,15 @@ set(PLUGIN_INSTALL_FULL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${PLUGIN_INSTALL_LIBDIR}
+ set(PLUGIN_INSTALL_VERSION_LIBDIR "${PLUGIN_INSTALL_LIBDIR}/${PLUGIN_PATH_ID}")
+ set(PLUGIN_VERSION_DIR "plugins/${PLUGIN_PATH_ID}")
+ 
++# hack to allow lemon to become a dependency
++add_custom_target( lemon )
++
+ add_subdirectory( capture )
+ add_subdirectory( doc )
+ add_subdirectory( docbook EXCLUDE_FROM_ALL )
+ add_subdirectory( epan )
+ add_subdirectory( extcap )
+ add_subdirectory( randpkt_core )
+-add_subdirectory( tools/lemon )
+-add_subdirectory( tools/radiotap-gen )
+ add_subdirectory( ui )
+ add_subdirectory( wiretap )
+ add_subdirectory( writecap )
+diff --git a/cmake/modules/FindLEMON.cmake b/cmake/modules/FindLEMON.cmake
+new file mode 100644
+index 0000000000..714d8f7d26
+--- /dev/null
++++ b/cmake/modules/FindLEMON.cmake
+@@ -0,0 +1,58 @@
++#
++# - Find lemon executable
++#
++
++include(FindChocolatey)
++
++find_program(LEMON_EXECUTABLE
++  NAMES
++    lemon
++  PATHS
++    ${CHOCOLATEY_BIN_PATH}
++    /bin
++    /usr/bin
++    /usr/local/bin
++    /sbin
++)
++
++INCLUDE(FindPackageHandleStandardArgs)
++FIND_PACKAGE_HANDLE_STANDARD_ARGS(LEMON DEFAULT_MSG LEMON_EXECUTABLE)
++
++MARK_AS_ADVANCED(LEMON_EXECUTABLE)
++
++# lemon a file
++
++MACRO(ADD_LEMON_FILES _source _generated)
++    set(_lemonpardir ${CMAKE_SOURCE_DIR}/tools/lemon)
++    FOREACH (_current_FILE ${ARGN})
++      GET_FILENAME_COMPONENT(_in ${_current_FILE} ABSOLUTE)
++      GET_FILENAME_COMPONENT(_basename ${_current_FILE} NAME_WE)
++
++      SET(_out ${CMAKE_CURRENT_BINARY_DIR}/${_basename})
++
++      ADD_CUSTOM_COMMAND(
++         OUTPUT
++          ${_out}.c
++          # These files are generated as side-effect
++          ${_out}.h
++          ${_out}.out
++         COMMAND ${LEMON_EXECUTABLE}
++           -T${_lemonpardir}/lempar.c
++           -d.
++           ${_in}
++         DEPENDS
++           ${_in}
++           ${_lemonpardir}/lempar.c
++      )
++
++      LIST(APPEND ${_source} ${_in})
++      LIST(APPEND ${_generated} ${_out}.c)
++      if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
++        set_source_files_properties(${_out}.c PROPERTIES COMPILE_OPTIONS "/w")
++      elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
++        set_source_files_properties(${_out}.c PROPERTIES COMPILE_OPTIONS "-Wno-unused-parameter")
++      else()
++        # Build with some warnings for lemon generated code
++      endif()
++    ENDFOREACH (_current_FILE)
++ENDMACRO(ADD_LEMON_FILES)
+-- 
+2.34.1
+

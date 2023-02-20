@@ -1,0 +1,24 @@
+From 32714d6a27a397600521d7cb760714e71cf8c792 Mon Sep 17 00:00:00 2001
+From: Osama Khalid <osama@codinghazard.com>
+Date: Thu, 19 Jan 2023 11:21:05 -0500
+Subject: [PATCH] Fix compilation error for undefined model_name variable on
+ unknown OS
+
+---
+ wsutil/cpu_info.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/wsutil/cpu_info.c b/wsutil/cpu_info.c
+index e11069647e..a5ee3e0733 100644
+--- a/wsutil/cpu_info.c
++++ b/wsutil/cpu_info.c
+@@ -413,6 +413,7 @@ get_cpu_info(GString *str)
+     ws_cpuid(CPUInfo, 0x80000004);
+     memcpy(CPUBrandString + 32, CPUInfo, sizeof(CPUInfo));
+ 
++    char *model_name;
+     model_name = g_strdup(g_strstrip(CPUBrandString));
+     g_tree_insert(model_names, model_name, NULL);
+ #endif
+-- 
+2.34.1

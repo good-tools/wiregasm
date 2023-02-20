@@ -1,0 +1,49 @@
+From 243924b3d45a2f9feb9934c7b35436c4fecc8901 Mon Sep 17 00:00:00 2001
+From: Osama Khalid <osama@codinghazard.com>
+Date: Fri, 17 Feb 2023 10:59:28 -0500
+Subject: [PATCH] export wireshark common
+
+---
+ CMakeLists.txt | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index a248e2ca0f..f9e7d47b03 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -2442,6 +2442,32 @@ set_target_properties(shark_common cli_main capture_opts
+ 	COMPILE_FLAGS "${WERROR_COMMON_FLAGS}"
+ )
+ 
++set(COMMON_PUBLIC_HEADERS
++	ui/summary.h
++	frame_tvbuff.h
++)
++
++install(FILES ${COMMON_PUBLIC_HEADERS}
++	DESTINATION "${PROJECT_INSTALL_INCLUDEDIR}/common"
++	COMPONENT "Development"
++)
++
++add_library(wireshark_common
++	ui/summary.c
++	$<TARGET_OBJECTS:shark_common>
++)
++
++target_include_directories(wireshark_common
++	SYSTEM PRIVATE
++		${GCRYPT_INCLUDE_DIRS}
++)
++
++install(TARGETS wireshark_common
++	EXPORT WiresharkTargets
++	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
++	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
++	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
++)
+ 
+ if(BUILD_wireshark AND QT_FOUND)
+ 	set(WIRESHARK_SRC
+-- 
+2.34.1
+

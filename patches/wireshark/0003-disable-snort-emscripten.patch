@@ -1,0 +1,29 @@
+From db3f10ae59b55cb80b55a40fb52f5c5efeaca591 Mon Sep 17 00:00:00 2001
+From: Osama Khalid <osama@codinghazard.com>
+Date: Fri, 20 Jan 2023 11:11:00 -0500
+Subject: [PATCH] disable snort on emscripten
+
+---
+ epan/dissectors/packet-snort.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/epan/dissectors/packet-snort.c b/epan/dissectors/packet-snort.c
+index 8d6d42a03a..dbc720a2d9 100644
+--- a/epan/dissectors/packet-snort.c
++++ b/epan/dissectors/packet-snort.c
+@@ -1332,6 +1332,12 @@ static void snort_start(void)
+     return;
+ #endif
+ 
++#ifdef __EMSCRIPTEN__
++    report_failure("Snort dissector: not yet able to launch Snort process under WebAssembly");
++    current_session.working = FALSE;
++    return;
++#endif
++
+     /* Create snort process and set up pipes */
+     snort_debug_printf("\nRunning %s with config file %s\n", pref_snort_binary_filename, pref_snort_config_filename);
+     if (!g_spawn_async_with_pipes(NULL,          /* working_directory */
+-- 
+2.34.1
+

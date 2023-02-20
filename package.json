@@ -1,0 +1,56 @@
+{
+  "name": "@goodtools/wiregasm",
+  "version": "1.0.0",
+  "description": "Packet Analyzer powered by Wireshark compiled for WebAssembly",
+  "source": "src/index.ts",
+  "main": "dist/main.js",
+  "types": "dist/types.d.ts",
+  "module": "dist/module.js",
+  "scripts": {
+    "dev": "parcel watch",
+    "build:emscripten": "docker run -it --rm -v $(pwd):/src okhalid/wiregasm-builder:latest ./build-lib.sh",
+    "build:emscripten-local": "./build-lib.sh",
+    "build": "parcel build && npm run copy-assets",
+    "copy-assets": "cp built/bin/wiregasm.wasm built/bin/wiregasm.js built/share/wiregasm/wiregasm.data dist/",
+    "lint": "eslint src/ --fix",
+    "test": "jest --coverage",
+    "fix:prettier": "prettier \"src/**/*.ts\" --write"
+  },
+  "keywords": [
+    "pcap",
+    "packet",
+    "analyzer",
+    "wireshark",
+    "wasm"
+  ],
+  "homepage": "https://github.com/good-tools/wiregasm",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/good-tools/wiregasm.git"
+  },
+  "license": "GPLV2",
+  "devDependencies": {
+    "@parcel/packager-ts": "^2.8.2",
+    "@parcel/transformer-typescript-types": "^2.8.2",
+    "@types/jest": "^29.2.5",
+    "@types/node": "^18.11.18",
+    "@typescript-eslint/eslint-plugin": "^5.48.1",
+    "@typescript-eslint/parser": "^5.48.1",
+    "eslint": "^8.31.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "jest": "^29.3.1",
+    "parcel": "^2.8.2",
+    "prettier": "^2.8.2",
+    "ts-jest": "^29.0.3"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "coveragePathIgnorePatterns": [
+      "<rootDir>/built/bin"
+    ]
+  },
+  "files": [
+    "dist"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${env:EMSDK}/upstream/emscripten/cache/sysroot/include",
+                "${workspaceFolder}/contrib/wasm32-unknown-emscripten/include/**",
+                "${workspaceFolder}/contrib/wasm32-unknown-emscripten/lib/glib-2.0/include/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}

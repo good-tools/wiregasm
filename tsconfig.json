@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target": "ES5",
+    "lib": ["ES2015"],
+    "types": ["jest", "node"],
+    "esModuleInterop": true
+  }
+}

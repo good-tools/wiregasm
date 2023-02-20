@@ -1,0 +1,29 @@
+From ee842a9bbe47b1a36b0e1700ef6509d9ba346ca5 Mon Sep 17 00:00:00 2001
+From: Osama Khalid <osama@codinghazard.com>
+Date: Mon, 23 Jan 2023 21:52:48 -0500
+Subject: [PATCH] force data directory path and do not bleed build paths
+
+---
+ wsutil/CMakeLists.txt | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/wsutil/CMakeLists.txt b/wsutil/CMakeLists.txt
+index a55086ccbb..6ab8c0585d 100644
+--- a/wsutil/CMakeLists.txt
++++ b/wsutil/CMakeLists.txt
+@@ -7,9 +7,9 @@
+ # SPDX-License-Identifier: GPL-2.0-or-later
+ #
+ 
+-add_definitions(-DPLUGIN_DIR=\"${CMAKE_INSTALL_PREFIX}/${PLUGIN_INSTALL_LIBDIR}\")
+-add_definitions(-DEXTCAP_DIR=\"${CMAKE_INSTALL_PREFIX}/${EXTCAP_INSTALL_LIBDIR}\")
+-add_definitions(-DDATA_DIR=\"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}\")
++add_definitions(-DPLUGIN_DIR=\"/nonexistent/plugins\")
++add_definitions(-DEXTCAP_DIR=\"/nonexistent/extcap\")
++add_definitions(-DDATA_DIR=\"/wireshark\")
+ 
+ add_subdirectory(wmem)
+ 
+-- 
+2.34.1
+
