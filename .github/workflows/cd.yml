@@ -29,8 +29,8 @@ jobs:
     - name: Load Dependencies
       run: npm ci
 
-    - name: Release
-      id: release
-      env:
-        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      run: npx semantic-release
+    # - name: Release
+    #   id: release
+    #   env:
+    #     NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    #   run: npx semantic-release

@@ -38,6 +38,14 @@ jobs:
           libtool \
           libltdl-dev
 
+    - uses: actions/cache@v3
+      with:
+        path: |
+          built
+          lib/.*
+          !lib/.sum-*
+        key: lib-${{ hashFiles('patches/**', 'lib/Makefile', 'lib/crossfile.meson') }}
+
     - name: Build WASM lib
       run: npm run build:emscripten-local
 
