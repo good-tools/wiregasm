@@ -32,6 +32,7 @@
   "devDependencies": {
     "@parcel/packager-ts": "^2.8.2",
     "@parcel/transformer-typescript-types": "^2.8.2",
+    "@semantic-release/git": "^10.0.1",
     "@types/jest": "^29.2.5",
     "@types/node": "^18.11.18",
     "@typescript-eslint/eslint-plugin": "^5.48.1",
