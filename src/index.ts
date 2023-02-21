@@ -1,7 +1,22 @@
+import {
+  CheckFilterResponse,
+  DissectSession,
+  Frame,
+  FramesResponse,
+  LoadResponse,
+  WiregasmLib,
+  WiregasmLibOverrides,
+  WiregasmLoader,
+} from "./types";
+import { vectorToArray } from "./utils";
+
+/**
+ * Wraps the WiregasmLib lib functionality and manages a single DissectSession
+ */
 export class Wiregasm {
-  lib: any;
+  lib: WiregasmLib;
   initialized: boolean;
-  session: any;
+  session: DissectSession | null;
   uploadDir: string;
 
   constructor() {
@@ -9,22 +24,42 @@ export class Wiregasm {
     this.session = null;
   }
 
-  async init(loader: any, overrides: object = {}) {
+  /**
+   * Initialize the wrapper and the Wiregasm module
+   *
+   * @param loader Loader function for the Emscripten module
+   * @param overrides Overrides
+   */
+  async init(loader: WiregasmLoader, overrides: WiregasmLibOverrides = {}) {
     if (this.initialized) {
       return;
     }
-    this.initialized = true;
 
     this.lib = await loader(overrides);
     this.uploadDir = this.lib.getUploadDirectory();
     this.lib.init();
+    this.initialized = true;
   }
 
-  test_filter(filter: string): any {
+  /**
+   * Check the validity of a filter expression.
+   *
+   * @param filter A display filter expression
+   */
+  test_filter(filter: string): CheckFilterResponse {
     return this.lib.checkFilter(filter);
   }
 
-  load(name: string, data: string | ArrayBufferView, opts: object = {}): any {
+  /**
+   * Load a packet trace file for analysis.
+   *
+   * @returns Response containing the status and summary
+   */
+  load(
+    name: string,
+    data: string | ArrayBufferView,
+    opts: object = {}
+  ): LoadResponse {
     if (this.session != null) {
       this.session.delete();
     }
@@ -37,11 +72,23 @@ export class Wiregasm {
     return this.session.load();
   }
 
-  frames(filter: string, skip = 0, limit = 0): any {
+  /**
+   * Get Packet List information for a range of packets.
+   *
+   * @param filter Output those frames that pass this filter expression
+   * @param skip Skip N frames
+   * @param limit Limit the output to N frames
+   */
+  frames(filter: string, skip = 0, limit = 0): FramesResponse {
     return this.session.getFrames(filter, skip, limit);
   }
 
-  frame(num: number): any {
+  /**
+   * Get full information about a frame including the protocol tree.
+   *
+   * @param number Frame number
+   */
+  frame(num: number): Frame {
     return this.session.getFrame(num);
   }
 
@@ -57,10 +104,16 @@ export class Wiregasm {
     }
   }
 
+  /**
+   * Returns the column headers
+   */
   columns(): string[] {
     const vec = this.lib.getColumns();
 
     // convert it from a vector to array
-    return new Array(vec.size()).fill(0).map((_, id) => vec.get(id));
+    return vectorToArray(vec);
   }
 }
+
+export * from "./types";
+export * from "./utils";

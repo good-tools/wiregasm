@@ -1,9 +1,9 @@
-import { Wiregasm } from ".";
+import { Wiregasm, WiregasmLib, WiregasmLibOverrides } from ".";
 import loadWiregasm from "../built/bin/wiregasm.js";
 import * as fs from "fs/promises";
 
 // overrides need to be copied over to every instance
-const buildTestOverrides = () => {
+const buildTestOverrides = (): WiregasmLibOverrides => {
   return {
     locateFile: (path, prefix) => {
       if (path.endsWith(".data")) return "built/share/wiregasm/" + path;
@@ -20,7 +20,7 @@ const buildTestOverrides = () => {
 };
 
 describe("Wiregasm Library", () => {
-  let lib;
+  let lib: WiregasmLib;
   beforeAll(async () => {
     lib = await loadWiregasm(buildTestOverrides());
     lib.init();
