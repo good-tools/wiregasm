@@ -41,11 +41,11 @@ jobs:
     - uses: actions/cache@v3
       with:
         path: |
-          built
+          built/*
           !built/bin/wiregasm.js
           !built/bin/wiregasm.wasm
           !built/share/wiregasm/wiregasm.data
-          lib
+          lib/*
           !lib/wiregasm
           !lib/crossfile.meson
           !lib/Makefile
@@ -59,9 +59,7 @@ jobs:
       with:
         name: lib
         path: |
-          built/bin/wiregasm.js
-          built/bin/wiregasm.wasm
-          built/share/wiregasm/wiregasm.data
+          built/bin/wiregasm.*
         retention-days: 3
 
     # hack to not use node 14 bundled with emsdk

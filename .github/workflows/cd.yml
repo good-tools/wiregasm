@@ -24,7 +24,7 @@ jobs:
       with:
         workflow: ${{ github.event.workflow_run.workflow_id }}
         name: lib
-        path: built
+        path: built/bin/
 
     - name: Load Dependencies
       run: npm ci
