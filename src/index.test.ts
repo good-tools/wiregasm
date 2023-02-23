@@ -1,12 +1,13 @@
 import { Wiregasm, WiregasmLib, WiregasmLibOverrides } from ".";
 import loadWiregasm from "../built/bin/wiregasm.js";
 import * as fs from "fs/promises";
+import pako from "pako";
 
 // overrides need to be copied over to every instance
 const buildTestOverrides = (): WiregasmLibOverrides => {
   return {
     locateFile: (path, prefix) => {
-      if (path.endsWith(".data")) return "built/share/wiregasm/" + path;
+      if (path.endsWith(".data")) return "built/bin/" + path;
       return prefix + path;
     },
     // supress all unwanted logs in test-suite
@@ -127,5 +128,51 @@ describe("Wiregasm Library Wrapper", () => {
   test("filter validation works", async () => {
     expect(wg.test_filter("tcp").ok).toBeTruthy();
     expect(wg.test_filter("txx").ok).toBeFalsy();
+  });
+});
+
+const buildCompressedOverrides = async (): Promise<WiregasmLibOverrides> => {
+  const wasm = pako.inflate(await fs.readFile("built/bin/wiregasm.wasm.gz"));
+  const data = pako.inflate(await fs.readFile("built/bin/wiregasm.data.gz"));
+
+  return {
+    wasmBinary: wasm.buffer,
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getPreloadedPackage(_name: string, _size: number): ArrayBuffer {
+      return data.buffer;
+    },
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    printErr: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    print: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    handleStatus: () => {},
+  };
+};
+
+describe("Wiregasm Library - Compressed Loading", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(async () => {
+    return wg.init(loadWiregasm, await buildCompressedOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("columns array returned correctly", async () => {
+    const cols = wg.columns();
+    expect(cols).toEqual([
+      "No.",
+      "Time",
+      "Source",
+      "Destination",
+      "Protocol",
+      "Length",
+      "Info",
+    ]);
   });
 });

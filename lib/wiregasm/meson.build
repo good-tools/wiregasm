@@ -82,13 +82,25 @@ out = executable(
 )
 
 # the data file doesn't get recognized currently
-# as an output by meson, this is a hack for installing
-# it in the datadir
+# as an output by meson, this is a hack for installing it
 custom_target(
   'fake target for installing .data',
   input: out,
   output: ['wiregasm.data'],
   command: [ find_program('true') ],
   install: true,
-  install_dir: join_paths(get_option('datadir'), 'wiregasm')
+  install_dir: get_option('bindir')
 )
+
+# create gzipped versions of .data and .wasm
+gzip = find_program('gzip', required: true)
+
+foreach tgt: [ 'wiregasm.wasm', 'wiregasm.data' ]
+  custom_target('gz-' + tgt,
+    command: [ gzip, '--keep', '--force', tgt ],
+    input: out,
+    output: tgt + '.gz',
+    install: true,
+    install_dir: get_option('bindir'),
+  )
+endforeach

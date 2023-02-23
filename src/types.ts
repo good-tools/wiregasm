@@ -155,6 +155,18 @@ export interface WiregasmLibOverrides {
    * @param message Message content
    */
   handleStatus?(type: number, message: string): void;
+
+  /**
+   * If you can fetch the binary yourself, you can set it
+   */
+  wasmBinary?: ArrayBuffer;
+
+  /**
+   * If you want to manually manage the download of .data file packages for
+   * custom caching, progress reporting and error handling behavior,
+   * you can implement this override.
+   */
+  getPreloadedPackage?(name: string, size: number): ArrayBuffer;
 }
 
 export interface WiregasmLib extends EmscriptenModule {
