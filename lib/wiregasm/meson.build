@@ -22,7 +22,9 @@ foreach d : [
     'gobject-2.0',
     'gmodule-2.0',
     'cares',
-    'gcrypt'
+    'gcrypt',
+    'lua',
+    'lrexlib'
   ]
   dependencies += [ cxx.find_library(d, dirs: [ contrib_lib_dir ], required: true) ]
 endforeach
