@@ -31,6 +31,7 @@ Cross-compiling Wireshark for emscripten/WASM isn't straightforward as it also d
   * `0004-export-wireshark-common.patch` - Expose some headers and objects that are not part of `epan`
   * `0005-force-data-dir.patch` - Force `/wireshark` as the data directory. It is needed for loading preferences, profiles and color filters
   * `0006-threadless-registration.patch` - Makes dissector registrations threadless
+  * `0007-export-lrexlib.patch` - Expose `lrexlib`, which is really a private dependency, but which isn't linked properly if not exported.
 
 ## Usage
 The Wiregasm `Dissect Session` implementation is effectively a tiny subset of `sharkd` APIs.
@@ -82,6 +83,22 @@ sess.delete();
 
 // destroy the lib
 wg.destroy();
+```
+
+To add custom Lua dissectors, add your dissectors to the plugins directory
+before initializing wiregasm:
+
+```javascript
+// read lua file from local FS
+const dissector_data = await fs.readFile("path/to/dissector.lua");
+
+// write lua file to the virtual emscripten FS plugin directory
+wg.FS.mkdir('/nonexistent');
+wg.FS.mkdir('/nonexistent/plugins');
+wg.FS.writeFile("/nonexistent/plugins/dissector.lua", dissector_data)
+
+// initialize and use wiregasm as usual
+wg.init();
 ```
 
 ## License
