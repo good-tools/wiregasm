@@ -93,9 +93,7 @@ before initializing wiregasm:
 const dissector_data = await fs.readFile("path/to/dissector.lua");
 
 // write lua file to the virtual emscripten FS plugin directory
-wg.FS.mkdir('/nonexistent');
-wg.FS.mkdir('/nonexistent/plugins');
-wg.FS.writeFile("/nonexistent/plugins/dissector.lua", dissector_data)
+wg.FS.writeFile("/plugins/dissector.lua", dissector_data)
 
 // initialize and use wiregasm as usual
 wg.init();

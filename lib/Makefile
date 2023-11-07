@@ -331,6 +331,7 @@ wireshark: wireshark-v$(WIRESHARK_VERSION).tar.bz2 .sum-wireshark
 	$(APPLY) $(PATCHES)/wireshark/0005-force-data-dir.patch
 	$(APPLY) $(PATCHES)/wireshark/0006-threadless-registration.patch
 	$(APPLY) $(PATCHES)/wireshark/0007-export-lrexlib.patch
+	$(APPLY) $(PATCHES)/wireshark/0008-export-wslua-headers.patch
 	$(MOVE)
 
 .wireshark: wireshark .c-ares .gcrypt .glib .lua

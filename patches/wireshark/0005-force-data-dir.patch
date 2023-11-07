@@ -18,8 +18,8 @@ index a55086ccbb..6ab8c0585d 100644
 -add_definitions(-DPLUGIN_DIR=\"${CMAKE_INSTALL_PREFIX}/${PLUGIN_INSTALL_LIBDIR}\")
 -add_definitions(-DEXTCAP_DIR=\"${CMAKE_INSTALL_PREFIX}/${EXTCAP_INSTALL_LIBDIR}\")
 -add_definitions(-DDATA_DIR=\"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}\")
-+add_definitions(-DPLUGIN_DIR=\"/nonexistent/plugins\")
-+add_definitions(-DEXTCAP_DIR=\"/nonexistent/extcap\")
++add_definitions(-DPLUGIN_DIR=\"/plugins\")
++add_definitions(-DEXTCAP_DIR=\"/extcap\")
 +add_definitions(-DDATA_DIR=\"/wireshark\")
  
  add_subdirectory(wmem)

@@ -5,6 +5,8 @@ export interface EmscriptenFileSystem {
     opts?: { flags?: string | undefined }
   ): void;
   readdir(path: string): string[];
+  mkdirTree(path: string, mode?: number);
+  mkdir(path: string, mode?: number);
 }
 
 export interface EmscriptenHeap {
@@ -180,9 +182,21 @@ export interface WiregasmLib extends EmscriptenModule {
   getUploadDirectory(): string;
 
   /**
+   * Returns the directory where plugins are stored
+   *
+   * @returns Path of the plugins directory
+   */
+  getPluginsDirectory(): string;
+
+  /**
    * Initialize the library, load preferences and register dissectors
    */
   init(): boolean;
+
+  /**
+   * Reload lua plugins
+   */
+  reloadLuaPlugins(): boolean;
 
   /**
    * Clean up any memory associated with the lib
@@ -214,3 +228,5 @@ export interface WiregasmLib extends EmscriptenModule {
 export type WiregasmLoader = (
   overrides: WiregasmLibOverrides
 ) => Promise<WiregasmLib>;
+
+export type BeforeInitCallback = (lib: WiregasmLib) => Promise<void>;
