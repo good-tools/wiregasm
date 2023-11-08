@@ -7,6 +7,7 @@ import {
   WiregasmLib,
   WiregasmLibOverrides,
   WiregasmLoader,
+  BeforeInitCallback,
 } from "./types";
 import { vectorToArray } from "./utils";
 
@@ -18,6 +19,7 @@ export class Wiregasm {
   initialized: boolean;
   session: DissectSession | null;
   uploadDir: string;
+  pluginsDir: string;
 
   constructor() {
     this.initialized = false;
@@ -30,13 +32,23 @@ export class Wiregasm {
    * @param loader Loader function for the Emscripten module
    * @param overrides Overrides
    */
-  async init(loader: WiregasmLoader, overrides: WiregasmLibOverrides = {}) {
+  async init(
+    loader: WiregasmLoader,
+    overrides: WiregasmLibOverrides = {},
+    beforeInit: BeforeInitCallback = null
+  ) {
     if (this.initialized) {
       return;
     }
 
     this.lib = await loader(overrides);
     this.uploadDir = this.lib.getUploadDirectory();
+    this.pluginsDir = this.lib.getPluginsDirectory();
+
+    if (beforeInit !== null) {
+      await beforeInit(this.lib);
+    }
+
     this.lib.init();
     this.initialized = true;
   }
@@ -48,6 +60,15 @@ export class Wiregasm {
    */
   test_filter(filter: string): CheckFilterResponse {
     return this.lib.checkFilter(filter);
+  }
+
+  reload_lua_plugins() {
+    this.lib.reloadLuaPlugins();
+  }
+
+  add_plugin(name: string, data: string | ArrayBufferView, opts: object = {}) {
+    const path = this.pluginsDir + "/" + name;
+    this.lib.FS.writeFile(path, data, opts);
   }
 
   /**

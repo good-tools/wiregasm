@@ -176,3 +176,66 @@ describe("Wiregasm Library - Compressed Loading", () => {
     ]);
   });
 });
+
+describe("Wiregasm Library - Lua Dissectors", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(async () => {
+    return wg.init(
+      loadWiregasm,
+      await buildCompressedOverrides(),
+      async (lib) => {
+        const dissector_data = await fs.readFile("samples/dissector.lua");
+        lib.FS.writeFile(
+          `${lib.getPluginsDirectory()}/dissector.lua`,
+          dissector_data
+        );
+      }
+    );
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("lua dissector works", async () => {
+    const data = await fs.readFile("samples/dns_port.pcap");
+    const ret = wg.load("dns_port.pcap", data);
+
+    expect(ret.code).toEqual(0);
+
+    const f = wg.frame(1);
+    const myDNSProtoTree = f.tree.get(f.tree.size() - 1);
+
+    expect(myDNSProtoTree.label).toBe("MyDNS Protocol");
+  });
+});
+
+describe("Wiregasm Library - Reloading Lua Plugins", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(async () => {
+    return wg.init(loadWiregasm, await buildCompressedOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("reloading lua plugins works", async () => {
+    const dissector_data = await fs.readFile("samples/dissector.lua");
+    wg.add_plugin("dissector.lua", dissector_data);
+
+    wg.reload_lua_plugins();
+
+    const data = await fs.readFile("samples/dns_port.pcap");
+    const ret = wg.load("dns_port.pcap", data);
+
+    expect(ret.code).toEqual(0);
+
+    const f = wg.frame(1);
+    const myDNSProtoTree = f.tree.get(f.tree.size() - 1);
+
+    expect(myDNSProtoTree.label).toBe("MyDNS Protocol");
+  });
+});

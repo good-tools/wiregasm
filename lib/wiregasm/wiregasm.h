@@ -77,11 +77,13 @@ struct CheckFilterResponse
 // globals
 
 bool wg_init();
+bool wg_reload_lua_plugins();
 void wg_destroy();
 string wg_upload_file(string name, int buffer_ptr, size_t size);
 vector<string> wg_get_columns();
 CheckFilterResponse wg_check_filter(string filter);
 string wg_get_upload_dir();
+string wg_get_plugins_dir();
 
 class DissectSession
 {

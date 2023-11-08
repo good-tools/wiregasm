@@ -1,0 +1,31 @@
+From 1dec7120a409696d1e975a1217958526ce6fc411 Mon Sep 17 00:00:00 2001
+From: Osama Khalid <osama@codinghazard.com>
+Date: Tue, 7 Nov 2023 11:54:03 -0500
+Subject: [PATCH] Export init_wslua.h header
+
+---
+ epan/wslua/CMakeLists.txt | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/epan/wslua/CMakeLists.txt b/epan/wslua/CMakeLists.txt
+index 39b23d3c5c..10216cc205 100644
+--- a/epan/wslua/CMakeLists.txt
++++ b/epan/wslua/CMakeLists.txt
+@@ -9,6 +9,14 @@
+ 
+ add_subdirectory(lrexlib)
+ 
++set(WSLUA_PUBLIC_HEADERS
++	init_wslua.h
++)
++
++install(FILES ${WSLUA_PUBLIC_HEADERS}
++	DESTINATION "${PROJECT_INSTALL_INCLUDEDIR}/epan/wslua"
++)
++
+ set(WSLUA_MODULES
+ 	${CMAKE_CURRENT_SOURCE_DIR}/lua_bitop.c
+ 	${CMAKE_CURRENT_SOURCE_DIR}/wslua_address.c
+-- 
+2.34.1
+

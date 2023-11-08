@@ -7,11 +7,13 @@ using namespace emscripten;
 EMSCRIPTEN_BINDINGS(Wiregasm)
 {
   emscripten::function("init", &wg_init);
+  emscripten::function("reloadLuaPlugins", &wg_reload_lua_plugins);
   emscripten::function("destroy", &wg_destroy);
   emscripten::function("getColumns", &wg_get_columns);
   emscripten::function("upload", &wg_upload_file, allow_raw_pointers());
   emscripten::function("checkFilter", &wg_check_filter);
   emscripten::function("getUploadDirectory", &wg_get_upload_dir);
+  emscripten::function("getPluginsDirectory", &wg_get_plugins_dir);
 }
 
 EMSCRIPTEN_BINDINGS(DissectSession)

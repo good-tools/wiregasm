@@ -1,6 +1,7 @@
 #include "wiregasm.h"
 #include "lib.h"
 #include <wsutil/privileges.h>
+#include <epan/wslua/init_wslua.h>
 
 using namespace std;
 
@@ -19,6 +20,11 @@ static e_prefs *prefs_p;
 string wg_get_upload_dir()
 {
   return string(UPLOAD_DIR);
+}
+
+string wg_get_plugins_dir()
+{
+  return string(get_plugins_dir());
 }
 
 vector<string> wg_get_columns()
@@ -55,6 +61,19 @@ string wg_upload_file(string name, int buffer_ptr, size_t size)
   return ret;
 }
 
+bool wg_reload_lua_plugins()
+{
+  if (!wg_initialized) {
+    return false;
+  }
+  
+  wslua_reload_plugins(NULL, NULL);
+
+  on_status(INFO, "Reload complete!");
+
+  return true;
+}
+
 bool wg_init()
 {
   if (wg_initialized)
@@ -64,8 +83,6 @@ bool wg_init()
   }
 
   on_status(INFO, "Initializing..");
-
-  g_mkdir_with_parents(UPLOAD_DIR, 0755);
 
   init_process_policies();
   relinquish_special_privs_perm();
