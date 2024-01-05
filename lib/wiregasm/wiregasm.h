@@ -8,7 +8,6 @@
 
 using namespace std;
 
-
 struct ProtoTree
 {
   string label;
@@ -23,10 +22,11 @@ struct ProtoTree
   vector<ProtoTree> tree;
 };
 
-struct FollowPayload {
-    int number;
-    string data;
-    unsigned int server;
+struct FollowPayload
+{
+  int number;
+  string data;
+  unsigned int server;
 };
 
 struct Follow
@@ -46,7 +46,8 @@ struct DataSource
   string data;
 };
 
-struct CompleteField {
+struct CompleteField
+{
   string field;
   int type;
   string name;
@@ -116,7 +117,7 @@ struct PrefData
   string name;
   string title;
   string description;
-  
+
   int type;
 
   // TODO: make these optional, emscripten now supports optional fields

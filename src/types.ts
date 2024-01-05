@@ -281,7 +281,7 @@ export interface WiregasmLib extends EmscriptenModule {
 
   /**
    * List all the preference modules
- 
+
    * @returns List of preference modules
    */
   listModules(): Vector<PrefModule>;
