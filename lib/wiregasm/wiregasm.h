@@ -8,14 +8,36 @@
 
 using namespace std;
 
+
 struct ProtoTree
 {
   string label;
   string filter;
+  string severity;
+  string type;
+  string url;
+  unsigned int fnum;
   int start;
   int length;
   int data_source_idx;
   vector<ProtoTree> tree;
+};
+
+struct FollowPayload {
+    int number;
+    string data;
+    unsigned int server;
+};
+
+struct Follow
+{
+  string shost;
+  string sport;
+  unsigned int sbytes;
+  string chost;
+  string cport;
+  unsigned int cbytes;
+  vector<FollowPayload> payloads;
 };
 
 struct DataSource
@@ -24,12 +46,19 @@ struct DataSource
   string data;
 };
 
+struct CompleteField {
+  string field;
+  int type;
+  string name;
+};
+
 struct Frame
 {
   int number;
   vector<string> comments;
   vector<DataSource> data_sources;
   vector<ProtoTree> tree;
+  vector<vector<string>> follow;
 };
 
 struct FrameMeta
@@ -74,6 +103,11 @@ struct CheckFilterResponse
   string error;
 };
 
+struct FilterCompletionResponse
+{
+  vector<CompleteField> fields;
+};
+
 // globals
 
 bool wg_init();
@@ -82,6 +116,7 @@ void wg_destroy();
 string wg_upload_file(string name, int buffer_ptr, size_t size);
 vector<string> wg_get_columns();
 CheckFilterResponse wg_check_filter(string filter);
+FilterCompletionResponse wg_complete_filter(string field);
 string wg_get_upload_dir();
 string wg_get_plugins_dir();
 
@@ -97,6 +132,7 @@ public:
   LoadResponse load();
   FramesResponse getFrames(string filter, int skip, int limit);
   Frame getFrame(int number);
+  Follow follow(string follow, string filter);
   ~DissectSession();
 };
 

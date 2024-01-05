@@ -35,6 +35,9 @@ export interface ProtoTree {
   start: number;
   length: number;
   data_source_idx: number;
+  type: "proto" | "url" | "framenum" | "";
+  url?: string;
+  fnum?: number;
   tree: Vector<ProtoTree>;
 }
 
@@ -43,11 +46,35 @@ export interface Frame {
   comments: Vector<string>;
   data_sources: Vector<DataSource>;
   tree: Vector<ProtoTree>;
+  follow: [string, string][]
 }
+
+export interface CompleteField {
+  field: string;
+  type: string;
+  name: string;
+}
+
 
 export interface FramesResponse {
   frames: Vector<FrameMeta>;
   matched: number;
+}
+
+export interface FollowPayload {
+  number: number;
+  server: number;
+  data: string;
+}
+
+export interface Follow {
+  shost: string;
+  sport: string;
+  sbytes: number;
+  chost: string;
+  cport: string;
+  cbytes: number;
+  payloads: FollowPayload[]
 }
 
 export interface FrameMeta {
@@ -105,10 +132,12 @@ export interface DissectSession {
    * @param number Frame number
    */
   getFrame(number: number): Frame;
+
+  follow(follow: string, filter: string): Follow;
 }
 
 export interface DissectSessionConstructable {
-  new (path: string): DissectSession;
+  new(path: string): DissectSession;
 }
 
 export interface CheckFilterResponse {
@@ -210,6 +239,7 @@ export interface WiregasmLib extends EmscriptenModule {
    */
   checkFilter(filter: string): CheckFilterResponse;
 
+  completeFilter(filter: string): CompleteField[];
   /**
    * Returns the column headers
    */

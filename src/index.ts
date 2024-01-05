@@ -1,14 +1,17 @@
 import {
+  BeforeInitCallback,
   CheckFilterResponse,
+  CompleteField,
   DissectSession,
+  Follow,
   Frame,
   FramesResponse,
   LoadResponse,
   WiregasmLib,
   WiregasmLibOverrides,
   WiregasmLoader,
-  BeforeInitCallback,
 } from "./types";
+
 import { vectorToArray } from "./utils";
 
 /**
@@ -62,6 +65,10 @@ export class Wiregasm {
     return this.lib.checkFilter(filter);
   }
 
+  complete_filter(filter: string): CompleteField[] {
+    return this.lib.completeFilter(filter);
+  }
+
   reload_lua_plugins() {
     this.lib.reloadLuaPlugins();
   }
@@ -111,6 +118,10 @@ export class Wiregasm {
    */
   frame(num: number): Frame {
     return this.session.getFrame(num);
+  }
+
+  follow(follow: string, filter: string): Follow {
+    return this.session.follow(follow, filter);
   }
 
   destroy() {
