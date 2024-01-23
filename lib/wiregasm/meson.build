@@ -45,7 +45,7 @@ link_args = [
 
   # XXX: drastically increases binary size, maybe selectively asyncify functions?
   # '-s', 'ASYNCIFY=1',
-  
+
   # XXX: loaded files can be big
   '-s', 'ALLOW_MEMORY_GROWTH=1',
 

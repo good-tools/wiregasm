@@ -66,7 +66,7 @@ bool wg_reload_lua_plugins()
   if (!wg_initialized) {
     return false;
   }
-  
+
   wslua_reload_plugins(NULL, NULL);
 
   on_status(INFO, "Reload complete!");
@@ -199,6 +199,20 @@ LoadResponse DissectSession::load()
   return r;
 }
 
+Follow DissectSession::follow(string follow, string filter)
+{
+  char *err_ret = NULL;
+  Follow ret = wg_process_follow(&this->capture_file, follow.c_str(), filter.c_str(), &err_ret);
+
+  // XXX: propagate?
+  if (err_ret)
+  {
+    g_free(err_ret);
+  }
+
+  return ret;
+}
+
 FramesResponse DissectSession::getFrames(string filter, int skip, int limit)
 {
   char *err_ret = NULL;
@@ -239,4 +253,11 @@ DissectSession::~DissectSession()
   epan_free(this->capture_file.epan);
   col_cleanup(&this->capture_file.cinfo);
   cf_close(&this->capture_file);
+}
+
+FilterCompletionResponse wg_complete_filter(string field)
+{
+  FilterCompletionResponse res;
+  res.fields = wg_session_process_complete(field.c_str());
+  return res;
 }

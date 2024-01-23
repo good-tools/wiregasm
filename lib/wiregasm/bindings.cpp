@@ -12,6 +12,7 @@ EMSCRIPTEN_BINDINGS(Wiregasm)
   emscripten::function("getColumns", &wg_get_columns);
   emscripten::function("upload", &wg_upload_file, allow_raw_pointers());
   emscripten::function("checkFilter", &wg_check_filter);
+  emscripten::function("completeFilter", &wg_complete_filter);
   emscripten::function("getUploadDirectory", &wg_get_upload_dir);
   emscripten::function("getPluginsDirectory", &wg_get_plugins_dir);
 }
@@ -22,7 +23,8 @@ EMSCRIPTEN_BINDINGS(DissectSession)
       .constructor<std::string>()
       .function("load", &DissectSession::load)
       .function("getFrames", &DissectSession::getFrames)
-      .function("getFrame", &DissectSession::getFrame);
+      .function("getFrame", &DissectSession::getFrame)
+      .function("follow", &DissectSession::follow);
 }
 
 EMSCRIPTEN_BINDINGS(ProtoTree)
@@ -33,7 +35,11 @@ EMSCRIPTEN_BINDINGS(ProtoTree)
       .field("start", &ProtoTree::start)
       .field("length", &ProtoTree::length)
       .field("data_source_idx", &ProtoTree::data_source_idx)
-      .field("tree", &ProtoTree::tree);
+      .field("tree", &ProtoTree::tree)
+      .field("severity", &ProtoTree::severity)
+      .field("type", &ProtoTree::type)
+      .field("fnum", &ProtoTree::fnum)
+      .field("url", &ProtoTree::url);
 }
 
 EMSCRIPTEN_BINDINGS(DataSource)
@@ -49,7 +55,8 @@ EMSCRIPTEN_BINDINGS(Frame)
       .field("number", &Frame::number)
       .field("comments", &Frame::comments)
       .field("data_sources", &Frame::data_sources)
-      .field("tree", &Frame::tree);
+      .field("tree", &Frame::tree)
+      .field("follow", &Frame::follow);
 }
 
 EMSCRIPTEN_BINDINGS(FrameMeta)
@@ -86,6 +93,12 @@ EMSCRIPTEN_BINDINGS(CheckFilterResponse)
       .field("error", &CheckFilterResponse::error);
 }
 
+EMSCRIPTEN_BINDINGS(FilterCompletionResponse)
+{
+  value_object<FilterCompletionResponse>("FilterCompletionResponse")
+      .field("fields", &FilterCompletionResponse::fields);
+}
+
 EMSCRIPTEN_BINDINGS(Summary)
 {
   value_object<Summary>("Summary")
@@ -99,10 +112,42 @@ EMSCRIPTEN_BINDINGS(Summary)
       .field("elapsed_time", &Summary::elapsed_time);
 }
 
+EMSCRIPTEN_BINDINGS(FollowPayload)
+{
+  value_object<FollowPayload>("FollowPayload")
+      .field("number", &FollowPayload::number)
+      .field("data", &FollowPayload::data)
+      .field("server", &FollowPayload::server);
+}
+
+EMSCRIPTEN_BINDINGS(Follow)
+{
+  value_object<Follow>("Follow")
+      .field("shost", &Follow::shost)
+      .field("sport", &Follow::sport)
+      .field("sbytes", &Follow::sbytes)
+      .field("chost", &Follow::chost)
+      .field("cport", &Follow::cport)
+      .field("cbytes", &Follow::cbytes)
+      .field("payloads", &Follow::payloads);
+}
+
+EMSCRIPTEN_BINDINGS(CompleteField)
+{
+  value_object<CompleteField>("CompleteField")
+      .field("field", &CompleteField::field)
+      .field("type", &CompleteField::type)
+      .field("name", &CompleteField::name);
+}
+
 EMSCRIPTEN_BINDINGS(stl_wrappers)
 {
   register_vector<string>("VectorString");
   register_vector<FrameMeta>("VectorFrameMeta");
   register_vector<DataSource>("VectorDataSource");
   register_vector<ProtoTree>("VectorProtoTree");
+  register_vector<FollowPayload>("VectorFollowPayload");
+  register_vector<CompleteField>("VectorCompleteField");
+  // Frame::follow is a vector of vectors of strings
+  register_vector<vector<string>>("VectorVectorString");
 }
