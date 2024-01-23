@@ -46,7 +46,7 @@ export interface Frame {
   comments: Vector<string>;
   data_sources: Vector<DataSource>;
   tree: Vector<ProtoTree>;
-  follow: [string, string][]
+  follow: Vector<Vector<string>>
 }
 
 export interface CompleteField {
@@ -74,7 +74,7 @@ export interface Follow {
   chost: string;
   cport: string;
   cbytes: number;
-  payloads: FollowPayload[]
+  payloads: Vector<FollowPayload>;
 }
 
 export interface FrameMeta {
@@ -239,7 +239,7 @@ export interface WiregasmLib extends EmscriptenModule {
    */
   checkFilter(filter: string): CheckFilterResponse;
 
-  completeFilter(filter: string): CompleteField[];
+  completeFilter(filter: string): { err: string; fields: Vector<CompleteField> };
   /**
    * Returns the column headers
    */

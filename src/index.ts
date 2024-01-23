@@ -65,8 +65,12 @@ export class Wiregasm {
     return this.lib.checkFilter(filter);
   }
 
-  complete_filter(filter: string): CompleteField[] {
-    return this.lib.completeFilter(filter);
+  complete_filter(filter: string): { err: string; fields: CompleteField[] } {
+    const out = this.lib.completeFilter(filter);
+    return {
+      err: out.err,
+      fields: vectorToArray(out.fields),
+    };
   }
 
   reload_lua_plugins() {

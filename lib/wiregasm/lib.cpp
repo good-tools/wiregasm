@@ -4,9 +4,6 @@
 static guint32 cum_bytes;
 static frame_data ref_frame;
 
-// Array of array of strings
-vector<vector<string>> followArray;
-
 
 void cf_close(capture_file *cf)
 {
@@ -516,10 +513,18 @@ wg_session_process_frame_cb_tree(epan_dissect_t *edt, proto_tree *tree, tvbuff_t
   return res;
 }
 
+
+struct VisitData {
+  packet_info *pi;
+  vector<vector<string>> *followArray;
+};
+
 static gboolean
-wg_session_follower_visit_cb(const void *key _U_, void *value, void *user_data _U_) {
+wg_session_follower_visit_cb(const void *key _U_, void *value, void *user_data) {
   register_follow_t *follower = (register_follow_t *) value;
-  packet_info *pi = (packet_info *) user_data;
+  VisitData *visitData = (VisitData *) user_data;
+  packet_info *pi = visitData->pi;
+  vector<vector<string>> *followArray = visitData->followArray;
 
   const int proto_id = get_follow_proto_id(follower);
   guint32 ignore_stream;
@@ -535,7 +540,7 @@ wg_session_follower_visit_cb(const void *key _U_, void *value, void *user_data _
         vector<string> follow;
         follow.push_back(static_cast<string>(layer_proto));
         follow.push_back(static_cast<string>(follow_filter));
-        followArray.push_back(follow);
+        followArray->push_back(follow);
         g_free(follow_filter);
     }
   return false;
@@ -608,10 +613,16 @@ void wg_session_process_frame_cb(capture_file *cfile, epan_dissect_t *edt, proto
 
     data_src = data_src->next;
   }
-  follow_iterate_followers(wg_session_follower_visit_cb, pi);
-  // Attach followArray to the variable outside
-  f->follow = followArray;
-  followArray.clear();
+
+  VisitData visitData;
+  visitData.pi = pi;
+  vector<vector<string>> followArray; // Initialize the followArray vector
+  visitData.followArray = &followArray; // Assign the address of followArray to visitData.followArray
+  follow_iterate_followers(wg_session_follower_visit_cb, &visitData);
+  // Assign followArray to f->follow
+  for (const auto& follow : *visitData.followArray) {
+    f->follow.push_back(follow);
+  }
 }
 
 Follow wg_session_process_follow(capture_file *cfile, const char* tok_follow, const char* tok_filter, char **err_ret)

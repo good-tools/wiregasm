@@ -1,6 +1,8 @@
-import { Wiregasm, WiregasmLib, WiregasmLibOverrides } from ".";
-import loadWiregasm from "../built/bin/wiregasm.js";
 import * as fs from "fs/promises";
+
+import { Wiregasm, WiregasmLib, WiregasmLibOverrides } from ".";
+
+import loadWiregasm from "../built/bin/wiregasm.js";
 import pako from "pako";
 
 // overrides need to be copied over to every instance
@@ -12,11 +14,11 @@ const buildTestOverrides = (): WiregasmLibOverrides => {
     },
     // supress all unwanted logs in test-suite
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    printErr: () => {},
+    printErr: () => { },
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    print: () => {},
+    print: () => { },
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    handleStatus: () => {},
+    handleStatus: () => { },
   };
 };
 
@@ -120,15 +122,48 @@ describe("Wiregasm Library Wrapper", () => {
     expect(frames.frames.size()).toEqual(4);
 
     const frame = wg.frame(1);
-
     expect(frame.number).toEqual(1);
     expect(frame.data_sources.size()).toBeGreaterThan(0);
+    expect(frame.follow.size()).toBe(1);
+    expect(frame.follow.get(0).get(0)).toBe("UDP");
+    expect(frame.follow.get(0).get(1)).toBe("udp.stream eq 0");
   });
 
   test("filter validation works", async () => {
     expect(wg.test_filter("tcp").ok).toBeTruthy();
     expect(wg.test_filter("txx").ok).toBeFalsy();
   });
+
+  test("follow works", async () => {
+    const data = await fs.readFile("samples/dhcp.pcap");
+    const ret = wg.load("dhcp.pcap", data);
+    expect(ret.code).toEqual(0);
+
+    const frame = wg.frame(1);
+    const follow = wg.follow(
+      frame.follow.get(0).get(0),
+      frame.follow.get(0).get(1)
+    );
+    expect(typeof follow.shost == "string").toBeTruthy();
+    expect(typeof follow.sbytes == "number").toBeTruthy();
+    expect(typeof follow.sport == "string").toBeTruthy();
+    expect(typeof follow.cport == "string").toBeTruthy();
+    expect(typeof follow.chost == "string").toBeTruthy();
+    expect(typeof follow.cbytes == "number").toBeTruthy();
+    expect(follow.payloads.size()).toBeGreaterThan(0);
+  });
+
+  test("filter compilation works", async () => {
+    expect(wg.complete_filter("tcp").fields.length).toBeGreaterThan(0);
+    expect(wg.complete_filter("tcp").fields.find(
+      (f) => f.field === "tcp"
+    )).toEqual({
+      field: "tcp",
+      name: "Transmission Control Protocol",
+      type: 1,
+    });
+    expect(wg.complete_filter("txx").fields.length).toBe(0);
+  })
 });
 
 const buildCompressedOverrides = async (): Promise<WiregasmLibOverrides> => {
@@ -144,11 +179,11 @@ const buildCompressedOverrides = async (): Promise<WiregasmLibOverrides> => {
     },
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    printErr: () => {},
+    printErr: () => { },
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    print: () => {},
+    print: () => { },
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    handleStatus: () => {},
+    handleStatus: () => { },
   };
 };
 
