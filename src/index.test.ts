@@ -1,6 +1,6 @@
 import * as fs from "fs/promises";
 
-import { Wiregasm, WiregasmLib, WiregasmLibOverrides } from ".";
+import { PrefSetResult, PrefType, Wiregasm, WiregasmLib, WiregasmLibOverrides } from ".";
 
 import loadWiregasm from "../built/bin/wiregasm.js";
 import pako from "pako";
@@ -209,6 +209,56 @@ describe("Wiregasm Library - Compressed Loading", () => {
       "Length",
       "Info",
     ]);
+  });
+});
+
+describe("Wiregasm Library - Module Preferences", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(async () => {
+    return wg.init(loadWiregasm, await buildCompressedOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("list modules works", async () => {
+    const modules = wg.list_modules();
+    expect(modules.size()).toBeGreaterThan(0);
+  });
+
+  test("list prefs works", async () => {
+    const prefs = wg.list_prefs("http");
+    expect(prefs.size()).toBeGreaterThan(0);
+  });
+});
+
+describe("Wiregasm Library - Set Preferences", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(async () => {
+    return wg.init(loadWiregasm, await buildCompressedOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("set preferences works", async () => {
+    // test defaults
+    const pref = wg.get_pref("http", "tcp.port");
+    expect(pref.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
+    expect(pref.range_value).toBe(
+      "80,3128,3132,5985,8080,8088,11371,1900,2869,2710"
+    );
+
+    const res = wg.set_pref("http", "tcp.port", "8001");
+    expect(res).toBe(PrefSetResult.PREFS_SET_OK);
+
+    const pref2 = wg.get_pref("http", "tcp.port");
+    expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
+    expect(pref2.range_value).toBe("8001");
   });
 });
 

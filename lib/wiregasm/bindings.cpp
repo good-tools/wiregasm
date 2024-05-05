@@ -15,6 +15,10 @@ EMSCRIPTEN_BINDINGS(Wiregasm)
   emscripten::function("completeFilter", &wg_complete_filter);
   emscripten::function("getUploadDirectory", &wg_get_upload_dir);
   emscripten::function("getPluginsDirectory", &wg_get_plugins_dir);
+  emscripten::function("setPref", &wg_set_pref);
+  emscripten::function("getPref", &wg_get_pref);
+  emscripten::function("listModules", &wg_list_modules);
+  emscripten::function("listPreferences", &wg_list_preferences);
 }
 
 EMSCRIPTEN_BINDINGS(DissectSession)
@@ -40,6 +44,31 @@ EMSCRIPTEN_BINDINGS(ProtoTree)
       .field("type", &ProtoTree::type)
       .field("fnum", &ProtoTree::fnum)
       .field("url", &ProtoTree::url);
+}
+
+EMSCRIPTEN_BINDINGS(PrefResponse)
+{
+  value_object<PrefResponse>("PrefResponse")
+      .field("name", &PrefResponse::name)
+      .field("title", &PrefResponse::title)
+      .field("description", &PrefResponse::description)
+      .field("ret", &PrefResponse::ret)
+      .field("type", &PrefResponse::type)
+      .field("uint_value", &PrefResponse::uint_value)
+      .field("uint_base_value", &PrefResponse::uint_base_value)
+      .field("bool_value", &PrefResponse::bool_value)
+      .field("string_value", &PrefResponse::string_value)
+      .field("range_value", &PrefResponse::range_value);
+}
+
+EMSCRIPTEN_BINDINGS(PrefModule)
+{
+  value_object<PrefModule>("PrefModule")
+      .field("name", &PrefModule::name)
+      .field("title", &PrefModule::title)
+      .field("description", &PrefModule::description)
+      .field("has_parent", &PrefModule::has_parent)
+      .field("submodules", &PrefModule::submodules);
 }
 
 EMSCRIPTEN_BINDINGS(DataSource)
@@ -148,6 +177,8 @@ EMSCRIPTEN_BINDINGS(stl_wrappers)
   register_vector<ProtoTree>("VectorProtoTree");
   register_vector<FollowPayload>("VectorFollowPayload");
   register_vector<CompleteField>("VectorCompleteField");
+  register_vector<PrefModule>("VectorPrefModule");
+  register_vector<PrefResponse>("VectorPrefResponse");
   // Frame::follow is a vector of vectors of strings
   register_vector<vector<string>>("VectorVectorString");
 }

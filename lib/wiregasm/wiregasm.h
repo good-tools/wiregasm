@@ -103,6 +103,34 @@ struct CheckFilterResponse
   string error;
 };
 
+struct PrefResponse
+{
+  int ret;
+
+  string name;
+  string title;
+  string description;
+  
+  int type;
+
+  // TODO: make these optional, emscripten now supports optional fields
+  uint uint_value;
+  uint uint_base_value;
+  bool bool_value;
+  string string_value;
+  // TODO: enum value array
+  string range_value;
+};
+
+struct PrefModule
+{
+  string name;
+  string title;
+  string description;
+  bool has_parent;
+  vector<PrefModule> submodules;
+};
+
 struct FilterCompletionResponse
 {
   vector<CompleteField> fields;
@@ -113,10 +141,14 @@ struct FilterCompletionResponse
 bool wg_init();
 bool wg_reload_lua_plugins();
 void wg_destroy();
+int wg_set_pref(string module_name, string pref_name, string value);
+PrefResponse wg_get_pref(string module_name, string pref_name);
 string wg_upload_file(string name, int buffer_ptr, size_t size);
 vector<string> wg_get_columns();
 CheckFilterResponse wg_check_filter(string filter);
 FilterCompletionResponse wg_complete_filter(string field);
+vector<PrefModule> wg_list_modules();
+vector<PrefResponse> wg_list_preferences(string module_name);
 string wg_get_upload_dir();
 string wg_get_plugins_dir();
 

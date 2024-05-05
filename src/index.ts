@@ -7,6 +7,10 @@ import {
   Frame,
   FramesResponse,
   LoadResponse,
+  Pref,
+  PrefModule,
+  PrefSetResult,
+  Vector,
   WiregasmLib,
   WiregasmLibOverrides,
   WiregasmLoader,
@@ -54,6 +58,23 @@ export class Wiregasm {
 
     this.lib.init();
     this.initialized = true;
+  }
+
+  list_modules(): Vector<PrefModule> {
+    return this.lib.listModules();
+  }
+
+  list_prefs(module: string): Vector<Pref> {
+    return this.lib.listPreferences(module);
+  }
+
+  set_pref(module: string, key: string, value: string): PrefSetResult {
+    const ret = this.lib.setPref(module, key, value);
+    return ret;
+  }
+
+  get_pref(module: string, key: string): Pref {
+    return this.lib.getPref(module, key);
   }
 
   /**

@@ -285,7 +285,7 @@ lua: lua-$(LUA_VERSION).tar.gz .sum-lua
 #
 WIRESHARK_VERSION := 4.0.3
 WIRESHARK_URL := https://gitlab.com/wireshark/wireshark/-/archive/v$(WIRESHARK_VERSION)/wireshark-v$(WIRESHARK_VERSION).tar.bz2
-WIRESHARK_CHECKSUM := 35f011156a9b0fb00eb3f0bb51c40b88ded7b8ead62f86d13246d68961404b460329ba8553715042e41a53ce01cabe5c57028fd7c9c98473aee4e26664576439
+WIRESHARK_CHECKSUM := 2f0f166dae43706945d681dd9f07aa4aa8d303967baae7d4065e1437fc0ae14c65648578ad3734e71729f3449ccc1590baadd6b140d246115cf7be8c5af55a83
 # do not build any tools, we're only interested in libwireshark (epan)
 WIRESHARK_CONF = \
 	-DBUILD_wireshark=OFF \
