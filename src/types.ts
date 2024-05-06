@@ -59,13 +59,21 @@ export interface PrefModule {
   name: string;
   title: string;
   description: string;
-  has_parent: boolean;
+  use_gui: boolean;
   submodules: Vector<PrefModule>;
 }
 
-export interface Pref {
-  ret: number;
+export interface PrefSetResponse {
+  code: PrefSetResult;
+  error: string;
+}
 
+export interface PrefResponse {
+  code: number;
+  data: Pref;
+}
+
+export interface Pref {
   name: string;
   title: string;
   description: string;
@@ -292,7 +300,7 @@ export interface WiregasmLib extends EmscriptenModule {
    * @param key Preference key
    * @param value Preference value
    */
-  setPref(module: string, key: string, value: string): PrefSetResult;
+  setPref(module: string, key: string, value: string): PrefSetResponse;
 
   /**
    * Get a preference
@@ -300,7 +308,7 @@ export interface WiregasmLib extends EmscriptenModule {
    * @param module Preference module
    * @param key Preference key
    */
-  getPref(module: string, key: string): Pref;
+  getPref(module: string, key: string): PrefResponse;
 
   /**
    * Reload lua plugins

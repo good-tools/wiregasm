@@ -1,6 +1,6 @@
 import * as fs from "fs/promises";
 
-import { PrefSetResult, PrefType, Wiregasm, WiregasmLib, WiregasmLibOverrides } from ".";
+import { PrefSetResult, PrefType, Wiregasm, WiregasmLib, WiregasmLibOverrides, vectorToArray } from ".";
 
 import loadWiregasm from "../built/bin/wiregasm.js";
 import pako from "pako";
@@ -245,6 +245,18 @@ describe("Wiregasm Library - Set Preferences", () => {
     wg.destroy();
   });
 
+  test("setting unknown preference throws error", async () => {
+    expect(() => {
+      wg.set_pref("http", "unknown", "value");
+    }).toThrow();
+  });
+
+  test("getting unknown preference throws error", async () => {
+    expect(() => {
+      wg.get_pref("http", "unknown");
+    }).toThrow();
+  });
+
   test("set preferences works", async () => {
     // test defaults
     const pref = wg.get_pref("http", "tcp.port");
@@ -253,8 +265,7 @@ describe("Wiregasm Library - Set Preferences", () => {
       "80,3128,3132,5985,8080,8088,11371,1900,2869,2710"
     );
 
-    const res = wg.set_pref("http", "tcp.port", "8001");
-    expect(res).toBe(PrefSetResult.PREFS_SET_OK);
+    wg.set_pref("http", "tcp.port", "8001");
 
     const pref2 = wg.get_pref("http", "tcp.port");
     expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);

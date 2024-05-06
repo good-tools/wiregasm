@@ -137,7 +137,7 @@ void wg_destroy()
   wg_initialized = FALSE;
 }
 
-void wg_set_pref_values(pref_t *pref, PrefResponse *res)
+void wg_set_pref_values(pref_t *pref, PrefData *res)
 {
   res->name = prefs_get_name(pref);
   res->title = prefs_get_title(pref);
@@ -174,6 +174,27 @@ void wg_set_pref_values(pref_t *pref, PrefResponse *res)
         break;
       }
     case PREF_ENUM:
+      {
+        const enum_val_t *enums;
+
+        for (enums = prefs_get_enumvals(pref); enums->name; enums++)
+        {
+          PrefEnum e;
+          e.name = string(enums->name);
+          e.description = string(enums->description);
+          e.value = enums->value;
+          e.selected = false;
+          
+          if (enums->value == prefs_get_enum_value(pref, pref_current))
+          {
+            e.selected = true;
+          }
+
+          res->enum_value.push_back(e);
+        }
+        break;
+      }
+
     case PREF_UAT:
     case PREF_COLOR:
     case PREF_CUSTOM:
@@ -187,62 +208,88 @@ void wg_set_pref_values(pref_t *pref, PrefResponse *res)
 PrefResponse wg_get_pref(string module_name, string pref_name)
 {
   PrefResponse res;
-  res.ret = -1;
+  res.code = -1;
 
   pref_t *pref = prefs_find_preference(prefs_find_module(module_name.c_str()), pref_name.c_str());
   if (pref == NULL) {
       return res;
   }
 
-  res.ret = 0;
+  res.code = 0;
 
-  wg_set_pref_values(pref, &res);
+  wg_set_pref_values(pref, &res.data);
 
   return res;
 }
 
+struct PrefModuleHolder
+{
+  vector<PrefModule> modules;
+  bool root;
+};
+
 guint wg_list_modules_cb(module_t *module, gpointer user_data)
 {
-  vector<PrefModule> *modules = (vector<PrefModule> *)user_data;
+  PrefModuleHolder *holder = (PrefModuleHolder *)user_data;
+
+  if (holder->root && module->parent != NULL)
+  {
+    return 0;
+  }
+
+  PrefModuleHolder subholder;
+  subholder.root = false;
 
   PrefModule m;
-  m.name = string(module->name);
-  m.title = string(module->title);
-  m.description = string(module->description);
-  m.has_parent = module->parent != NULL;
+
+  m.use_gui = module->use_gui;
+
+  if (module->name) {
+    m.name = string(module->name);
+  }
+
+  if (module->title) {
+    m.title = string(module->title);
+  }
+
+  if (module->description) {
+    m.description = string(module->description);
+  }
 
   if (prefs_module_has_submodules(module))
   {
-    prefs_modules_foreach_submodules(module, wg_list_modules_cb, &m.submodules);
+    prefs_modules_foreach_submodules(module, wg_list_modules_cb, &subholder);
+    m.submodules = subholder.modules;
   }
 
-  modules->push_back(m);
+  holder->modules.push_back(m);
 
   return 0;
 }
 
+
 vector<PrefModule> wg_list_modules()
 {
-  vector<PrefModule> modules;
-  prefs_modules_foreach(wg_list_modules_cb, &modules);
-  return modules;
+  PrefModuleHolder holder;
+  holder.root = true;
+  prefs_modules_foreach(wg_list_modules_cb, &holder);
+  return holder.modules;
 }
 
 guint wg_list_preferences_cb(pref_t *pref, gpointer user_data)
 {
-  vector<PrefResponse> *prefs = (vector<PrefResponse> *)user_data;
+  vector<PrefData> *prefs = (vector<PrefData> *)user_data;
 
-  PrefResponse p;
-  p.ret = 0;
+  PrefData p;
   wg_set_pref_values(pref, &p);
   prefs->push_back(p);
 
   return 0;
 }
 
-vector<PrefResponse> wg_list_preferences(string module_name)
+vector<PrefData> wg_list_preferences(string module_name)
 {
-  vector<PrefResponse> prefs;
+  vector<PrefData> prefs;
   module_t * mod = prefs_find_module(module_name.c_str());
 
   if (mod != NULL)
@@ -253,8 +300,10 @@ vector<PrefResponse> wg_list_preferences(string module_name)
   return prefs;
 }
 
-int wg_set_pref(string module_name, string pref_name, string value)
+SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
 {
+  SetPrefResponse res;
+
   char pref[4096];
   prefs_set_pref_e ret;
   char *errmsg = NULL;
@@ -263,9 +312,15 @@ int wg_set_pref(string module_name, string pref_name, string value)
 
   ret = prefs_set_pref(pref, &errmsg);
 
-  g_free(errmsg);
+  res.code = ret;
 
-  return ret;
+  if (errmsg)
+  {
+    res.error = string(errmsg);
+    g_free(errmsg);
+  }
+
+  return res;
 }
 
 CheckFilterResponse wg_check_filter(string filter)
