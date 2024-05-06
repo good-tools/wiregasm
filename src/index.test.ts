@@ -1,6 +1,6 @@
 import * as fs from "fs/promises";
 
-import { PrefSetResult, PrefType, Wiregasm, WiregasmLib, WiregasmLibOverrides, vectorToArray } from ".";
+import { PrefType, Wiregasm, WiregasmLib, WiregasmLibOverrides } from ".";
 
 import loadWiregasm from "../built/bin/wiregasm.js";
 import pako from "pako";

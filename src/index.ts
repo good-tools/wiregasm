@@ -68,6 +68,10 @@ export class Wiregasm {
     return this.lib.listPreferences(module);
   }
 
+  apply_prefs() {
+    this.lib.applyPreferences();
+  }
+
   set_pref(module: string, key: string, value: string) {
     const ret = this.lib.setPref(module, key, value);
 

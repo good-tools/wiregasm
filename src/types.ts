@@ -294,6 +294,11 @@ export interface WiregasmLib extends EmscriptenModule {
   listPreferences(module: string): Vector<Pref>;
 
   /**
+   * Apply preferences
+   */
+  applyPreferences(): void;
+
+  /**
    * Set a preference
    *
    * @param module Preference module

@@ -137,6 +137,11 @@ void wg_destroy()
   wg_initialized = FALSE;
 }
 
+void wg_prefs_apply_all()
+{
+  prefs_apply_all();
+}
+
 void wg_set_pref_values(pref_t *pref, PrefData *res)
 {
   res->name = prefs_get_name(pref);
