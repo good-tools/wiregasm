@@ -7,12 +7,16 @@ import {
   Frame,
   FramesResponse,
   LoadResponse,
+  Pref,
+  PrefModule,
+  PrefSetResult,
+  Vector,
   WiregasmLib,
   WiregasmLibOverrides,
   WiregasmLoader,
 } from "./types";
 
-import { vectorToArray } from "./utils";
+import { preferenceSetCodeToError, vectorToArray } from "./utils";
 
 /**
  * Wraps the WiregasmLib lib functionality and manages a single DissectSession
@@ -54,6 +58,38 @@ export class Wiregasm {
 
     this.lib.init();
     this.initialized = true;
+  }
+
+  list_modules(): Vector<PrefModule> {
+    return this.lib.listModules();
+  }
+
+  list_prefs(module: string): Vector<Pref> {
+    return this.lib.listPreferences(module);
+  }
+
+  apply_prefs() {
+    this.lib.applyPreferences();
+  }
+
+  set_pref(module: string, key: string, value: string) {
+    const ret = this.lib.setPref(module, key, value);
+
+    if (ret.code != PrefSetResult.PREFS_SET_OK) {
+      const message =
+        ret.error != "" ? ret.error : preferenceSetCodeToError(ret.code);
+      throw new Error(
+        `Failed to set preference (${module}.${key}): ${message}`
+      );
+    }
+  }
+
+  get_pref(module: string, key: string): Pref {
+    const response = this.lib.getPref(module, key);
+    if (response.code != 0) {
+      throw new Error(`Failed to get preference (${module}.${key})`);
+    }
+    return response.data;
   }
 
   /**

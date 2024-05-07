@@ -2,6 +2,8 @@
 #include "lib.h"
 #include <wsutil/privileges.h>
 #include <epan/wslua/init_wslua.h>
+#include <epan/prefs-int.h>
+#include <epan/prefs.h>
 
 using namespace std;
 
@@ -133,6 +135,197 @@ void wg_destroy()
   free_progdirs();
 
   wg_initialized = FALSE;
+}
+
+void wg_prefs_apply_all()
+{
+  prefs_apply_all();
+}
+
+void wg_set_pref_values(pref_t *pref, PrefData *res)
+{
+  res->name = prefs_get_name(pref);
+  res->title = prefs_get_title(pref);
+  res->description = prefs_get_description(pref);
+
+  res->type = prefs_get_type(pref);
+
+  switch (res->type)
+  {
+    case PREF_UINT:
+      res->uint_value = prefs_get_uint_value_real(pref, pref_current);
+      if (prefs_get_uint_base(pref) != 10)
+        res->uint_base_value = prefs_get_uint_base(pref);
+      break;
+
+    case PREF_BOOL:
+      res->bool_value = prefs_get_bool_value(pref, pref_current);
+      break;
+
+    case PREF_STRING:
+    case PREF_SAVE_FILENAME:
+    case PREF_OPEN_FILENAME:
+    case PREF_DIRNAME:
+    case PREF_PASSWORD:
+      res->string_value = string(prefs_get_string_value(pref, pref_current));
+      break;
+
+    case PREF_RANGE:
+    case PREF_DECODE_AS_RANGE:
+      {
+        char *range_str = range_convert_range(NULL, prefs_get_range_value_real(pref, pref_current));
+        res->range_value = string(range_str);
+        wmem_free(NULL, range_str);
+        break;
+      }
+    case PREF_ENUM:
+      {
+        const enum_val_t *enums;
+
+        for (enums = prefs_get_enumvals(pref); enums->name; enums++)
+        {
+          PrefEnum e;
+          e.name = string(enums->name);
+          e.description = string(enums->description);
+          e.value = enums->value;
+          e.selected = false;
+          
+          if (enums->value == prefs_get_enum_value(pref, pref_current))
+          {
+            e.selected = true;
+          }
+
+          res->enum_value.push_back(e);
+        }
+        break;
+      }
+
+    case PREF_UAT:
+    case PREF_COLOR:
+    case PREF_CUSTOM:
+    case PREF_STATIC_TEXT:
+    case PREF_OBSOLETE:
+        /* TODO */
+        break;
+  }
+}
+
+PrefResponse wg_get_pref(string module_name, string pref_name)
+{
+  PrefResponse res;
+  res.code = -1;
+
+  pref_t *pref = prefs_find_preference(prefs_find_module(module_name.c_str()), pref_name.c_str());
+  if (pref == NULL) {
+      return res;
+  }
+
+  res.code = 0;
+
+  wg_set_pref_values(pref, &res.data);
+
+  return res;
+}
+
+struct PrefModuleHolder
+{
+  vector<PrefModule> modules;
+  bool root;
+};
+
+guint wg_list_modules_cb(module_t *module, gpointer user_data)
+{
+  PrefModuleHolder *holder = (PrefModuleHolder *)user_data;
+
+  if (holder->root && module->parent != NULL)
+  {
+    return 0;
+  }
+
+  PrefModuleHolder subholder;
+  subholder.root = false;
+
+  PrefModule m;
+
+  m.use_gui = module->use_gui;
+
+  if (module->name) {
+    m.name = string(module->name);
+  }
+
+  if (module->title) {
+    m.title = string(module->title);
+  }
+
+  if (module->description) {
+    m.description = string(module->description);
+  }
+
+  if (prefs_module_has_submodules(module))
+  {
+    prefs_modules_foreach_submodules(module, wg_list_modules_cb, &subholder);
+    m.submodules = subholder.modules;
+  }
+
+  holder->modules.push_back(m);
+
+  return 0;
+}
+
+
+vector<PrefModule> wg_list_modules()
+{
+  PrefModuleHolder holder;
+  holder.root = true;
+  prefs_modules_foreach(wg_list_modules_cb, &holder);
+  return holder.modules;
+}
+
+guint wg_list_preferences_cb(pref_t *pref, gpointer user_data)
+{
+  vector<PrefData> *prefs = (vector<PrefData> *)user_data;
+
+  PrefData p;
+  wg_set_pref_values(pref, &p);
+  prefs->push_back(p);
+
+  return 0;
+}
+
+vector<PrefData> wg_list_preferences(string module_name)
+{
+  vector<PrefData> prefs;
+  module_t * mod = prefs_find_module(module_name.c_str());
+
+  if (mod != NULL)
+  {
+    prefs_pref_foreach(mod, wg_list_preferences_cb, &prefs);
+  }
+
+  return prefs;
+}
+
+SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
+{
+  SetPrefResponse res;
+
+  char pref[4096];
+  prefs_set_pref_e ret;
+  char *errmsg = NULL;
+
+  snprintf(pref, sizeof(pref), "%s.%s:%s", module_name.c_str(), pref_name.c_str(), value.c_str());
+
+  ret = prefs_set_pref(pref, &errmsg);
+
+  res.code = ret;
+
+  if (errmsg)
+  {
+    res.error = string(errmsg);
+    g_free(errmsg);
+  }
+
+  return res;
 }
 
 CheckFilterResponse wg_check_filter(string filter)

@@ -15,6 +15,11 @@ EMSCRIPTEN_BINDINGS(Wiregasm)
   emscripten::function("completeFilter", &wg_complete_filter);
   emscripten::function("getUploadDirectory", &wg_get_upload_dir);
   emscripten::function("getPluginsDirectory", &wg_get_plugins_dir);
+  emscripten::function("setPref", &wg_set_pref);
+  emscripten::function("getPref", &wg_get_pref);
+  emscripten::function("listModules", &wg_list_modules);
+  emscripten::function("listPreferences", &wg_list_preferences);
+  emscripten::function("applyPreferences", &wg_prefs_apply_all);
 }
 
 EMSCRIPTEN_BINDINGS(DissectSession)
@@ -40,6 +45,54 @@ EMSCRIPTEN_BINDINGS(ProtoTree)
       .field("type", &ProtoTree::type)
       .field("fnum", &ProtoTree::fnum)
       .field("url", &ProtoTree::url);
+}
+
+EMSCRIPTEN_BINDINGS(PrefData)
+{
+  value_object<PrefData>("PrefData")
+      .field("name", &PrefData::name)
+      .field("title", &PrefData::title)
+      .field("description", &PrefData::description)
+      .field("type", &PrefData::type)
+      .field("uint_value", &PrefData::uint_value)
+      .field("uint_base_value", &PrefData::uint_base_value)
+      .field("bool_value", &PrefData::bool_value)
+      .field("string_value", &PrefData::string_value)
+      .field("enum_value", &PrefData::enum_value)
+      .field("range_value", &PrefData::range_value);
+}
+
+EMSCRIPTEN_BINDINGS(PrefResponse)
+{
+  value_object<PrefResponse>("PrefResponse")
+      .field("code", &PrefResponse::code)
+      .field("data", &PrefResponse::data);
+}
+
+EMSCRIPTEN_BINDINGS(SetPrefResponse)
+{
+  value_object<SetPrefResponse>("SetPrefResponse")
+      .field("code", &SetPrefResponse::code)
+      .field("error", &SetPrefResponse::error);
+}
+
+EMSCRIPTEN_BINDINGS(PrefEnum)
+{
+  value_object<PrefEnum>("PrefEnum")
+      .field("name", &PrefEnum::name)
+      .field("description", &PrefEnum::description)
+      .field("value", &PrefEnum::value)
+      .field("selected", &PrefEnum::selected);
+}
+
+EMSCRIPTEN_BINDINGS(PrefModule)
+{
+  value_object<PrefModule>("PrefModule")
+      .field("name", &PrefModule::name)
+      .field("title", &PrefModule::title)
+      .field("description", &PrefModule::description)
+      .field("submodules", &PrefModule::submodules)
+      .field("use_gui", &PrefModule::use_gui);
 }
 
 EMSCRIPTEN_BINDINGS(DataSource)
@@ -148,6 +201,9 @@ EMSCRIPTEN_BINDINGS(stl_wrappers)
   register_vector<ProtoTree>("VectorProtoTree");
   register_vector<FollowPayload>("VectorFollowPayload");
   register_vector<CompleteField>("VectorCompleteField");
+  register_vector<PrefModule>("VectorPrefModule");
+  register_vector<PrefData>("VectorPrefData");
+  register_vector<PrefEnum>("VectorPrefEnum");
   // Frame::follow is a vector of vectors of strings
   register_vector<vector<string>>("VectorVectorString");
 }

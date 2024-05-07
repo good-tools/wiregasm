@@ -29,6 +29,63 @@ export interface DataSource {
   data: string;
 }
 
+export enum PrefSetResult {
+  PREFS_SET_OK, // succeeded
+  PREFS_SET_SYNTAX_ERR, // syntax error in string
+  PREFS_SET_NO_SUCH_PREF, // no such preference
+  PREFS_SET_OBSOLETE, // preference used to exist but no longer does
+}
+
+export enum PrefType {
+  PREF_UINT = 1 << 0,
+  PREF_BOOL = 1 << 1,
+  PREF_ENUM = 1 << 2,
+  PREF_STRING = 1 << 3,
+  PREF_RANGE = 1 << 4,
+  PREF_STATIC_TEXT = 1 << 5,
+  PREF_UAT = 1 << 6,
+  PREF_SAVE_FILENAME = 1 << 7,
+  PREF_COLOR = 1 << 8, // These are only supported for "internal" (non-protocol)
+  PREF_CUSTOM = 1 << 9, // use and not as a generic protocol preference
+  PREF_OBSOLETE = 1 << 10,
+  PREF_DIRNAME = 1 << 11,
+  PREF_DECODE_AS_UINT = 1 << 12, // These are only supported for "internal" (non-protocol)
+  PREF_DECODE_AS_RANGE = 1 << 13, // use and not as a generic protocol preference
+  PREF_OPEN_FILENAME = 1 << 14,
+  PREF_PASSWORD = 1 << 15, // like string, but never saved to prefs file
+}
+
+export interface PrefModule {
+  name: string;
+  title: string;
+  description: string;
+  use_gui: boolean;
+  submodules: Vector<PrefModule>;
+}
+
+export interface PrefSetResponse {
+  code: PrefSetResult;
+  error: string;
+}
+
+export interface PrefResponse {
+  code: number;
+  data: Pref;
+}
+
+export interface Pref {
+  name: string;
+  title: string;
+  description: string;
+
+  type: PrefType;
+  uint_value: number;
+  uint_base_value: number;
+  bool_value: boolean;
+  string_value: string;
+  range_value: string;
+}
+
 export interface ProtoTree {
   label: string;
   filter: string;
@@ -221,6 +278,42 @@ export interface WiregasmLib extends EmscriptenModule {
    * Initialize the library, load preferences and register dissectors
    */
   init(): boolean;
+
+  /**
+   * List all the preference modules
+ 
+   * @returns List of preference modules
+   */
+  listModules(): Vector<PrefModule>;
+
+  /**
+   * List all the preferences for a given module
+   *
+   * @param module Preference module
+   */
+  listPreferences(module: string): Vector<Pref>;
+
+  /**
+   * Apply preferences
+   */
+  applyPreferences(): void;
+
+  /**
+   * Set a preference
+   *
+   * @param module Preference module
+   * @param key Preference key
+   * @param value Preference value
+   */
+  setPref(module: string, key: string, value: string): PrefSetResponse;
+
+  /**
+   * Get a preference
+   *
+   * @param module Preference module
+   * @param key Preference key
+   */
+  getPref(module: string, key: string): PrefResponse;
 
   /**
    * Reload lua plugins
