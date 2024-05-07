@@ -1,6 +1,7 @@
 #ifndef WIREGASM_H
 #define WIREGASM_H
 
+#include "wg_decode_as.h"
 #include <string>
 #include <vector>
 #include <glib.h>
@@ -177,6 +178,7 @@ private:
   string path;
   capture_file capture_file;
   GHashTable *filter_table;
+  WGDecodeAsModel *decode_as_model;
 
 public:
   DissectSession(string _path);
@@ -184,6 +186,7 @@ public:
   FramesResponse getFrames(string filter, int skip, int limit);
   Frame getFrame(int number);
   Follow follow(string follow, string filter);
+  vector<UIDecodeAsItem> getDecodeAs();
   ~DissectSession();
 };
 

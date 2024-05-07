@@ -212,6 +212,37 @@ describe("Wiregasm Library - Compressed Loading", () => {
   });
 });
 
+describe("Wiregasm Library - Decode As", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(async () => {
+    return wg.init(loadWiregasm, await buildCompressedOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("getDecodeAs returns correct values", async () => {
+    const data = await fs.readFile("samples/dhcp.pcap");
+    const ret = wg.load("dhcp.pcap", data);
+    expect(ret.code).toEqual(0);
+
+    // select the first frame
+    wg.frame(1);
+
+    const decode_as = wg.decode_as();
+    expect(decode_as.size()).toBe(1);
+
+    const decode_as_item = decode_as.get(0);
+
+    expect(decode_as_item.field).toBe("UDP port");
+    expect(decode_as_item.value).toBe("68");
+    expect(decode_as_item.default_dissector).toBe("DHCP/BOOTP");
+    expect(decode_as_item.current_dissector).toBe("DHCP/BOOTP");
+  });
+});
+
 describe("Wiregasm Library - Module Preferences", () => {
   const wg = new Wiregasm();
 

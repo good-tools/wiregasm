@@ -161,6 +161,13 @@ export interface LoadResponse {
   summary: LoadSummary;
 }
 
+export interface DecodeAsItem {
+  field: string;
+  value: string;
+  default_dissector: string;
+  current_dissector: string;
+}
+
 export interface DissectSession {
   /**
    * Free up any memory used by the session
@@ -173,6 +180,11 @@ export interface DissectSession {
    * @returns Response containing the status and summary
    */
   load(): LoadResponse;
+
+  /**
+   * Get the Decode As information
+   */
+  getDecodeAs(): Vector<DecodeAsItem>;
 
   /**
    * Get Packet List information for a range of packets.

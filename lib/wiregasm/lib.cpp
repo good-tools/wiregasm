@@ -754,8 +754,8 @@ wg_dissect_request(capture_file *cfile, guint32 framenum, guint32 frame_ref_num,
                    wg_dissect_func_t cb, void *data,
                    int *err, gchar **err_info)
 {
+  epan_dissect_t *old_edt = cfile->edt;
   frame_data *fdata;
-  epan_dissect_t edt;
   gboolean create_proto_tree;
 
   fdata = wg_get_frame(cfile, framenum);
@@ -769,19 +769,21 @@ wg_dissect_request(capture_file *cfile, guint32 framenum, guint32 frame_ref_num,
     return DISSECT_REQUEST_READ_ERROR; /* error reading the record */
   }
 
+  cfile->edt = g_new0(epan_dissect_t, 1);
+
   create_proto_tree = ((dissect_flags & WG_DISSECT_FLAG_PROTO_TREE) ||
                        ((dissect_flags & WG_DISSECT_FLAG_COLOR) && color_filters_used()) ||
                        (cinfo && have_custom_cols(cinfo)));
-  epan_dissect_init(&edt, cfile->epan, create_proto_tree, (dissect_flags & WG_DISSECT_FLAG_PROTO_TREE));
+  epan_dissect_init(cfile->edt, cfile->epan, create_proto_tree, (dissect_flags & WG_DISSECT_FLAG_PROTO_TREE));
 
   if (dissect_flags & WG_DISSECT_FLAG_COLOR)
   {
-    color_filters_prime_edt(&edt);
+    color_filters_prime_edt(cfile->edt);
     fdata->need_colorize = 1;
   }
 
   if (cinfo)
-    col_custom_prime_edt(&edt, cinfo);
+    col_custom_prime_edt(cfile->edt, cinfo);
 
   /*
    * XXX - need to catch an OutOfMemoryError exception and
@@ -790,22 +792,25 @@ wg_dissect_request(capture_file *cfile, guint32 framenum, guint32 frame_ref_num,
   fdata->ref_time = (framenum == frame_ref_num);
   fdata->frame_ref_num = frame_ref_num;
   fdata->prev_dis_num = prev_dis_num;
-  epan_dissect_run(&edt, cfile->cd_t, rec,
+  epan_dissect_run(cfile->edt, cfile->cd_t, rec,
                    frame_tvbuff_new_buffer(&cfile->provider, fdata, buf),
                    fdata, cinfo);
 
   if (cinfo)
   {
     /* "Stringify" non frame_data vals */
-    epan_dissect_fill_in_columns(&edt, FALSE, TRUE /* fill_fd_columns */);
+    epan_dissect_fill_in_columns(cfile->edt, FALSE, TRUE /* fill_fd_columns */);
   }
 
-  cb(cfile, &edt, (dissect_flags & WG_DISSECT_FLAG_PROTO_TREE) ? edt.tree : NULL,
-     cinfo, (dissect_flags & WG_DISSECT_FLAG_BYTES) ? edt.pi.data_src : NULL,
+  cb(cfile, cfile->edt, (dissect_flags & WG_DISSECT_FLAG_PROTO_TREE) ? cfile->edt->tree : NULL,
+     cinfo, (dissect_flags & WG_DISSECT_FLAG_BYTES) ? cfile->edt->pi.data_src : NULL,
      data);
 
   wtap_rec_reset(rec);
-  epan_dissect_cleanup(&edt);
+
+  if (old_edt != NULL)
+      epan_dissect_free(old_edt);
+
   return DISSECT_REQUEST_SUCCESS;
 }
 

@@ -29,6 +29,7 @@ EMSCRIPTEN_BINDINGS(DissectSession)
       .function("load", &DissectSession::load)
       .function("getFrames", &DissectSession::getFrames)
       .function("getFrame", &DissectSession::getFrame)
+      .function("getDecodeAs", &DissectSession::getDecodeAs)
       .function("follow", &DissectSession::follow);
 }
 
@@ -193,6 +194,15 @@ EMSCRIPTEN_BINDINGS(CompleteField)
       .field("name", &CompleteField::name);
 }
 
+EMSCRIPTEN_BINDINGS(UIDecodeAsItem)
+{
+  value_object<UIDecodeAsItem>("UIDecodeAsItem")
+      .field("field", &UIDecodeAsItem::field)
+      .field("value", &UIDecodeAsItem::value)
+      .field("default_dissector", &UIDecodeAsItem::default_dissector)
+      .field("current_dissector", &UIDecodeAsItem::current_dissector);
+}
+
 EMSCRIPTEN_BINDINGS(stl_wrappers)
 {
   register_vector<string>("VectorString");
@@ -204,6 +214,7 @@ EMSCRIPTEN_BINDINGS(stl_wrappers)
   register_vector<PrefModule>("VectorPrefModule");
   register_vector<PrefData>("VectorPrefData");
   register_vector<PrefEnum>("VectorPrefEnum");
+  register_vector<UIDecodeAsItem>("VectorUIDecodeAsItem");
   // Frame::follow is a vector of vectors of strings
   register_vector<vector<string>>("VectorVectorString");
 }

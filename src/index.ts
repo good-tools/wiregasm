@@ -2,6 +2,7 @@ import {
   BeforeInitCallback,
   CheckFilterResponse,
   CompleteField,
+  DecodeAsItem,
   DissectSession,
   Follow,
   Frame,
@@ -158,6 +159,10 @@ export class Wiregasm {
    */
   frame(num: number): Frame {
     return this.session.getFrame(num);
+  }
+
+  decode_as(): Vector<DecodeAsItem> {
+    return this.session.getDecodeAs();
   }
 
   follow(follow: string, filter: string): Follow {

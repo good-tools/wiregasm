@@ -70,6 +70,7 @@ link_args = [
 
 sources = files([
   'wiregasm.cpp',
+  'wg_decode_as.cpp',
   'lib.cpp',
   'bindings.cpp'
 ])

@@ -359,6 +359,7 @@ DissectSession::DissectSession(string _path) : path(_path)
   cap_file_init(&this->capture_file);
   build_column_format_array(&this->capture_file.cinfo, prefs_p->num_cols, TRUE);
   this->filter_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, wg_session_filter_free);
+  this->decode_as_model = new WGDecodeAsModel(&this->capture_file);
 }
 
 LoadResponse DissectSession::load()
@@ -434,6 +435,14 @@ Frame DissectSession::getFrame(int number)
   return f;
 }
 
+vector<UIDecodeAsItem> DissectSession::getDecodeAs()
+{
+  this->decode_as_model->fillTable();
+  this->decode_as_model->insertRows(this->decode_as_model->rowCount(), 1);
+
+  return this->decode_as_model->getUIModel();
+}
+
 DissectSession::~DissectSession()
 {
   if (this->capture_file.provider.frames != NULL)
@@ -445,6 +454,12 @@ DissectSession::~DissectSession()
   g_hash_table_destroy(this->filter_table);
   epan_free(this->capture_file.epan);
   col_cleanup(&this->capture_file.cinfo);
+
+  if (this->capture_file.edt != NULL)
+  {
+    epan_dissect_free(this->capture_file.edt);
+  }
+
   cf_close(&this->capture_file);
 }
 
