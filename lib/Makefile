@@ -224,6 +224,107 @@ gcrypt: libgcrypt-$(GCRYPT_VERSION).tar.bz2 .sum-gcrypt
 	emmake make -C $(BUILD_DIR) install
 	touch $@
 
+# gmp
+GMP_VERSION := 6.3.0
+GMP_URL := https://gmplib.org/download/gmp/gmp-$(GMP_VERSION).tar.xz
+GMP_CHECKSUM := e85a0dab5195889948a3462189f0e0598d331d3457612e2d3350799dba2e244316d256f8161df5219538eb003e4b5343f989aaa00f96321559063ed8c8f29fd2
+
+$(TARBALLS)/gmp-$(GMP_VERSION).tar.xz:
+	$(call download,$(GMP_URL))
+
+.sum-gmp: gmp-$(GMP_VERSION).tar.xz
+	$(call checksum,$(GMP_CHECKSUM),$<)
+	touch $@
+
+gmp: gmp-$(GMP_VERSION).tar.xz .sum-gmp
+	$(CLEANUP)
+	tar xJfo $<
+	$(MOVE)
+
+.gmp: gmp
+	echo "[+] Building GMP"
+	$(RECONF)
+	mkdir -p $(BUILD_DIR) && rm -f $(BUILD_DIR)/config.status && test ! -f $</config.status || $(MAKE) -C $< distclean
+	cd $(BUILD_DIR) && $(HOSTTOOLS) emconfigure ../configure $(HOSTCONF) --disable-assembly
+	emmake make -C $(BUILD_DIR)
+	emmake make -C $(BUILD_DIR) install
+	touch $@
+
+# nettle
+NETTLE_VERSION := 3.9.1
+NETTLE_URL := https://ftp.gnu.org/gnu/nettle/nettle-$(NETTLE_VERSION).tar.gz
+NETTLE_CHECKSUM := 5939c4b43cf9ff6c6272245b85f123c81f8f4e37089fa4f39a00a570016d837f6e706a33226e4bbfc531b02a55b2756ff312461225ed88de338a73069e031ced
+
+$(TARBALLS)/nettle-$(NETTLE_VERSION).tar.gz:
+	$(call download,$(NETTLE_URL))
+
+.sum-nettle: nettle-$(NETTLE_VERSION).tar.gz
+	$(call checksum,$(NETTLE_CHECKSUM),$<)
+	touch $@
+
+nettle: nettle-$(NETTLE_VERSION).tar.gz .sum-nettle
+	$(CLEANUP)
+	tar xzfo $<
+	$(MOVE)
+
+.nettle: nettle .gmp
+	echo "[+] Building Nettle"
+	$(RECONF)
+	mkdir -p $(BUILD_DIR) && rm -f $(BUILD_DIR)/config.status && test ! -f $</config.status || $(MAKE) -C $< distclean
+	cd $(BUILD_DIR) && $(HOSTTOOLS) emconfigure ../configure LDFLAGS="-L${PREFIX}/lib" CFLAGS="$(CFLAGS) -I${PREFIX}/include" LIBS="-lgmp" $(HOSTCONF) --disable-asm --disable-assembler --disable-documentation
+	emmake make -C $(BUILD_DIR)
+	emmake make -C $(BUILD_DIR) install
+	touch $@
+
+# GNUTLS
+GNUTLS_MAJOR_VERSION := 3.7
+GNUTLS_MINOR_VERSION := $(GNUTLS_MAJOR_VERSION).10
+GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v$(GNUTLS_MAJOR_VERSION)/gnutls-$(GNUTLS_MINOR_VERSION).tar.xz
+GNUTLS_CHECKSUM := 23e0890abd00c433f11c2d4ceb328fe4ac0a0b765de89dff52f16e7d20694a7c61a6acb084d9f58f15c1a9609d70efdac489ac4759963c0ff1d1b8bb7183269e
+
+$(TARBALLS)/gnutls-$(GNUTLS_MINOR_VERSION).tar.xz:
+	$(call download,$(GNUTLS_URL))
+
+.sum-gnutls: gnutls-$(GNUTLS_MINOR_VERSION).tar.xz
+	$(call checksum,$(GNUTLS_CHECKSUM),$<)
+	touch $@
+
+gnutls: gnutls-$(GNUTLS_MINOR_VERSION).tar.xz .sum-gnutls
+	$(CLEANUP)
+	tar xJfo $<
+	$(MOVE)
+
+.gnutls: gnutls .nettle
+	echo "[+] Building GnuTLS"
+	$(RECONF)
+	mkdir -p $(BUILD_DIR) && rm -f $(BUILD_DIR)/config.status && test ! -f $</config.status || $(MAKE) -C $< distclean
+	cd $(BUILD_DIR) && $(HOSTTOOLS) emconfigure ../configure LDFLAGS="-L${PREFIX}/lib" CFLAGS="$(CFLAGS) -I${PREFIX}/include" $(HOSTCONF) \
+		--disable-doc \
+		--disable-maintainer-mode \
+		--disable-tools \
+		--disable-cxx \
+		--disable-hardware-acceleration \
+		--disable-padlock \
+		--disable-ssl3-support \
+		--disable-ssl2-support \
+		--disable-tests \
+		--disable-valgrind-tests \
+		--disable-full-test-suite \
+		--disable-rpath \
+		--disable-libtool-lock \
+		--disable-libdane \
+		--without-p11-kit \
+		--without-tpm \
+		--without-zlib \
+		--without-libz-prefix \
+		--without-idn \
+		--without-libidn2 \
+		--with-included-unistring \
+		--with-included-libtasn1
+	emmake make -C $(BUILD_DIR)
+	emmake make -C $(BUILD_DIR) install
+	touch $@
+
 #
 # GLIB
 #
@@ -334,7 +435,7 @@ wireshark: wireshark-v$(WIRESHARK_VERSION).tar.bz2 .sum-wireshark
 	$(APPLY) $(PATCHES)/wireshark/0008-export-wslua-headers.patch
 	$(MOVE)
 
-.wireshark: wireshark .c-ares .gcrypt .glib .lua
+.wireshark: wireshark .c-ares .gcrypt .glib .gnutls .lua
 	echo "[+] Building Wireshark"
 	$(CMAKECLEAN)
 	emcmake cmake -G Ninja -S $< -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:STRING=$(PREFIX) -DCMAKE_FIND_ROOT_PATH:STRING=$(PREFIX) $(WIRESHARK_CONF)

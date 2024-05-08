@@ -273,6 +273,23 @@ describe("Wiregasm Library - Set Preferences", () => {
   });
 });
 
+describe("Wiregasm Library - GNUTLS Support", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(async () => {
+    return wg.init(loadWiregasm, await buildCompressedOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("get preferences that depend on GNUTLS", async () => {
+    const pref = wg.get_pref("tls", "key_table");
+    expect(pref.title).toBe("RSA keys list");
+  });
+});
+
 describe("Wiregasm Library - Lua Dissectors", () => {
   const wg = new Wiregasm();
 
