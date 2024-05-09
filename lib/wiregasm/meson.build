@@ -24,7 +24,8 @@ foreach d : [
     'cares',
     'gcrypt',
     'lua',
-    'lrexlib'
+    'lrexlib',
+    'nghttp2',
   ]
   dependencies += [ cxx.find_library(d, dirs: [ contrib_lib_dir ], required: true) ]
 endforeach

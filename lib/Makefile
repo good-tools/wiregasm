@@ -62,8 +62,8 @@ MESON_SETUP = meson setup $(BUILD_DIR) $< --default-library static --prefix $(PR
 MESON_BUILD = meson compile -C $(BUILD_DIR) && meson install -C $(BUILD_DIR)
 
 mostlyclean:
-	rm -rf c-ares ffi gcrypt glib gpg-error lua pcre wireshark
-	rm -rf .c-ares .ffi .gcrypt .glib .gpg-error .lua .pcre .wireshark
+	rm -rf c-ares ffi gcrypt glib gpg-error lua pcre nghttp2 wireshark
+	rm -rf .c-ares .ffi .gcrypt .glib .gpg-error .lua .pcre .nghttp2 .wireshark
 	rm -rf .sum-*
 
 clean: mostlyclean
@@ -280,6 +280,33 @@ lua: lua-$(LUA_VERSION).tar.gz .sum-lua
 	emmake make -C $< generic INSTALL_TOP=$(PREFIX) install $(LUA_CONF)
 	touch $@
 
+NGHTTP2_VERSION := 1.61.0
+NGHTTP2_URL := https://github.com/nghttp2/nghttp2/releases/download/v$(NGHTTP2_VERSION)/nghttp2-$(NGHTTP2_VERSION).tar.xz
+NGHTTP2_CHECKSUM := 01e930d7caf464699505f92b76e2bc8192d168612dc564d2546812c42afea2fb81d552d70e8a5fed35e2bf5deadbec8eda095af94a2484bca41542988afce52a
+NGHTTP2_CONF := \
+	--enable-lib-only
+
+$(TARBALLS)/nghttp2-$(NGHTTP2_VERSION).tar.xz:
+	$(call download,$(NGHTTP2_URL))
+
+.sum-nghttp2: nghttp2-$(NGHTTP2_VERSION).tar.xz
+	$(call checksum,$(NGHTTP2_CHECKSUM),$<)
+	touch $@
+
+nghttp2: nghttp2-$(NGHTTP2_VERSION).tar.xz .sum-nghttp2
+	$(CLEANUP)
+	tar xJfo $<
+	$(MOVE)
+
+.nghttp2: nghttp2
+	echo "[+] Building nghttp2"
+	$(RECONF)
+	mkdir -p $(BUILD_DIR) && rm -f $(BUILD_DIR)/config.status && test ! -f $</config.status || $(MAKE) -C $< distclean
+	cd $(BUILD_DIR) && $(HOSTTOOLS) emconfigure ../configure $(HOSTCONF) $(NGHTTP2_CONF)
+	emmake make -C $(BUILD_DIR)
+	emmake make -C $(BUILD_DIR) install
+	touch $@
+
 #
 # Wireshark (epan)
 #
@@ -334,7 +361,7 @@ wireshark: wireshark-v$(WIRESHARK_VERSION).tar.bz2 .sum-wireshark
 	$(APPLY) $(PATCHES)/wireshark/0008-export-wslua-headers.patch
 	$(MOVE)
 
-.wireshark: wireshark .c-ares .gcrypt .glib .lua
+.wireshark: wireshark .c-ares .gcrypt .glib .lua .nghttp2
 	echo "[+] Building Wireshark"
 	$(CMAKECLEAN)
 	emcmake cmake -G Ninja -S $< -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:STRING=$(PREFIX) -DCMAKE_FIND_ROOT_PATH:STRING=$(PREFIX) $(WIRESHARK_CONF)
