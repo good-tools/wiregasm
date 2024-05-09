@@ -273,6 +273,60 @@ describe("Wiregasm Library - Set Preferences", () => {
   });
 });
 
+describe("Wiregasm Library - nghttp2", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(async () => {
+    return wg.init(loadWiregasm, await buildCompressedOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("enhanced http2 dissection works", async () => {
+    const data = await fs.readFile("samples/http2-16-ssl.pcapng");
+
+    // write pre-master secret to file
+    // this secret is used to decrypt the TLS traffic
+    // it is present in the pcapng file as a comment
+    wg.lib.FS.writeFile(
+      "/uploads/pre_master_secret",
+      Buffer.from(
+        "CLIENT_RANDOM 8E83073C735EE9A9D7C471CF9E58E2CDF49FAC8CDE59A4484FC20B8CA17C9E30 A97655616C73DBA996B7A9EACAD4D658D8C2260674798DC843854F57C848D92DAF4F06A9D8BEB45F38C407BD7EB20FD4"
+      )
+    );
+
+    // set the keylog_file pref
+    wg.set_pref("tls", "keylog_file", "/uploads/pre_master_secret");
+
+    const ret = wg.load("http2-16-ssl.pcapng", data);
+
+    expect(ret.code).toEqual(0);
+
+    const frame = wg.frame(14);
+
+    // if http2 decoding works, there should be 3 data sources
+    expect(frame.data_sources.size()).toBe(3);
+
+    // the last data source should be the http2 protocol
+    const lastDataSource = frame.data_sources.get(2);
+    expect(lastDataSource.name).toBe("Decompressed Header (167 bytes)");
+
+    // get the last http2 protocol tree
+    const http2ProtoTree = frame.tree.get(frame.tree.size() - 1);
+    expect(http2ProtoTree.tree.size()).toBeGreaterThan(0);
+
+    // the first tree should be the http2 headers
+    const headersTree = http2ProtoTree.tree.get(0);
+
+    // verify if the label contains the decoded headers
+    expect(headersTree.label).toBe(
+      "Stream: HEADERS, Stream ID: 1, Length 32, GET /"
+    );
+  });
+});
+
 describe("Wiregasm Library - Lua Dissectors", () => {
   const wg = new Wiregasm();
 
