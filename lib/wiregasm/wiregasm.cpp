@@ -473,6 +473,35 @@ Frame DissectSession::getFrame(int number)
   return f;
 }
 
+
+gboolean DissectSession::tap(string tap_type)
+{
+  char *err_ret = NULL;
+  gboolean res = wg_session_eo_retap_listener(&this->capture_file, tap_type.c_str(), &err_ret);
+
+  // XXX: propagate?
+  if (err_ret)
+  {
+    g_free(err_ret);
+  }
+
+  return res;
+}
+
+
+DownloadFile DissectSession::downloadFile(string token)
+{
+  DownloadFile res;
+  char *err_ret = NULL;
+  res = wg_session_process_download(&this->capture_file, token.c_str(), &err_ret);
+  // XXX: propagate?
+  if (err_ret)
+  {
+    g_free(err_ret);
+  }
+  return res;
+}
+
 DissectSession::~DissectSession()
 {
   if (this->capture_file.provider.frames != NULL)

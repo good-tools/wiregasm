@@ -161,6 +161,12 @@ export interface LoadResponse {
   summary: LoadSummary;
 }
 
+export interface DownloadFile {
+  file: string;
+  mime: string;
+  data: string;
+}
+
 export interface DissectSession {
   /**
    * Free up any memory used by the session
@@ -191,6 +197,10 @@ export interface DissectSession {
   getFrame(number: number): Frame;
 
   follow(follow: string, filter: string): Follow;
+
+  tap(tap_type: string): boolean;
+
+  downloadFile(token: string): DownloadFile;
 }
 
 export interface DissectSessionConstructable {
@@ -332,7 +342,11 @@ export interface WiregasmLib extends EmscriptenModule {
    */
   checkFilter(filter: string): CheckFilterResponse;
 
-  completeFilter(filter: string): { err: string; fields: Vector<CompleteField> };
+  completeFilter(filter: string): { fields: Vector<CompleteField> };
+
+  tap(tap_type: string): boolean;
+
+  downloadFile(token: string): DownloadFile;
   /**
    * Returns the column headers
    */

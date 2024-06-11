@@ -72,7 +72,8 @@ link_args = [
 sources = files([
   'wiregasm.cpp',
   'lib.cpp',
-  'bindings.cpp'
+  'bindings.cpp',
+  'ssl_key_export.cpp'
 ])
 
 out = executable(

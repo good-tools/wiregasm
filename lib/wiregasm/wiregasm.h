@@ -155,6 +155,13 @@ struct FilterCompletionResponse
   vector<CompleteField> fields;
 };
 
+struct DownloadFile
+{
+  string file;
+  string mime;
+  string data;
+};
+
 // globals
 
 bool wg_init();
@@ -185,6 +192,8 @@ public:
   FramesResponse getFrames(string filter, int skip, int limit);
   Frame getFrame(int number);
   Follow follow(string follow, string filter);
+  gboolean tap(string tap_type);
+  DownloadFile downloadFile(string token);
   ~DissectSession();
 };
 

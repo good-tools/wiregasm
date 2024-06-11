@@ -4,6 +4,24 @@
 static guint32 cum_bytes;
 static frame_data ref_frame;
 
+struct wg_export_object_list
+{
+  struct wg_export_object_list *next;
+
+  char *type;
+  const char *proto;
+  GSList *entries;
+};
+
+static struct wg_export_object_list *wg_eo_list;
+
+// struct wg_download_rtp
+// {
+//     rtpstream_id_t id;
+//     GSList *packets;
+//     double start_time;
+// };
+
 void cf_close(capture_file *cf)
 {
   if (cf->state == FILE_CLOSED)
@@ -1077,7 +1095,6 @@ Follow wg_process_follow(capture_file *cfile, const char *follow, const char *fi
  *   field - field to be completed
  *
  * Output object with :
- *   err - always 0attributes
  *   field - array of object with attributes:
  *         field - field text
  *         type - field type (FT_ number)
@@ -1141,3 +1158,472 @@ wg_session_process_complete(const char *tok_field)
   }
   return res;
 }
+
+static struct wg_export_object_list *
+wg_eo_object_list_get_entry_by_type(void *gui_data, const char *tap_type)
+{
+  struct wg_export_object_list *object_list = (struct wg_export_object_list *)gui_data;
+  for (; object_list; object_list = object_list->next)
+  {
+    if (!strcmp(object_list->type, tap_type))
+      return object_list;
+  }
+  return NULL;
+}
+
+static export_object_entry_t *
+wg_eo_object_list_get_entry(void *gui_data, int row)
+{
+  struct wg_export_object_list *object_list = (struct wg_export_object_list *)gui_data;
+
+  return (export_object_entry_t *)g_slist_nth_data(object_list->entries, row);
+}
+
+static void
+wg_eo_object_list_add_entry(void *gui_data, export_object_entry_t *entry)
+{
+  struct wg_export_object_list *object_list = (struct wg_export_object_list *)gui_data;
+
+  object_list->entries = g_slist_append(object_list->entries, entry);
+}
+
+static GString *wg_session_eo_register_tap_listener(register_eo_t *eo, const char *tap_type, const char *tap_filter, tap_draw_cb tap_draw, void **ptap_data, GFreeFunc *ptap_free)
+{
+  export_object_list_t *eo_object;
+  struct wg_export_object_list *object_list;
+
+  object_list = wg_eo_object_list_get_entry_by_type(wg_eo_list, tap_type);
+  if (object_list)
+  {
+    g_slist_free_full(object_list->entries, (GDestroyNotify)eo_free_entry);
+    object_list->entries = NULL;
+  }
+  else
+  {
+    object_list = g_new(struct wg_export_object_list, 1);
+    object_list->type = g_strdup(tap_type);
+    object_list->proto = proto_get_protocol_short_name(find_protocol_by_id(get_eo_proto_id(eo)));
+    object_list->entries = NULL;
+    object_list->next = wg_eo_list;
+    wg_eo_list = object_list;
+  }
+
+  eo_object = g_new0(export_object_list_t, 1);
+  eo_object->add_entry = wg_eo_object_list_add_entry;
+  eo_object->get_entry = wg_eo_object_list_get_entry;
+  eo_object->gui_data = (void *)object_list;
+
+  *ptap_data = eo_object;
+  *ptap_free = g_free; /* need to free only eo_object, object_list need to be kept for potential download */
+
+  return register_tap_listener(get_eo_tap_listener_name(eo), eo_object, tap_filter, 0, NULL, get_eo_packet_func(eo), tap_draw, NULL);
+}
+
+gboolean wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char **err_ret)
+{
+  gboolean ok = TRUE;
+  register_eo_t *eo = NULL;
+  GString *tap_error = NULL;
+  void *tap_data = NULL;
+  GFreeFunc tap_free = NULL;
+
+  // get <name> from eo:<name>, get_eo_by_name only needs the name (http etc.)
+  eo = get_eo_by_name(tap_type + 3);
+  if (!eo)
+  {
+    ok = FALSE;
+    *err_ret = g_strdup_printf("eo=%s not found", tap_type + 3);
+  }
+
+  if (ok)
+  {
+    tap_error = wg_session_eo_register_tap_listener(eo, tap_type, NULL, NULL, &tap_data, &tap_free);
+    if (tap_error)
+    {
+      ok = FALSE;
+      *err_ret = g_strdup_printf("error %s", tap_error->str);
+      g_string_free(tap_error, TRUE);
+    }
+  }
+
+  if (ok)
+    wg_retap(cfile);
+
+  if (!tap_error)
+    remove_tap_listener(tap_data);
+
+  if (tap_free)
+    tap_free(tap_data);
+
+  return ok;
+}
+
+/**
+ * wg_session_process_download()
+ *
+ * Process download request
+ *
+ * Input:
+ *   (m) token  - token to download
+ *
+ * Output object with attributes:
+ *   (o) file - suggested name of file
+ *   (o) mime - suggested content type
+ *   (o) data - payload base64 encoded
+ */
+DownloadFile wg_session_process_download(capture_file *cfile, const char *tok_token, char **err_ret)
+{
+  DownloadFile f;
+  if (!tok_token)
+  {
+    *err_ret = g_strdup_printf("missing token");
+    return f;
+  }
+
+  if (!strncmp(tok_token, "eo:", 3))
+  {
+    // get eo:<name> from eo:<name>_<row>
+    char *tap_type = g_strdup(tok_token);
+    char *tmp = strrchr(tap_type, '_');
+    if (tmp)
+      *tmp = '\0';
+
+    // if eo:<name> not in wg_eo_list, retap
+    if (!wg_eo_object_list_get_entry_by_type(wg_eo_list, tap_type) &&
+        !wg_session_eo_retap_listener(cfile, tap_type, err_ret))
+    {
+      g_free(tap_type);
+      *err_ret = g_strdup_printf("invalid token");
+      return f;
+    }
+
+    g_free(tap_type);
+
+    struct wg_export_object_list *object_list;
+    const export_object_entry_t *eo_entry = NULL;
+
+    for (object_list = wg_eo_list; object_list; object_list = object_list->next)
+    {
+      size_t eo_type_len = strlen(object_list->type);
+
+      if (!strncmp(tok_token, object_list->type, eo_type_len) && tok_token[eo_type_len] == '_')
+      {
+        int row;
+
+        if (sscanf(&tok_token[eo_type_len + 1], "%d", &row) != 1)
+          break;
+
+        eo_entry = (export_object_entry_t *)g_slist_nth_data(object_list->entries, row);
+        break;
+      }
+    }
+
+    if (eo_entry)
+    {
+      const char *mime = (eo_entry->content_type) ? eo_entry->content_type : "application/octet-stream";
+      const char *filename = (eo_entry->filename) ? eo_entry->filename : tok_token;
+      f.file = filename;
+      f.mime = mime;
+      f.data = g_base64_encode(eo_entry->payload_data, eo_entry->payload_len);
+    }
+    return f;
+  }
+  else if (!strcmp(tok_token, "ssl-secrets"))
+  {
+    *err_ret = g_strdup_printf("ssl-secrets download is not supported");
+    return f;
+    // gsize str_len;
+    // char *str = ssl_export_sessions(&str_len);
+
+    // if (str)
+    // {
+    //     const char *mime     = "text/plain";
+    //     const char *filename = "keylog.txt";
+    //   f.file = filename;
+    //   f.mime = mime;
+    //   f.data = g_base64_encode(str, str_len);
+    // }
+    // g_free(str);
+    // return f;
+  }
+  else if (!strncmp(tok_token, "rtp:", 4))
+  {
+    *err_ret = g_strdup_printf("rtp download is not supported");
+    return f;
+    // struct wg_download_rtp rtp_req;
+    // GString *tap_error;
+
+    // memset(&rtp_req, 0, sizeof(rtp_req));
+    // if (!wg_rtp_match_init(&rtp_req.id, tok_token + 4))
+    // {
+    // // @FIXME:
+    //     sharkd_json_error(
+    //             rpcid, -10001, NULL,
+    //             "sharkd_session_process_download() rtp tokenizing error %s", tok_token
+    //             );
+    //     return;
+    // }
+
+    // tap_error = register_tap_listener("rtp", &rtp_req, NULL, 0, NULL, wg_session_packet_download_tap_rtp_cb, NULL, NULL);
+    // if (tap_error)
+    // {
+    // // @FIXME:
+    //     sharkd_json_error(
+    //             rpcid, -10002, NULL,
+    //             "sharkd_session_process_download() rtp error %s", tap_error->str
+    //             );
+    //     g_string_free(tap_error, TRUE);
+    //     return;
+    // }
+
+    // wg_retap();
+    // remove_tap_listener(&rtp_req);
+
+    // if (rtp_req.packets)
+    // {
+    //     const char *mime     = "audio/x-wav";
+    //     const char *filename = tok_token;
+
+    // // @FIXME:
+    //     f.file = filename;
+    //     f.mime = mime;
+    //     f.data = g_base64_encode(rtp_req.payload_data->data, rtp_req.payload_data->len);
+
+    //     json_dumper_begin_base64(&dumper);
+    // // @FIXME:
+    //     wg_rtp_download_decode(&rtp_req);
+    //     json_dumper_end_base64(&dumper);
+
+    // // @FIXME:
+    //     sharkd_json_result_epilogue();
+
+    //     g_slist_free_full(rtp_req.packets, wg_rtp_download_free_items);
+    // }
+    // else
+    // {
+
+    // // @FIXME:
+    //     sharkd_json_error(
+    //         rpcid, -10003, NULL,
+    //         "no rtp data available"
+    //     );
+    // }
+  }
+  else
+  {
+    *err_ret = g_strdup_printf("unrecognized token");
+    return f;
+  }
+}
+
+// static gboolean wg_rtp_match_init(rtpstream_id_t *id, const char *init_str)
+// {
+//     gboolean ret = FALSE;
+//     char **arr;
+//     guint32 tmp_addr_src, tmp_addr_dst;
+//     address tmp_src_addr, tmp_dst_addr;
+
+//     memset(id, 0, sizeof(*id));
+
+//     arr = g_strsplit(init_str, "_", 7); /* pass larger value, so we'll catch incorrect input :) */
+//     if (g_strv_length(arr) != 5)
+//         goto fail;
+
+//     /* TODO, for now only IPv4 */
+//     if (!get_host_ipaddr(arr[0], &tmp_addr_src))
+//         goto fail;
+
+//     if (!ws_strtou16(arr[1], NULL, &id->src_port))
+//         goto fail;
+
+//     if (!get_host_ipaddr(arr[2], &tmp_addr_dst))
+//         goto fail;
+
+//     if (!ws_strtou16(arr[3], NULL, &id->dst_port))
+//         goto fail;
+
+//     if (!ws_hexstrtou32(arr[4], NULL, &id->ssrc))
+//         goto fail;
+
+//     set_address(&tmp_src_addr, AT_IPv4, 4, &tmp_addr_src);
+//     copy_address(&id->src_addr, &tmp_src_addr);
+//     set_address(&tmp_dst_addr, AT_IPv4, 4, &tmp_addr_dst);
+//     copy_address(&id->dst_addr, &tmp_dst_addr);
+
+//     ret = TRUE;
+
+// fail:
+//     g_strfreev(arr);
+//     return ret;
+// }
+
+// static tap_packet_status wg_session_packet_download_tap_rtp_cb(void *tapdata, packet_info *pinfo, epan_dissect_t *edt _U_, const void *data, tap_flags_t flags _U_)
+// {
+//     const struct _rtp_info *rtp_info = (const struct _rtp_info *) data;
+//     struct sharkd_download_rtp *req_rtp = (struct sharkd_download_rtp *) tapdata;
+
+//     /* do not consider RTP packets without a setup frame */
+//     if (rtp_info->info_setup_frame_num == 0)
+//         return TAP_PACKET_DONT_REDRAW;
+
+//     if (rtpstream_id_equal_pinfo_rtp_info(&req_rtp->id, pinfo, rtp_info))
+//     {
+//         rtp_packet_t *rtp_packet;
+
+//         rtp_packet = g_new0(rtp_packet_t, 1);
+//         rtp_packet->info = (struct _rtp_info *) g_memdup2(rtp_info, sizeof(struct _rtp_info));
+
+//         if (rtp_info->info_all_data_present && rtp_info->info_payload_len != 0)
+//             rtp_packet->payload_data = (guint8 *) g_memdup2(&(rtp_info->info_data[rtp_info->info_payload_offset]), rtp_info->info_payload_len);
+
+//         if (!req_rtp->packets)
+//             req_rtp->start_time = nstime_to_sec(&pinfo->abs_ts);
+
+//         rtp_packet->frame_num = pinfo->num;
+//         rtp_packet->arrive_offset = nstime_to_sec(&pinfo->abs_ts) - req_rtp->start_time;
+
+//         /* XXX, O(n) optimize */
+//         req_rtp->packets = g_slist_append(req_rtp->packets, rtp_packet);
+//     }
+
+//     return TAP_PACKET_DONT_REDRAW;
+// }
+
+// static void wg_rtp_download_free_items(void *ptr)
+// {
+//     rtp_packet_t *rtp_packet = (rtp_packet_t *) ptr;
+
+//     g_free(rtp_packet->info);
+//     g_free(rtp_packet->payload_data);
+//     g_free(rtp_packet);
+// }
+
+// static void wg_rtp_download_decode(struct wg_download_rtp *req)
+// {
+//     /* based on RtpAudioStream::decode() 6e29d874f8b5e6ebc59f661a0bb0dab8e56f122a */
+//     /* TODO, for now only without silence (timing_mode_ = Uninterrupted) */
+
+//     static const int sample_bytes_ = sizeof(SAMPLE) / sizeof(char);
+
+//     guint32 audio_out_rate_ = 0;
+//     struct _GHashTable *decoders_hash_ = rtp_decoder_hash_table_new();
+//     struct SpeexResamplerState_ *audio_resampler_ = NULL;
+
+//     gsize resample_buff_len = 0x1000;
+//     SAMPLE *resample_buff = (SAMPLE *) g_malloc(resample_buff_len);
+//     spx_uint32_t cur_in_rate = 0;
+//     char *write_buff = NULL;
+//     size_t write_bytes = 0;
+//     unsigned channels = 0;
+//     unsigned sample_rate = 0;
+
+//     GSList *l;
+
+//     for (l = req->packets; l; l = l->next)
+//     {
+//         rtp_packet_t *rtp_packet = (rtp_packet_t *) l->data;
+
+//         SAMPLE *decode_buff = NULL;
+//         size_t decoded_bytes;
+
+//         decoded_bytes = decode_rtp_packet(rtp_packet, &decode_buff, decoders_hash_, &channels, &sample_rate);
+//         if (decoded_bytes == 0 || sample_rate == 0)
+//         {
+//             /* We didn't decode anything. Clean up and prep for the next packet. */
+//             g_free(decode_buff);
+//             continue;
+//         }
+
+//         if (audio_out_rate_ == 0)
+//         {
+//             guint32 tmp32;
+//             guint16 tmp16;
+//             char wav_hdr[44];
+
+//             /* First non-zero wins */
+//             audio_out_rate_ = sample_rate;
+
+//             RTP_STREAM_DEBUG("Audio sample rate is %u", audio_out_rate_);
+
+//             /* write WAVE header */
+//             memset(&wav_hdr, 0, sizeof(wav_hdr));
+//             memcpy(&wav_hdr[0], "RIFF", 4);
+//             memcpy(&wav_hdr[4], "\xFF\xFF\xFF\xFF", 4); /* XXX, unknown */
+//             memcpy(&wav_hdr[8], "WAVE", 4);
+
+//             memcpy(&wav_hdr[12], "fmt ", 4);
+//             memcpy(&wav_hdr[16], "\x10\x00\x00\x00", 4); /* PCM */
+//             memcpy(&wav_hdr[20], "\x01\x00", 2);         /* PCM */
+//             /* # channels */
+//             tmp16 = channels;
+//             memcpy(&wav_hdr[22], &tmp16, 2);
+//             /* sample rate */
+//             tmp32 = sample_rate;
+//             memcpy(&wav_hdr[24], &tmp32, 4);
+//             /* byte rate */
+//             tmp32 = sample_rate * channels * sample_bytes_;
+//             memcpy(&wav_hdr[28], &tmp32, 4);
+//             /* block align */
+//             tmp16 = channels * sample_bytes_;
+//             memcpy(&wav_hdr[32], &tmp16, 2);
+//             /* bits per sample */
+//             tmp16 = 8 * sample_bytes_;
+//             memcpy(&wav_hdr[34], &tmp16, 2);
+
+//             memcpy(&wav_hdr[36], "data", 4);
+//             memcpy(&wav_hdr[40], "\xFF\xFF\xFF\xFF", 4); /* XXX, unknown */
+
+// // @FIXME:
+//             json_dumper_write_base64(&dumper, wav_hdr, sizeof(wav_hdr));
+//         }
+
+//         // Write samples to our file.
+//         write_buff = (char *) decode_buff;
+//         write_bytes = decoded_bytes;
+
+//         if (audio_out_rate_ != sample_rate)
+//         {
+//             spx_uint32_t in_len, out_len;
+
+//             /* Resample the audio to match our previous output rate. */
+//             if (!audio_resampler_)
+//             {
+//                 audio_resampler_ = speex_resampler_init(1, sample_rate, audio_out_rate_, 10, NULL);
+//                 speex_resampler_skip_zeros(audio_resampler_);
+//                 RTP_STREAM_DEBUG("Started resampling from %u to (out) %u Hz.", sample_rate, audio_out_rate_);
+//             }
+//             else
+//             {
+//                 spx_uint32_t audio_out_rate;
+//                 speex_resampler_get_rate(audio_resampler_, &cur_in_rate, &audio_out_rate);
+
+//                 if (sample_rate != cur_in_rate)
+//                 {
+//                     speex_resampler_set_rate(audio_resampler_, sample_rate, audio_out_rate);
+//                     RTP_STREAM_DEBUG("Changed input rate from %u to %u Hz. Out is %u.", cur_in_rate, sample_rate, audio_out_rate_);
+//                 }
+//             }
+//             in_len = (spx_uint32_t)rtp_packet->info->info_payload_len;
+//             out_len = (audio_out_rate_ * (spx_uint32_t)rtp_packet->info->info_payload_len / sample_rate) + (audio_out_rate_ % sample_rate != 0);
+//             if (out_len * sample_bytes_ > resample_buff_len)
+//             {
+//                 while ((out_len * sample_bytes_ > resample_buff_len))
+//                     resample_buff_len *= 2;
+//                 resample_buff = (SAMPLE *) g_realloc(resample_buff, resample_buff_len);
+//             }
+
+//             speex_resampler_process_int(audio_resampler_, 0, decode_buff, &in_len, resample_buff, &out_len);
+//             write_buff = (char *) resample_buff;
+//             write_bytes = out_len * sample_bytes_;
+//         }
+
+//         /* Write the decoded, possibly-resampled audio */
+//         // @FIXME:
+//         json_dumper_write_base64(&dumper, write_buff, write_bytes);
+
+//         g_free(decode_buff);
+//     }
+
+//     g_free(resample_buff);
+//     g_hash_table_destroy(decoders_hash_);
+// }

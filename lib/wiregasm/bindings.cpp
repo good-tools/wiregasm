@@ -29,6 +29,8 @@ EMSCRIPTEN_BINDINGS(DissectSession)
       .function("load", &DissectSession::load)
       .function("getFrames", &DissectSession::getFrames)
       .function("getFrame", &DissectSession::getFrame)
+      .function("tap", &DissectSession::tap)
+      .function("downloadFile", &DissectSession::downloadFile)
       .function("follow", &DissectSession::follow);
 }
 
@@ -206,4 +208,12 @@ EMSCRIPTEN_BINDINGS(stl_wrappers)
   register_vector<PrefEnum>("VectorPrefEnum");
   // Frame::follow is a vector of vectors of strings
   register_vector<vector<string>>("VectorVectorString");
+}
+
+EMSCRIPTEN_BINDINGS(DownloadFile)
+{
+  value_object<DownloadFile>("DownloadFile")
+      .field("file", &DownloadFile::file)
+      .field("mime", &DownloadFile::mime)
+      .field("data", &DownloadFile::data);
 }

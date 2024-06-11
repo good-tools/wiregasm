@@ -3,6 +3,7 @@ import {
   CheckFilterResponse,
   CompleteField,
   DissectSession,
+  DownloadFile,
   Follow,
   Frame,
   FramesResponse,
@@ -101,12 +102,19 @@ export class Wiregasm {
     return this.lib.checkFilter(filter);
   }
 
-  complete_filter(filter: string): { err: string; fields: CompleteField[] } {
+  complete_filter(filter: string): { fields: CompleteField[] } {
     const out = this.lib.completeFilter(filter);
     return {
-      err: out.err,
       fields: vectorToArray(out.fields),
     };
+  }
+
+  tap(tap_type: string) {
+    return this.session.tap(tap_type);
+  }
+
+  download_file(token: string): DownloadFile {
+    return this.session.downloadFile(token);
   }
 
   reload_lua_plugins() {
