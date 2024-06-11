@@ -1,9 +1,30 @@
 #include "lib.h"
 #include "wiregasm.h"
+#include <epan/conversation_table.h>
+#include <epan/maxmind_db.h>
+
 
 static guint32 cum_bytes;
 static frame_data ref_frame;
 
+struct wg_conv_tap_data
+{
+  const char *type;
+  conv_hash_t hash;
+  bool resolve_name;
+  bool resolve_port;
+};
+
+struct wg_export_object_list
+{
+  struct wg_export_object_list *next;
+
+  char *type;
+  const char *proto;
+  GSList *entries;
+};
+
+static struct wg_export_object_list *wg_eo_list;
 
 void cf_close(capture_file *cf)
 {
@@ -314,14 +335,12 @@ int wg_load_cap_file(capture_file *cfile, summary_tally *summary)
   return load_cap_file(cfile, 0, 0, summary);
 }
 
-
-int
-wg_retap(capture_file *cfile)
+int wg_retap(capture_file *cfile)
 {
-  guint32          framenum;
+  guint32 framenum;
   frame_data *fdata;
-  Buffer           buf;
-  wtap_rec         rec;
+  Buffer buf;
+  wtap_rec rec;
   int err;
   char *err_info = NULL;
 
@@ -376,7 +395,6 @@ wg_retap(capture_file *cfile)
 
   return 0;
 }
-
 
 int wg_session_process_load(capture_file *cfile, const char *path, summary_tally *summary, char **err_ret)
 {
@@ -513,14 +531,15 @@ wg_session_process_frame_cb_tree(epan_dissect_t *edt, proto_tree *tree, tvbuff_t
   return res;
 }
 
-
-struct VisitData {
+struct VisitData
+{
   packet_info *pi;
   vector<vector<string>> *followArray;
 };
 
 static gboolean
-wg_session_follower_visit_cb(const void *key _U_, void *value, void *user_data) {
+wg_session_follower_visit_cb(const void *key _U_, void *value, void *user_data)
+{
   register_follow_t *follower = (register_follow_t *)value;
   VisitData *visitData = (VisitData *)user_data;
   packet_info *pi = visitData->pi;
@@ -565,6 +584,7 @@ void wg_session_process_frame_cb(capture_file *cfile, epan_dissect_t *edt, proto
       {
         f->comments.push_back(std::string(comment));
       }
+      g_free(comment);
     }
   }
 
@@ -605,9 +625,7 @@ void wg_session_process_frame_cb(capture_file *cfile, epan_dissect_t *edt, proto
     char *src_name = get_data_source_name(src);
     const guchar *cp = tvb_get_ptr(tvb, 0, length);
     char *encoded = g_base64_encode(cp, length);
-
     f->data_sources.push_back(DataSource{ string(src_name), string(encoded) });
-
     g_free(encoded);
     wmem_free(NULL, src_name);
 
@@ -616,11 +634,12 @@ void wg_session_process_frame_cb(capture_file *cfile, epan_dissect_t *edt, proto
 
   VisitData visitData;
   visitData.pi = pi;
-  vector<vector<string>> followArray; // Initialize the followArray vector
+  vector<vector<string>> followArray;   // Initialize the followArray vector
   visitData.followArray = &followArray; // Assign the address of followArray to visitData.followArray
   follow_iterate_followers(wg_session_follower_visit_cb, &visitData);
   // Assign followArray to f->follow
-  for (const auto &follow : *visitData.followArray) {
+  for (const auto &follow : *visitData.followArray)
+  {
     f->follow.push_back(follow);
   }
 }
@@ -642,7 +661,6 @@ Follow wg_session_process_follow(capture_file *cfile, const char *tok_follow, co
     *err_ret = g_strdup_printf("follower=%s not found", tok_follow);
     return f;
   }
-
   /* follow_reset_stream ? */
   follow_info = g_new0(follow_info_t, 1);
   /* gui_data, filter_out_filter not set, but not used by dissector */
@@ -684,6 +702,7 @@ Follow wg_session_process_follow(capture_file *cfile, const char *tok_follow, co
       follow_record = (follow_record_t *)cur->data;
       char *encoded = g_base64_encode(follow_record->data->data, follow_record->data->len);
       f.payloads.push_back(FollowPayload{ int(follow_record->packet_num), string(encoded), static_cast<unsigned int>(follow_record->is_server ? 1 : 0) });
+      g_free(encoded);
     }
   }
 
@@ -691,7 +710,6 @@ Follow wg_session_process_follow(capture_file *cfile, const char *tok_follow, co
   follow_info_free(follow_info);
   return f;
 }
-
 
 void wg_session_process_frames_cb(capture_file *cfile, epan_dissect_t *edt, proto_tree *tree _U_,
                                   struct epan_column_info *cinfo, const GSList *data_src _U_, void *data)
@@ -1141,4 +1159,627 @@ wg_session_process_complete(const char *tok_field)
     }
   }
   return res;
+}
+
+static struct wg_export_object_list *
+wg_eo_object_list_get_entry_by_type(void *gui_data, const char *tap_type)
+{
+  struct wg_export_object_list *object_list = (struct wg_export_object_list *)gui_data;
+  for (; object_list; object_list = object_list->next)
+  {
+    if (!strcmp(object_list->type, tap_type))
+      return object_list;
+  }
+  return NULL;
+}
+
+static export_object_entry_t *
+wg_eo_object_list_get_entry(void *gui_data, int row)
+{
+  struct wg_export_object_list *object_list = (struct wg_export_object_list *)gui_data;
+
+  return (export_object_entry_t *)g_slist_nth_data(object_list->entries, row);
+}
+
+static void
+wg_eo_object_list_add_entry(void *gui_data, export_object_entry_t *entry)
+{
+  struct wg_export_object_list *object_list = (struct wg_export_object_list *)gui_data;
+
+  object_list->entries = g_slist_append(object_list->entries, entry);
+}
+
+static GString *wg_session_eo_register_tap_listener(register_eo_t *eo, const char *tap_type, const char *tap_filter, tap_draw_cb tap_draw, void **ptap_data, GFreeFunc *ptap_free)
+{
+  export_object_list_t *eo_object;
+  struct wg_export_object_list *object_list;
+
+  object_list = wg_eo_object_list_get_entry_by_type(wg_eo_list, tap_type);
+  if (object_list)
+  {
+    g_slist_free_full(object_list->entries, (GDestroyNotify)eo_free_entry);
+    object_list->entries = NULL;
+  }
+  else
+  {
+    object_list = g_new(struct wg_export_object_list, 1);
+    object_list->type = g_strdup(tap_type);
+    object_list->proto = proto_get_protocol_short_name(find_protocol_by_id(get_eo_proto_id(eo)));
+    object_list->entries = NULL;
+    object_list->next = wg_eo_list;
+    wg_eo_list = object_list;
+  }
+
+  eo_object = g_new0(export_object_list_t, 1);
+  eo_object->add_entry = wg_eo_object_list_add_entry;
+  eo_object->get_entry = wg_eo_object_list_get_entry;
+  eo_object->gui_data = (void *)object_list;
+
+  *ptap_data = eo_object;
+  *ptap_free = g_free;
+  /* need to free only eo_object, object_list need to be kept for potential download */
+
+  return register_tap_listener(
+      get_eo_tap_listener_name(eo),
+      eo_object, tap_filter,
+      0,
+      NULL,
+      get_eo_packet_func(eo),
+      tap_draw,
+      NULL);
+}
+
+bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char *err_ret)
+{
+  bool ok = true;
+  register_eo_t *eo = NULL;
+  GString *tap_error = NULL;
+  void *tap_data = NULL;
+  GFreeFunc tap_free = NULL;
+
+  // get <name> from eo:<name>, get_eo_by_name only needs the name (http etc.)
+  eo = get_eo_by_name(tap_type + 3);
+  if (!eo)
+  {
+    ok = false;
+    err_ret = g_strdup_printf("eo %s not found", tap_type + 3);
+  }
+
+  if (ok)
+  {
+    tap_error = wg_session_eo_register_tap_listener(eo, tap_type, NULL, NULL, &tap_data, &tap_free);
+    if (tap_error)
+    {
+      ok = false;
+      err_ret = g_strdup_printf("error %s", tap_error->str);
+      g_string_free(tap_error, TRUE);
+    }
+  }
+
+  if (ok)
+    wg_retap(cfile);
+
+  if (!tap_error)
+    remove_tap_listener(tap_data);
+
+  if (tap_free)
+    tap_free(tap_data);
+
+  return ok;
+}
+
+/**
+ * Process download request
+ *
+ * Input:
+ *   (m) token  - token to download
+ *
+ * Output object with attributes:
+ *  (m) error - error message
+ *  (o) data - object with attributes:
+ *    (o) file - suggested name of file
+ *    (o) mime - suggested content type
+ *    (o) data - payload base64 encoded
+ */
+DownloadResponse wg_session_process_download(capture_file *cfile, const char *tok_token)
+{
+  DownloadResponse res;
+
+  if (!tok_token)
+  {
+    res.error = "missing token";
+    return res;
+  }
+
+  if (!strncmp(tok_token, "eo:", 3))
+  {
+    // get eo:<name> from eo:<name>_<row>
+    char *tap_type = g_strdup(tok_token);
+    char *tmp = strrchr(tap_type, '_');
+    char *err_ret = NULL;
+
+    if (tmp)
+      *tmp = '\0';
+
+    // if eo:<name> not in wg_eo_list, retap
+    if (!wg_eo_object_list_get_entry_by_type(wg_eo_list, tap_type) &&
+        !wg_session_eo_retap_listener(cfile, tap_type, err_ret))
+    {
+      g_free(tap_type);
+      if (err_ret)
+        res.error = err_ret;
+      else
+        res.error = "invalid token";
+      return res;
+    }
+
+    g_free(tap_type);
+
+    struct wg_export_object_list *object_list;
+    const export_object_entry_t *eo_entry = NULL;
+
+    for (object_list = wg_eo_list; object_list; object_list = object_list->next)
+    {
+      size_t eo_type_len = strlen(object_list->type);
+
+      if (!strncmp(tok_token, object_list->type, eo_type_len) && tok_token[eo_type_len] == '_')
+      {
+        int row;
+
+        if (sscanf(&tok_token[eo_type_len + 1], "%d", &row) != 1)
+          break;
+
+        eo_entry = (export_object_entry_t *)g_slist_nth_data(object_list->entries, row);
+        break;
+      }
+    }
+
+    if (eo_entry)
+    {
+      const char *mime = (eo_entry->content_type) ? eo_entry->content_type : "application/octet-stream";
+      const char *filename = (eo_entry->filename) ? eo_entry->filename : tok_token;
+      res.download.file = filename;
+      res.download.mime = mime;
+      res.download.data = g_base64_encode(eo_entry->payload_data, eo_entry->payload_len);
+    }
+    return res;
+  }
+  else
+  {
+    res.error = "unrecognized token";
+    return res;
+  }
+}
+
+/**
+ * Output eo tap:
+ *   (m) tap        - tap name
+ *   (m) type       - tap output type
+ *   (m) proto      - protocol short name
+ *   (m) objects    - array of object with attributes:
+ *                  (m) pkt - packet number
+ *                  (o) hostname - hostname
+ *                  (o) type - content type
+ *                  (o) filename - filename
+ *                  (m) len - object length
+ */
+static eo::ExportObjectTap
+wg_session_process_tap_eo_cb(void *tapdata)
+{
+  export_object_list_t *tap_object = (export_object_list_t *)tapdata;
+  struct wg_export_object_list *object_list = (struct wg_export_object_list *)tap_object->gui_data;
+  GSList *slist;
+  eo::ExportObjectTap res;
+  res.tap = object_list->type;
+  res.type = "eo";
+  res.proto = object_list->proto;
+  int i = 0;
+
+  for (slist = object_list->entries; slist; slist = slist->next)
+  {
+    const export_object_entry_t *eo_entry = (export_object_entry_t *)slist->data;
+    eo::ExportObject obj;
+    obj.pkt = eo_entry->pkt_num;
+    if (eo_entry->hostname)
+      obj.hostname = eo_entry->hostname;
+    if (eo_entry->content_type)
+      obj.type = eo_entry->content_type;
+    if (eo_entry->filename)
+      obj.filename = eo_entry->filename;
+    obj._download = g_strdup_printf("%s_%d", object_list->type, i);
+    obj.len = eo_entry->payload_len;
+    res.objects.push_back(obj);
+    i++;
+  }
+  return res;
+}
+
+
+
+static void
+wg_session_free_tap_conv_cb(void *arg)
+{
+  conv_hash_t *hash = (conv_hash_t *)arg;
+  struct wg_conv_tap_data *iu = (struct wg_conv_tap_data *)hash->user_data;
+
+  if (!strncmp(iu->type, "conv:", 5))
+  {
+    reset_conversation_table_data(hash);
+  }
+  else if (!strncmp(iu->type, "endpt:", 6))
+  {
+    reset_endpoint_table_data(hash);
+  }
+
+  g_free(iu);
+}
+
+
+static bool
+wg_session_geoip_addr(address *addr)
+{
+  const mmdb_lookup_t *lookup = NULL;
+  eo::GeoIp geoip;
+
+  if (addr->type == AT_IPv4)
+  {
+    const ws_in4_addr *ip4 = (const ws_in4_addr *)addr->data;
+    lookup = maxmind_db_lookup_ipv4(ip4);
+  }
+  else if (addr->type == AT_IPv6)
+  {
+    const ws_in6_addr *ip6 = (const ws_in6_addr *)addr->data;
+    lookup = maxmind_db_lookup_ipv6(ip6);
+  }
+
+  if (!lookup || !lookup->found)
+    return false;
+
+  if (lookup->country)
+  {
+    geoip.country = lookup->country;
+    return true;
+  }
+
+  if (lookup->country_iso)
+  {
+    geoip.country_iso = lookup->country_iso;
+    return true;
+  }
+
+  if (lookup->city)
+  {
+    geoip.city = lookup->city;
+    return true;
+  }
+
+  if (lookup->as_org)
+  {
+    geoip.as_org = lookup->as_org;
+    return true;
+  }
+
+  if (lookup->as_number > 0)
+  {
+    geoip.as = lookup->as_number;
+    return true;
+  }
+
+  if (lookup->latitude >= -90.0 && lookup->latitude <= 90.0)
+  {
+    geoip.lat = lookup->latitude;
+    return true;
+  }
+
+  if (lookup->longitude >= -180.0 && lookup->longitude <= 180.0)
+  {
+    geoip.lon = lookup->longitude;
+    return true;
+  }
+
+  return false;
+}
+
+
+/**
+ * wg_session_process_tap_conv_cb()
+ *
+ * Output conv tap:
+ *   (m) tap        - tap name
+ *   (m) type       - tap output type
+ *   (m) proto      - protocol short name
+ *   (o) filter     - filter string
+ *   (o) geoip      - whether GeoIP information is available, boolean
+ *
+ *   (o) convs      - array of object with attributes:
+ *                  (m) saddr - source address
+ *                  (m) daddr - destination address
+ *                  (o) sport - source port
+ *                  (o) dport - destination port
+ *                  (m) txf   - TX frame count
+ *                  (m) txb   - TX bytes
+ *                  (m) rxf   - RX frame count
+ *                  (m) rxb   - RX bytes
+ *                  (m) start - (relative) first packet time
+ *                  (m) stop  - (relative) last packet time
+ *                  (o) filter - conversation filter
+ *
+ *   (o) hosts      - array of object with attributes:
+ *                  (m) host - host address
+ *                  (o) port - host port
+ *                  (m) txf  - TX frame count
+ *                  (m) txb  - TX bytes
+ *                  (m) rxf  - RX frame count
+ *                  (m) rxb  - RX bytes
+ */
+static eo::TapConvResponse
+wg_session_process_tap_conv_cb(void *tapdata)
+{
+  conv_hash_t *hash = (conv_hash_t *)tapdata;
+  const struct wg_conv_tap_data *iu = (struct wg_conv_tap_data *)hash->user_data;
+  const char *proto;
+  int proto_with_port;
+  int i;
+  int with_geoip = 0;
+  eo::TapConvResponse buf;
+  buf.tap = iu->type;
+
+  if (!strncmp(iu->type, "conv:", 5))
+  {
+    buf.type = "conv";
+    proto = iu->type + 5;
+  }
+  else if (!strncmp(iu->type, "endpt:", 6))
+  {
+    buf.type = "host";
+    proto = iu->type + 6;
+  }
+  else
+  {
+    buf.type = "err";
+    proto = "";
+  }
+
+  proto_with_port = (!strcmp(proto, "TCP") || !strcmp(proto, "UDP") || !strcmp(proto, "SCTP"));
+  if (iu->hash.conv_array != NULL && !strncmp(iu->type, "conv:", 5))
+  {
+    for (i = 0; i < iu->hash.conv_array->len; i++)
+    {
+      conv_item_t *iui = &g_array_index(iu->hash.conv_array, conv_item_t, i);
+      char *filter_str;
+
+      eo::Conversation con;
+      con.saddr = get_conversation_address(NULL, &iui->src_address, iu->resolve_name);
+      con.daddr = get_conversation_address(NULL, &iui->dst_address, iu->resolve_name);
+
+      if (proto_with_port)
+      {
+        con.sport = get_conversation_port(NULL, iui->src_port, iui->ctype, iu->resolve_port);
+        con.dport = get_conversation_port(NULL, iui->dst_port, iui->ctype, iu->resolve_port);
+      }
+
+      con.txf = iui->tx_frames;
+      con.txb = iui->tx_bytes;
+      con.rxf = iui->rx_frames;
+      con.rxb = iui->rx_bytes;
+
+      con.start = nstime_to_sec(&iui->start_time);
+      con.stop = nstime_to_sec(&iui->stop_time);
+
+      filter_str = get_conversation_filter(iui, CONV_DIR_A_TO_FROM_B);
+      if (filter_str)
+      {
+        con.filter = filter_str;
+        g_free(filter_str);
+      }
+
+      if (wg_session_geoip_addr(&(iui->src_address)))
+        with_geoip = 1;
+      if (wg_session_geoip_addr(&(iui->dst_address)))
+        with_geoip = 1;
+
+      buf.convs.push_back(con);
+    }
+  }
+  else if (iu->hash.conv_array != NULL && !strncmp(iu->type, "endpt:", 6))
+  {
+    for (i = 0; i < iu->hash.conv_array->len; i++)
+    {
+      eo::Host h;
+      endpoint_item_t *endpoint = &g_array_index(iu->hash.conv_array, endpoint_item_t, i);
+      char *filter_str;
+
+      h.host = get_conversation_address(NULL, &endpoint->myaddress, iu->resolve_name);
+
+      if (proto_with_port)
+      {
+        h.port = get_endpoint_port(NULL, endpoint, iu->resolve_port);
+      }
+
+      h.txf = endpoint->tx_frames;
+      h.txb = endpoint->tx_bytes;
+      h.rxf = endpoint->rx_frames;
+      h.rxb = endpoint->rx_bytes;
+
+      filter_str = get_endpoint_filter(endpoint);
+      if (filter_str)
+      {
+        h.filter = filter_str;
+        g_free(filter_str);
+      }
+
+      if (wg_session_geoip_addr(&(endpoint->myaddress)))
+        with_geoip = 1;
+
+      buf.hosts.push_back(h);
+    }
+  }
+
+  buf.proto = proto;
+  buf.geoip = with_geoip ? true : false;
+  return buf;
+}
+
+
+/**
+ * wg_session_process_tap()
+ *
+ * Process tap request
+ *
+ * Input:
+ *   (m) tap0         - First tap request
+ *   (o) tap1...tap15 - Other tap requests
+ *
+ * Output object with attributes:
+ *   (m) taps  - array of object with attributes:
+ *                  (m) tap  - tap name
+ *                  (m) type - tap output type
+ *                  ...
+ *                  for type:eo see wg_session_process_tap_eo_cb()
+ *
+ *   (m) err   - error code
+ */
+TapResponse wg_session_process_tap(capture_file *cfile, TapInput taps)
+{
+  TapResponse buf;
+  void *taps_data[16];
+  GFreeFunc taps_free[16];
+  const char *taps_type[16] = { 0 };
+  int taps_count = 0;
+  int i;
+
+  for (i = 0; i < 16; i++)
+  {
+    char tapbuf[32];
+    const char *tap_filter = "";
+    void *tap_data = NULL;
+    GFreeFunc tap_free = NULL;
+    GString *tap_error = NULL;
+
+    snprintf(tapbuf, sizeof(tapbuf), "tap%d", i);
+    if (taps.find(tapbuf) == taps.end())
+      break;
+
+    const char *tok_tap = taps[tapbuf].c_str();
+    if (!strncmp(tok_tap, "conv:", 5) || !strncmp(tok_tap, "endpt:", 6))
+    {
+      struct register_ct *ct = nullptr;
+      const char *ct_tapname;
+      tap_packet_cb tap_func;
+      struct wg_conv_tap_data *ct_data;
+
+      if (!strncmp(tok_tap, "conv:", 5))
+      {
+        ct = get_conversation_by_proto_id(proto_get_id_by_short_name(tok_tap + 5));
+        if (!ct || !(tap_func = get_conversation_packet_func(ct)))
+        {
+          buf.error = g_strdup_printf("conv %s not found", tok_tap + 5);
+          return buf;
+        }
+      }
+      else if (!strncmp(tok_tap, "endpt:", 6))
+      {
+        ct = get_conversation_by_proto_id(proto_get_id_by_short_name(tok_tap + 6));
+        if (!ct || !(tap_func = get_endpoint_packet_func(ct)))
+        {
+          buf.error = g_strdup_printf("endpt %s not found", tok_tap + 6);
+          return buf;
+        }
+      }
+      else
+      {
+        buf.error = g_strdup_printf("tap %s not recognized", tok_tap);
+        return buf;
+      }
+
+      int proto_id = get_conversation_proto_id(ct);
+      ct_tapname = proto_get_protocol_filter_name(proto_id);
+      ct_data = g_new0(struct wg_conv_tap_data, 1);
+      ct_data->type = tok_tap;
+      ct_data->hash.user_data = ct_data;
+      ct_data->resolve_name = true;
+      ct_data->resolve_port = true;
+
+      tap_error = register_tap_listener(
+        ct_tapname,
+        &ct_data->hash,
+        tap_filter,
+        0,
+        NULL,
+        tap_func,
+        NULL,
+        NULL
+      );
+      tap_data = &ct_data->hash;
+      tap_free = wg_session_free_tap_conv_cb;
+    }
+    else if (!strncmp(tok_tap, "eo:", 3))
+    {
+      register_eo_t *eo = get_eo_by_name(tok_tap + 3);
+      if (!eo)
+      {
+        buf.error = g_strdup_printf("eo %s not found", tok_tap + 3);
+        return buf;
+      }
+
+      tap_error = wg_session_eo_register_tap_listener(
+          eo,
+          tok_tap,
+          tap_filter,
+          NULL,
+          &tap_data,
+          &tap_free);
+    }
+    else
+    {
+      buf.error = g_strdup_printf("%s not recognized", tok_tap);
+      return buf;
+    }
+
+    if (tap_error)
+    {
+      buf.error = g_strdup_printf("name=%s error=%s", tok_tap, tap_error->str);
+      g_string_free(tap_error, true);
+      if (tap_free)
+        tap_free(tap_data);
+      return buf;
+    }
+
+    taps_data[taps_count] = tap_data;
+    taps_free[taps_count] = tap_free;
+    taps_type[taps_count] = tok_tap;
+    taps_count++;
+  }
+
+  if (taps_count == 0)
+  {
+    return buf;
+  }
+
+  wg_retap(cfile);
+
+  for (i = 0; i < taps_count; i++)
+  {
+    if (taps_data[i])
+    {
+      json j;
+      if (taps_type[i] && strncmp(taps_type[i], "eo:", 3) == 0)
+      {
+        j = wg_session_process_tap_eo_cb(taps_data[i]);
+      }
+      else if (taps_type[i] &&
+           (strncmp(taps_type[i], "conv:", 5) == 0 ||
+        strncmp(taps_type[i], "endpt:", 6) == 0))
+      {
+        j = wg_session_process_tap_conv_cb(taps_data[i]);
+      }
+      buf.taps.push_back(j.dump());
+      remove_tap_listener(taps_data[i]);
+    }
+    if (taps_free[i])
+      taps_free[i](taps_data[i]);
+
+    taps_type[i] = NULL;
+  }
+  return buf;
 }

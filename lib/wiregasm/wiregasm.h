@@ -5,8 +5,11 @@
 #include <vector>
 #include <glib.h>
 #include <wireshark/cfile.h>
+#include <map>
+#include <nlohmann/json.hpp>
 
 using namespace std;
+using json = nlohmann::json;
 
 
 struct ProtoTree
@@ -103,6 +106,83 @@ struct CheckFilterResponse
   string error;
 };
 
+namespace eo {
+  struct GeoIp {
+    string country;
+    string country_iso;
+    string city;
+    string as_org;
+    uint32_t as;
+    double lat;
+    double lon;
+  };
+
+  struct Conversation {
+    string saddr;
+    string daddr;
+    string sport;
+    string dport;
+    unsigned txf;
+    unsigned txb;
+    unsigned rxf;
+    unsigned rxb;
+    double start;
+    double stop;
+    string filter;
+  };
+
+  struct Host {
+    string host;
+    string port;
+    unsigned txf;
+    unsigned txb;
+    unsigned rxf;
+    unsigned rxb;
+    string filter;
+  };
+
+  struct TapConvResponse {
+    string tap;
+    string type;
+    string proto;
+    bool geoip;
+    vector<Conversation> convs;
+    vector<Host> hosts;
+  };
+
+  struct ExportObject
+  {
+    unsigned pkt;
+    string hostname;
+    string type;
+    string filename;
+    string _download;
+    size_t len;
+  };
+  struct ExportObjectTap
+  {
+    string tap;
+    string type;
+    string proto;
+    vector<ExportObject> objects;
+  };
+
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ExportObject, pkt, hostname, type, filename, _download, len);
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GeoIp, country, country_iso, city, as_org, as, lat, lon);
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Conversation, saddr, daddr, sport, dport, txf, txb, rxf, rxb, start, stop, filter);
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Host, host, port, txf, txb, rxf, rxb, filter);
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TapConvResponse, tap, type, proto, geoip, convs, hosts);
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ExportObjectTap, tap, type, proto, objects)
+}
+
+using TapInput = std::map<string, string>;
+
+struct TapResponse
+{
+  vector<string> taps;
+  string error;
+};
+
 struct PrefEnum
 {
   string name;
@@ -154,6 +234,19 @@ struct FilterCompletionResponse
   vector<CompleteField> fields;
 };
 
+struct Download
+{
+  string file;
+  string mime;
+  string data;
+};
+
+struct DownloadResponse
+{
+  string error;
+  Download download;
+};
+
 // globals
 
 bool wg_init();
@@ -184,6 +277,8 @@ public:
   FramesResponse getFrames(string filter, int skip, int limit);
   Frame getFrame(int number);
   Follow follow(string follow, string filter);
+  TapResponse tap(string taps);
+  DownloadResponse download(string token);
   ~DissectSession();
 };
 

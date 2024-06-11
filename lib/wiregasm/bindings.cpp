@@ -22,6 +22,33 @@ EMSCRIPTEN_BINDINGS(Wiregasm)
   emscripten::function("applyPreferences", &wg_prefs_apply_all);
 }
 
+EMSCRIPTEN_BINDINGS(TapResponse)
+{
+  value_object<TapResponse>("TapResponse")
+    .field("taps", &TapResponse::taps)
+    .field("error", &TapResponse::error);
+}
+
+EMSCRIPTEN_BINDINGS(ExportObject)
+{
+  value_object<eo::ExportObject>("ExportObject")
+    .field("pkt", &eo::ExportObject::pkt)
+    .field("hostname", &eo::ExportObject::hostname)
+    .field("type", &eo::ExportObject::type)
+    .field("len", &eo::ExportObject::len)
+    .field("filename", &eo::ExportObject::filename)
+    .field("_download", &eo::ExportObject::_download);
+}
+
+EMSCRIPTEN_BINDINGS(ExportObjectTap)
+{
+  value_object<eo::ExportObjectTap>("ExportObjectTap")
+    .field("tap", &eo::ExportObjectTap::tap)
+    .field("type", &eo::ExportObjectTap::type)
+    .field("proto", &eo::ExportObjectTap::proto)
+    .field("objects", &eo::ExportObjectTap::objects);
+}
+
 EMSCRIPTEN_BINDINGS(DissectSession)
 {
   class_<DissectSession>("DissectSession")
@@ -29,6 +56,8 @@ EMSCRIPTEN_BINDINGS(DissectSession)
     .function("load", &DissectSession::load)
     .function("getFrames", &DissectSession::getFrames)
     .function("getFrame", &DissectSession::getFrame)
+    .function("tap", &DissectSession::tap)
+    .function("download", &DissectSession::download)
     .function("follow", &DissectSession::follow);
 }
 
@@ -206,4 +235,22 @@ EMSCRIPTEN_BINDINGS(stl_wrappers)
   register_vector<PrefEnum>("VectorPrefEnum");
   // Frame::follow is a vector of vectors of strings
   register_vector<vector<string>>("VectorVectorString");
+  register_vector<eo::ExportObject>("VectorExportObject");
+  register_vector<eo::ExportObjectTap>("VectorExportObjectTap");
+  register_map<string, string>("map<string, string>");
+}
+
+EMSCRIPTEN_BINDINGS(Download)
+{
+  value_object<Download>("Download")
+    .field("file", &Download::file)
+    .field("mime", &Download::mime)
+    .field("data", &Download::data);
+}
+
+EMSCRIPTEN_BINDINGS(DownloadResponse)
+{
+  value_object<DownloadResponse>("DownloadResponse")
+    .field("error", &DownloadResponse::error)
+    .field("download", &DownloadResponse::download);
 }

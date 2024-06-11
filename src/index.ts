@@ -3,10 +3,12 @@ import {
   CheckFilterResponse,
   CompleteField,
   DissectSession,
+  Download,
   Follow,
   Frame,
   FramesResponse,
   LoadResponse,
+  TapInput,
   Pref,
   PrefModule,
   PrefSetResult,
@@ -14,6 +16,7 @@ import {
   WiregasmLib,
   WiregasmLibOverrides,
   WiregasmLoader,
+  DownloadResponse,
 } from "./types";
 
 import { preferenceSetCodeToError, vectorToArray } from "./utils";
@@ -101,12 +104,23 @@ export class Wiregasm {
     return this.lib.checkFilter(filter);
   }
 
-  complete_filter(filter: string): { err: string; fields: CompleteField[] } {
+  complete_filter(filter: string): { fields: CompleteField[] } {
     const out = this.lib.completeFilter(filter);
     return {
-      err: out.err,
       fields: vectorToArray(out.fields),
     };
+  }
+
+  tap(taps: TapInput) {
+    const out = this.session.tap(JSON.stringify(taps));
+    return {
+      ...out,
+      taps: vectorToArray(out.taps).map((t) => JSON.parse(t)),
+    }
+  }
+
+  download(token: string): DownloadResponse {
+    return this.session.download(token);
   }
 
   reload_lua_plugins() {
