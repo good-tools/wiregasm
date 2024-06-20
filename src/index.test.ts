@@ -273,6 +273,7 @@ describe("Wiregasm Library - Set Preferences", () => {
   });
 
   test("set preferences works for diameter", async () => {
+    
     const pref = wg.get_pref("diameter", "tcp.port");
     expect(pref.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
     expect(pref.range_value).toBe(
