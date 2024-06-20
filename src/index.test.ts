@@ -271,6 +271,36 @@ describe("Wiregasm Library - Set Preferences", () => {
     expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
     expect(pref2.range_value).toBe("8001");
   });
+
+  test("set preferences works for diameter", async () => {
+    const pref = wg.get_pref("diameter", "tcp.port");
+    expect(pref.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
+    expect(pref.range_value).toBe(
+      "3868"
+    );
+
+    wg.set_pref("diameter", "tcp.port", "3871");
+
+    const pref2 = wg.get_pref("diameter", "tcp.port");
+    expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
+    expect(pref2.range_value).toBe("3871");
+  });
+
+  test("set preferences works for sip", async () => {
+    const pref = wg.get_pref("sip", "tcp.port");
+    expect(pref.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
+    expect(pref.range_value).toBe(
+      "5060"
+    );
+
+    wg.set_pref("sip", "tcp.port", "8001");
+
+    const pref2 = wg.get_pref("sip", "tcp.port");
+    expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
+    expect(pref2.range_value).toBe("8001");
+  });
+
+
 });
 
 describe("Wiregasm Library - nghttp2", () => {
