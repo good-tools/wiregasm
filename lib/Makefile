@@ -72,16 +72,18 @@ clean: mostlyclean
 #
 # CARES
 #
-CARES_VERSION := 1.15.0	
-CARES_URL := https://github.com/c-ares/c-ares/releases/download/cares-1_15_0/c-ares-1.15.0.tar.gz
+CARES_VERSION := 1.15.0
+CARES_URL := https://github.com/c-ares/c-ares/releases/download/cares-$(subst .,_,$(CARES_VERSION))/c-ares-$(CARES_VERSION).tar.gz
 CARES_CHECKSUM := a1de6c5e7e1a6a13c926aae690e83d5caa51e7313d63da1cf2af6bc757c41d585aad5466bc3ba7b7f7793cb1748fa589f40972b196728851c8b059cfc8c3be50
 
-$(TARBALLS)/c-ares-1.15.0.tar.gz:
+$(TARBALLS)/c-ares-$(CARES_VERSION).tar.gz:
 	$(call download,$(CARES_URL))
 
+.sum-c-ares: c-ares-$(CARES_VERSION).tar.gz
+	$(call checksum,$(CARES_CHECKSUM),$<)
+	touch $@
 
-
-c-ares: c-ares-1.15.0.tar.gz
+c-ares: c-ares-$(CARES_VERSION).tar.gz .sum-c-ares
 	$(CLEANUP)
 	tar xzfo $<
 	$(MOVE)
