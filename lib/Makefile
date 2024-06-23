@@ -326,7 +326,7 @@ wireshark: wireshark-$(WIRESHARK_VERSION).tar.xz .sum-wireshark
 	$(CLEANUP)
 	tar xJfo $<
 	$(APPLY) $(PATCHES)/wireshark/0001-dont-build-radiotap-lemon.patch
-	# $(APPLY) $(PATCHES)/wireshark/0002-fix-cpu-name-unknown.patch
+	$(APPLY) $(PATCHES)/wireshark/0002-fix-dfilter-export.patch
 	$(APPLY) $(PATCHES)/wireshark/0003-disable-snort-emscripten.patch
 	$(APPLY) $(PATCHES)/wireshark/0004-export-wireshark-common.patch
 	$(APPLY) $(PATCHES)/wireshark/0005-force-data-dir.patch
@@ -340,6 +340,7 @@ wireshark: wireshark-$(WIRESHARK_VERSION).tar.xz .sum-wireshark
 	$(CMAKECLEAN)
 	emcmake cmake -G Ninja -S $< -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:STRING=$(PREFIX) -DCMAKE_FIND_ROOT_PATH:STRING=$(PREFIX) $(WIRESHARK_CONF)
 	env cmake --build $(BUILD_DIR)
+	env cmake --install $(BUILD_DIR) --prefix $(PREFIX)
 	env cmake --install $(BUILD_DIR) --prefix $(PREFIX) --component Development
 	cp -rf $(BUILD_DIR)/staging/* $(PREFIX) # copy artifacts from the staging directory
 	touch $@

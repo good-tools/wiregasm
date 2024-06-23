@@ -1,0 +1,24 @@
+From 2a65fe079b17a2c716e167a3c06bfeacbb815aee Mon Sep 17 00:00:00 2001
+From: Osama Khalid <osama@codinghazard.com>
+Date: Sun, 23 Jun 2024 13:49:22 -0400
+Subject: [PATCH] fix dfilter export
+
+---
+ epan/dfilter/CMakeLists.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/epan/dfilter/CMakeLists.txt b/epan/dfilter/CMakeLists.txt
+index c21129f5f4..b6136f4afa 100644
+--- a/epan/dfilter/CMakeLists.txt
++++ b/epan/dfilter/CMakeLists.txt
+@@ -9,6 +9,7 @@
+ 
+ set(DFILTER_PUBLIC_HEADERS
+ 	dfilter.h
++	dfilter-loc.h
+ 	drange.h
+ )
+ 
+-- 
+2.43.0
+
