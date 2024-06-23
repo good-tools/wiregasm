@@ -4,6 +4,7 @@
 #include <epan/wslua/init_wslua.h>
 #include <epan/prefs-int.h>
 #include <epan/prefs.h>
+#include <wireshark/ws_version.h>
 
 using namespace std;
 
@@ -16,8 +17,16 @@ using namespace std;
 // }
 
 static const char *UPLOAD_DIR = "/uploads";
+static const char *DEFAULT_PLUGINS_DIR = "/plugins";
 static gboolean wg_initialized = FALSE;
 static e_prefs *prefs_p;
+
+string wg_ws_version()
+{
+  char version[32];
+  snprintf(version, sizeof(version), "%d.%d.%d", WIRESHARK_VERSION_MAJOR, WIRESHARK_VERSION_MINOR, WIRESHARK_VERSION_MICRO);
+  return string(version);
+}
 
 string wg_get_upload_dir()
 {
@@ -26,6 +35,12 @@ string wg_get_upload_dir()
 
 string wg_get_plugins_dir()
 {
+  if (!wg_initialized) {
+    return string(DEFAULT_PLUGINS_DIR);
+  }
+
+  // get_plugins_dir relies on configuration_init being called
+  // which only happens in wg_init
   return string(get_plugins_dir());
 }
 
@@ -86,8 +101,26 @@ bool wg_init()
 
   on_status(INFO, "Initializing..");
 
+  // cleanup any previous state
+  free_progdirs();
+
   init_process_policies();
   relinquish_special_privs_perm();
+
+  char * cerr_msg = configuration_init("/wiregasm", NULL);
+  if (cerr_msg != NULL) {
+    on_status(ERROR, cerr_msg);
+    g_free(cerr_msg);
+    return false;
+  }
+
+  const char * plugin_dir = get_plugins_dir();
+
+  if (plugin_dir == NULL || strlen(plugin_dir) == 0)
+  {
+    on_status(ERROR, "Failed to get plugins dir");
+    return false;
+  }
 
   ws_log_set_level(LOG_LEVEL_INFO);
 
@@ -332,10 +365,10 @@ CheckFilterResponse wg_check_filter(string filter)
 {
   CheckFilterResponse res;
 
-  char *err_msg = NULL;
+  df_error_t *err_info = NULL;
   dfilter_t *dfp;
 
-  if (dfilter_compile(filter.c_str(), &dfp, &err_msg))
+  if (dfilter_compile(filter.c_str(), &dfp, &err_info))
   {
     dfilter_free(dfp);
     res.ok = true;
@@ -345,10 +378,10 @@ CheckFilterResponse wg_check_filter(string filter)
     res.ok = false;
   }
 
-  if (err_msg)
+  if (err_info)
   {
-    res.error = string(err_msg);
-    g_free(err_msg);
+    res.error = string(err_info->msg);
+    g_free(err_info);
   }
 
   return res;

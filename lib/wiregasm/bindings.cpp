@@ -20,6 +20,7 @@ EMSCRIPTEN_BINDINGS(Wiregasm)
   emscripten::function("listModules", &wg_list_modules);
   emscripten::function("listPreferences", &wg_list_preferences);
   emscripten::function("applyPreferences", &wg_prefs_apply_all);
+  emscripten::function("wiresharkVersion", &wg_ws_version);
 }
 
 EMSCRIPTEN_BINDINGS(DissectSession)

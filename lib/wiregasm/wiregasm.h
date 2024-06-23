@@ -160,6 +160,7 @@ bool wg_init();
 bool wg_reload_lua_plugins();
 void wg_destroy();
 void wg_prefs_apply_all();
+string wg_ws_version();
 SetPrefResponse wg_set_pref(string module_name, string pref_name, string value);
 PrefResponse wg_get_pref(string module_name, string pref_name);
 string wg_upload_file(string name, int buffer_ptr, size_t size);

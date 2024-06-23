@@ -49,14 +49,17 @@ export class Wiregasm {
     }
 
     this.lib = await loader(overrides);
-    this.uploadDir = this.lib.getUploadDirectory();
-    this.pluginsDir = this.lib.getPluginsDirectory();
 
     if (beforeInit !== null) {
       await beforeInit(this.lib);
     }
 
-    this.lib.init();
+    if (!this.lib.init()) {
+      throw new Error("Failed to initialize Wiregasm");
+    }
+
+    this.uploadDir = this.lib.getUploadDirectory();
+    this.pluginsDir = this.lib.getPluginsDirectory();
     this.initialized = true;
   }
 

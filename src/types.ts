@@ -261,6 +261,13 @@ export interface WiregasmLib extends EmscriptenModule {
   DissectSession: DissectSessionConstructable;
 
   /**
+   * Returns the version of the library
+   *
+   * @returns Version string
+   */
+  wiresharkVersion(): string;
+
+  /**
    * Returns the directory where files are uploaded
    *
    * @returns Path of the directory

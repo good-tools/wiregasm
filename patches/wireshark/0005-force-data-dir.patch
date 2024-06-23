@@ -1,29 +1,32 @@
-From ee842a9bbe47b1a36b0e1700ef6509d9ba346ca5 Mon Sep 17 00:00:00 2001
+From c6610c087ca95fcc03a5cbc64713134d15010747 Mon Sep 17 00:00:00 2001
 From: Osama Khalid <osama@codinghazard.com>
-Date: Mon, 23 Jan 2023 21:52:48 -0500
+Date: Sat, 22 Jun 2024 14:51:25 -0400
 Subject: [PATCH] force data directory path and do not bleed build paths
 
 ---
- wsutil/CMakeLists.txt | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ wsutil/path_config.h.in | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/wsutil/CMakeLists.txt b/wsutil/CMakeLists.txt
-index a55086ccbb..6ab8c0585d 100644
---- a/wsutil/CMakeLists.txt
-+++ b/wsutil/CMakeLists.txt
-@@ -7,9 +7,9 @@
- # SPDX-License-Identifier: GPL-2.0-or-later
- #
+diff --git a/wsutil/path_config.h.in b/wsutil/path_config.h.in
+index 6539a5ab58..0318bc0056 100644
+--- a/wsutil/path_config.h.in
++++ b/wsutil/path_config.h.in
+@@ -1,10 +1,10 @@
+ #ifndef __PATH_CONFIG_H__
+ #define __PATH_CONFIG_H__
  
--add_definitions(-DPLUGIN_DIR=\"${CMAKE_INSTALL_PREFIX}/${PLUGIN_INSTALL_LIBDIR}\")
--add_definitions(-DEXTCAP_DIR=\"${CMAKE_INSTALL_PREFIX}/${EXTCAP_INSTALL_LIBDIR}\")
--add_definitions(-DDATA_DIR=\"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}\")
-+add_definitions(-DPLUGIN_DIR=\"/plugins\")
-+add_definitions(-DEXTCAP_DIR=\"/extcap\")
-+add_definitions(-DDATA_DIR=\"/wireshark\")
+-#define INSTALL_PREFIX  "@PATH_INSTALL_PREFIX@"
+-#define DATA_DIR        "@PATH_DATA_DIR@"
+-#define DOC_DIR         "@PATH_DOC_DIR@"
+-#define PLUGIN_DIR      "@PATH_PLUGIN_DIR@"
+-#define EXTCAP_DIR      "@PATH_EXTCAP_DIR@"
++#define INSTALL_PREFIX  "/"
++#define DATA_DIR        "/wireshark"
++#define DOC_DIR         "/docs"
++#define PLUGIN_DIR      "/plugins"
++#define EXTCAP_DIR      "/extcap"
  
- add_subdirectory(wmem)
- 
+ #endif
 -- 
-2.34.1
+2.43.0
 

@@ -201,7 +201,7 @@ process_packet(capture_file *cf, epan_dissect_t *edt,
     {
       if (dfilter_apply_edt(cf->dfcode, edt))
       {
-        g_slist_foreach(edt->pi.dependent_frames, find_and_mark_frame_depended_upon, cf->provider.frames);
+        g_hash_table_foreach(edt->pi.fd->dependent_frames, find_and_mark_frame_depended_upon, cf->provider.frames);
       }
     }
 
@@ -482,11 +482,11 @@ wg_session_process_frame_cb_tree(epan_dissect_t *edt, proto_tree *tree, tvbuff_t
       else if (finfo->hfinfo->type == FT_FRAMENUM)
       {
         t.type = "framenum";
-        t.fnum = static_cast<unsigned int>(finfo->value.value.uinteger);
+        t.fnum = fvalue_get_uinteger(finfo->value);
       }
       else if (FI_GET_FLAG(finfo, FI_URL) && finfo->hfinfo->type == FT_STRING)
       {
-        char *url = fvalue_to_string_repr(NULL, &finfo->value, FTREPR_DISPLAY, finfo->hfinfo->display);
+        char *url = fvalue_to_string_repr(NULL, finfo->value, FTREPR_DISPLAY, finfo->hfinfo->display);
         t.type = "url";
         t.url = url;
         wmem_free(NULL, url);
@@ -519,7 +519,7 @@ struct VisitData {
   vector<vector<string>> *followArray;
 };
 
-static gboolean
+static bool
 wg_session_follower_visit_cb(const void *key _U_, void *value, void *user_data) {
   register_follow_t *follower = (register_follow_t *) value;
   VisitData *visitData = (VisitData *) user_data;
@@ -752,7 +752,7 @@ wg_dissect_request(capture_file *cfile, guint32 framenum, guint32 frame_ref_num,
                    guint32 prev_dis_num, wtap_rec *rec, Buffer *buf,
                    column_info *cinfo, guint32 dissect_flags,
                    wg_dissect_func_t cb, void *data,
-                   int *err, gchar **err_info)
+                   int *err, char **err_info)
 {
   frame_data *fdata;
   epan_dissect_t edt;
@@ -826,9 +826,10 @@ int wg_filter(capture_file *cfile, const char *dftext, guint8 **result, guint *p
 
   epan_dissect_t edt;
 
-  if (!dfilter_compile(dftext, &dfcode, &err_info))
+  df_error_t *dferr = NULL;
+  if (!dfilter_compile(dftext, &dfcode, &dferr))
   {
-    g_free(err_info);
+    g_free(dferr);
     return -1;
   }
 

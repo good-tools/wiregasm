@@ -1,23 +1,24 @@
-From b00725b5f086db3d918b9a0f1e83b5f99ef22971 Mon Sep 17 00:00:00 2001
+From 7d6afee5ca02173a02557275b0e5657485338fa5 Mon Sep 17 00:00:00 2001
 From: Osama Khalid <osama@codinghazard.com>
-Date: Sat, 4 Feb 2023 22:07:33 -0500
+Date: Sat, 22 Jun 2024 15:43:27 -0400
 Subject: [PATCH] synchronous registration
 
 ---
- epan/register.c | 93 ++++++++++++-------------------------------------
- 1 file changed, 22 insertions(+), 71 deletions(-)
+ epan/register.c | 111 +++++++++---------------------------------------
+ 1 file changed, 21 insertions(+), 90 deletions(-)
 
 diff --git a/epan/register.c b/epan/register.c
-index d8c0eda839..eab9e64a57 100644
+index 1f8f2c2fa5..e8377d5913 100644
 --- a/epan/register.c
 +++ b/epan/register.c
-@@ -17,29 +17,22 @@
+@@ -17,70 +17,28 @@
  
  #include "epan/dissectors/dissectors.h"
  
 -static const char *cur_cb_name = NULL;
--// We could use g_atomic_pointer_set/get instead of a mutex, but that's
--// currently (early 2018) invisible to TSAN.
+-// We could use g_atomic_pointer_set/get instead of a mutex, but that causes
+-// a false positive with Clang and TSAN for GLib < 2.64.0 (Issue #17753):
+-// https://gitlab.gnome.org/GNOME/glib/-/issues/1843
 -static GMutex cur_cb_name_mtx;
 -static GAsyncQueue *register_cb_done_q;
 -
@@ -44,7 +45,6 @@ index d8c0eda839..eab9e64a57 100644
 -            set_cb_name(dissector_reg_proto[i].cb_name);
 +            cb_name = dissector_reg_proto[i].cb_name;
              dissector_reg_proto[i].cb_func();
-+
 +            if (cb && cb_name) {
 +                cb(RA_REGISTER, cb_name, cb_data);
 +                called_back = TRUE;
@@ -52,7 +52,16 @@ index d8c0eda839..eab9e64a57 100644
          }
      }
      CATCH(DissectorError) {
-@@ -56,30 +49,6 @@ register_all_protocols_worker(void *arg _U_)
+-        /*
+-         * This is probably a dissector, or something it calls,
+-         * calling REPORT_DISSECTOR_ERROR() in a registration
+-         * routine or something else outside the normal dissection
+-         * code path.
+-         *
+-         * The message gets freed by ENDTRY, so we must make a copy
+-         * of it.
+-         */
+         error_message = g_strdup(GET_MESSAGE);
      }
      ENDTRY;
  
@@ -83,7 +92,7 @@ index d8c0eda839..eab9e64a57 100644
      if (error_message != NULL)
          THROW_MESSAGE(DissectorError, error_message);
      if (cb && !called_back) {
-@@ -87,15 +56,22 @@ register_all_protocols(register_cb cb, gpointer cb_data)
+@@ -88,61 +46,34 @@ register_all_protocols(register_cb cb, gpointer cb_data)
      }
  }
  
@@ -110,7 +119,16 @@ index d8c0eda839..eab9e64a57 100644
          }
      }
      CATCH(DissectorError) {
-@@ -112,36 +88,11 @@ register_all_protocol_handoffs_worker(void *arg _U_)
+-        /*
+-         * This is probably a dissector, or something it calls,
+-         * calling REPORT_DISSECTOR_ERROR() in a registration
+-         * routine or something else outside the normal dissection
+-         * code path.
+-         *
+-         * The message gets freed by ENDTRY, so we must make a copy
+-         * of it.
+-         */
+         error_message = g_strdup(GET_MESSAGE);
      }
      ENDTRY;
  
@@ -148,5 +166,5 @@ index d8c0eda839..eab9e64a57 100644
  
  gulong register_count(void)
 -- 
-2.34.1
+2.43.0
 

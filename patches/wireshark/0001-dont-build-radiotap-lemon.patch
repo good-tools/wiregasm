@@ -1,19 +1,19 @@
-From 33cc92797e374e6505cf0c0db53f31a9841a2764 Mon Sep 17 00:00:00 2001
+From ce7a2b0167e2aadbbeee9012bd9cee4afe6eeb18 Mon Sep 17 00:00:00 2001
 From: Osama Khalid <osama@codinghazard.com>
-Date: Fri, 20 Jan 2023 11:04:54 -0500
-Subject: [PATCH] don't build lemon or radiotap
+Date: Sat, 22 Jun 2024 14:38:52 -0400
+Subject: [PATCH] don't build lemon
 
 ---
- CMakeLists.txt                |  7 +++--
+ CMakeLists.txt                |  5 ++-
  cmake/modules/FindLEMON.cmake | 58 +++++++++++++++++++++++++++++++++++
- 2 files changed, 62 insertions(+), 3 deletions(-)
+ 2 files changed, 62 insertions(+), 1 deletion(-)
  create mode 100644 cmake/modules/FindLEMON.cmake
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index a248e2ca0f..cbcb9ddafe 100644
+index 155e0a4312..6bd0f5bb64 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -361,7 +361,6 @@ set(LOG_RC_VERSION ${LOG_PROJECT_MAJOR_VERSION},${LOG_PROJECT_MINOR_VERSION},${P
+@@ -409,7 +409,6 @@ set(LOG_RC_VERSION ${LOG_PROJECT_MAJOR_VERSION},${LOG_PROJECT_MINOR_VERSION},${P
  
  message(STATUS "V: ${PROJECT_VERSION}, MaV: ${PROJECT_MAJOR_VERSION}, MiV: ${PROJECT_MINOR_VERSION}, PL: ${PROJECT_PATCH_VERSION}, EV: ${PROJECT_VERSION_EXTENSION}.")
  
@@ -21,15 +21,15 @@ index a248e2ca0f..cbcb9ddafe 100644
  include(UseMakePluginReg)
  include(UseMakeTaps)
  include(UseExecutableResources)
-@@ -1132,6 +1131,7 @@ find_package(CARES "1.13.0" REQUIRED)
+@@ -1208,6 +1207,7 @@ endif ()
  find_package(LEX REQUIRED)
  find_package(Perl)
  find_package(PCRE2 REQUIRED)
 +find_package(LEMON REQUIRED)
  
- find_package(Python3 3.6 REQUIRED)
- # Several files (including LocatePythonModule) still use the old name
-@@ -1513,14 +1513,15 @@ set(PLUGIN_INSTALL_FULL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${PLUGIN_INSTALL_LIBDIR}
+ if (NOT WIN32)
+ 	find_package(Gettext)
+@@ -1627,6 +1627,9 @@ set(PLUGIN_INSTALL_FULL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${PLUGIN_INSTALL_LIBDIR}
  set(PLUGIN_INSTALL_VERSION_LIBDIR "${PLUGIN_INSTALL_LIBDIR}/${PLUGIN_PATH_ID}")
  set(PLUGIN_VERSION_DIR "plugins/${PLUGIN_PATH_ID}")
  
@@ -39,17 +39,9 @@ index a248e2ca0f..cbcb9ddafe 100644
  add_subdirectory( capture )
  add_subdirectory( doc )
  add_subdirectory( docbook EXCLUDE_FROM_ALL )
- add_subdirectory( epan )
- add_subdirectory( extcap )
- add_subdirectory( randpkt_core )
--add_subdirectory( tools/lemon )
--add_subdirectory( tools/radiotap-gen )
- add_subdirectory( ui )
- add_subdirectory( wiretap )
- add_subdirectory( writecap )
 diff --git a/cmake/modules/FindLEMON.cmake b/cmake/modules/FindLEMON.cmake
 new file mode 100644
-index 0000000000..714d8f7d26
+index 0000000000..ed2e9b4033
 --- /dev/null
 +++ b/cmake/modules/FindLEMON.cmake
 @@ -0,0 +1,58 @@
@@ -111,6 +103,7 @@ index 0000000000..714d8f7d26
 +      endif()
 +    ENDFOREACH (_current_FILE)
 +ENDMACRO(ADD_LEMON_FILES)
+\ No newline at end of file
 -- 
-2.34.1
+2.43.0
 
