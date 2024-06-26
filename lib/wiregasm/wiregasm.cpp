@@ -309,6 +309,45 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
 {
   SetPrefResponse res;
 
+  module_t *mod = prefs_find_module(module_name.c_str());
+  pref_t *p = prefs_find_preference(mod, pref_name.c_str());
+
+  if (p == NULL)
+  {
+    res.code = -1;
+    res.error = "Preference not found";
+    return res;
+  }
+
+  int type = prefs_get_type(p);
+
+  // handle decode as range ourselves
+  if (type == PREF_DECODE_AS_RANGE) {
+    range_t *new_range = NULL;
+    convert_ret_t ret = range_convert_str(NULL, &new_range, value.c_str(), prefs_get_max_value(p));
+
+    if (ret != CVT_NO_ERROR) {
+      res.code = -1;
+      res.error = "Invalid range";
+      return res;
+    }
+
+    if (prefs_set_range_value(p, new_range, pref_stashed)) {
+      pref_unstash_data_t unstashed_data;
+
+      unstashed_data.module = mod;
+      unstashed_data.handle_decode_as = true;
+
+      pref_unstash(p, &unstashed_data);
+      prefs_apply(mod);
+    }
+
+    res.code = 0;
+    return res;
+  }
+
+  // use prefs_set_pref for all other types for now
+
   char pref[4096];
   prefs_set_pref_e ret;
   char *errmsg = NULL;
