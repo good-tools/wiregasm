@@ -4,8 +4,8 @@ Date: Fri, 17 Feb 2023 10:59:28 -0500
 Subject: [PATCH] export wireshark common
 
 ---
- CMakeLists.txt | 26 ++++++++++++++++++++++++++
- 1 file changed, 26 insertions(+)
+ CMakeLists.txt | 28 ++++++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 index a248e2ca0f..f9e7d47b03 100644
@@ -14,9 +14,10 @@ index a248e2ca0f..f9e7d47b03 100644
 @@ -2442,6 +2442,32 @@ set_target_properties(shark_common cli_main capture_opts
  	COMPILE_FLAGS "${WERROR_COMMON_FLAGS}"
  )
- 
+
 +set(COMMON_PUBLIC_HEADERS
 +	ui/summary.h
+# +	ui/ssl_key_export.h
 +	frame_tvbuff.h
 +)
 +
@@ -27,6 +28,7 @@ index a248e2ca0f..f9e7d47b03 100644
 +
 +add_library(wireshark_common
 +	ui/summary.c
+# +	ui/ssl_key_export.c
 +	$<TARGET_OBJECTS:shark_common>
 +)
 +
@@ -41,9 +43,8 @@ index a248e2ca0f..f9e7d47b03 100644
 +	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +)
- 
+
  if(BUILD_wireshark AND QT_FOUND)
  	set(WIRESHARK_SRC
--- 
+--
 2.34.1
-
