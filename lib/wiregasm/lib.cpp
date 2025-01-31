@@ -1229,9 +1229,9 @@ static GString *wg_session_eo_register_tap_listener(register_eo_t *eo, const cha
       NULL);
 }
 
-gboolean wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char **err_ret)
+bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char **err_ret)
 {
-  gboolean ok = TRUE;
+  bool ok = true;
   register_eo_t *eo = NULL;
   GString *tap_error = NULL;
   void *tap_data = NULL;
@@ -1241,7 +1241,7 @@ gboolean wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type,
   eo = get_eo_by_name(tap_type + 3);
   if (!eo)
   {
-    ok = FALSE;
+    ok = false;
     *err_ret = g_strdup_printf("eo=%s not found", tap_type + 3);
   }
 
@@ -1250,7 +1250,7 @@ gboolean wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type,
     tap_error = wg_session_eo_register_tap_listener(eo, tap_type, NULL, NULL, &tap_data, &tap_free);
     if (tap_error)
     {
-      ok = FALSE;
+      ok = false;
       *err_ret = g_strdup_printf("error %s", tap_error->str);
       g_string_free(tap_error, TRUE);
     }

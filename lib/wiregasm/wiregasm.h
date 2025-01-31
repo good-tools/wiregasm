@@ -6,7 +6,6 @@
 #include <glib.h>
 #include <wireshark/cfile.h>
 #include <map>
-#include <any>
 
 using namespace std;
 
@@ -125,6 +124,7 @@ struct ExportObjectTap
 };
 
 using TapInput = std::map<string, string>;
+
 struct TapResponse
 {
   vector<ExportObjectTap> taps;
