@@ -1,15 +1,6 @@
 #include "lib.h"
 #include "wiregasm.h"
 
-// #include <epan/stats_tree_priv.h>
-// #include <epan/stat_tap_ui.h>
-// #include <epan/conversation_table.h>
-// #include <epan/expert.h>
-#include <epan/export_object.h>
-// #include <epan/follow.h>
-// #include <epan/rtd_table.h>
-// #include <epan/srt_table.h>
-
 static guint32 cum_bytes;
 static frame_data ref_frame;
 
