@@ -112,7 +112,6 @@ export interface CompleteField {
   name: string;
 }
 
-
 export interface FramesResponse {
   frames: Vector<FrameMeta>;
   matched: number;
@@ -143,7 +142,6 @@ export interface FrameMeta {
   fg: number;
   columns: Vector<string>;
 }
-
 export interface LoadSummary {
   filename: string;
   file_type: string;
@@ -167,12 +165,10 @@ export interface Download {
   data: string;
 }
 
-
 export interface DownloadResponse {
   error: string;
   download: Download;
 }
-
 
 export type TapInput = Record<string, string>;
 
@@ -318,7 +314,6 @@ export interface WiregasmLib extends EmscriptenModule {
 
   /**
    * List all the preference modules
-
    * @returns List of preference modules
    */
   listModules(): Vector<PrefModule>;
