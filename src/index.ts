@@ -3,7 +3,7 @@ import {
   CheckFilterResponse,
   CompleteField,
   DissectSession,
-  DownloadFile,
+  Download,
   Follow,
   Frame,
   FramesResponse,
@@ -16,6 +16,7 @@ import {
   WiregasmLib,
   WiregasmLibOverrides,
   WiregasmLoader,
+  DownloadResponse,
 } from "./types";
 
 import { preferenceSetCodeToError, vectorToArray } from "./utils";
@@ -113,19 +114,17 @@ export class Wiregasm {
   tap(taps: TapInput) {
     const out = this.session.tap(JSON.stringify(taps));
     return {
-      taps: vectorToArray(out.taps).map((tap) => {
-        return {
-          ...tap,
-          objects: vectorToArray(tap.objects),
-        };
-      }),
-      err: out.err,
+      ...out,
+      taps: vectorToArray(out.taps).map((tap) => ({
+        ...tap,
+        objects: vectorToArray(tap.objects),
+      })),
     };;
 
   }
 
-  download_file(token: string): DownloadFile {
-    return this.session.downloadFile(token);
+  download(token: string): DownloadResponse {
+    return this.session.download(token);
   }
 
   reload_lua_plugins() {

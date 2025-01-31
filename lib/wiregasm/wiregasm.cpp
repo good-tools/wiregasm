@@ -500,17 +500,9 @@ TapResponse DissectSession::tap(string json)
   return wg_session_process_tap(&this->capture_file, taps);
 }
 
-DownloadFile DissectSession::downloadFile(string token)
+DownloadResponse DissectSession::download(string token)
 {
-  DownloadFile res;
-  char *err_ret = NULL;
-  res = wg_session_process_download(&this->capture_file, token.c_str(), &err_ret);
-  // XXX: propagate?
-  if (err_ret)
-  {
-    g_free(err_ret);
-  }
-  return res;
+  return wg_session_process_download(&this->capture_file, token.c_str());
 }
 
 DissectSession::~DissectSession()

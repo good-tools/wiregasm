@@ -161,16 +161,22 @@ export interface LoadResponse {
   summary: LoadSummary;
 }
 
-export interface DownloadFile {
+export interface Download {
   file: string;
   mime: string;
   data: string;
 }
 
 
+export interface DownloadResponse {
+  error: string;
+  download: Download;
+}
+
+
 export type TapInput = Record<string, string>;
 
-interface Obj {
+interface ExportObject {
   hostname: string;
   pkt: number;
   type: string;
@@ -182,7 +188,7 @@ export interface TapResponse {
   type: string;
   tap: string;
   proto: string;
-  objects: Vector<Obj>;
+  objects: Vector<ExportObject>;
 }
 
 export interface DissectSession {
@@ -218,10 +224,10 @@ export interface DissectSession {
 
   tap(taps: string): {
     taps: Vector<TapResponse>;
-    err: string;
+    error: string;
   };
 
-  downloadFile(token: string): DownloadFile;
+  download(token: string): DownloadResponse;
 }
 
 export interface DissectSessionConstructable {
@@ -365,7 +371,7 @@ export interface WiregasmLib extends EmscriptenModule {
 
   completeFilter(filter: string): { fields: Vector<CompleteField> };
 
-  downloadFile(token: string): DownloadFile;
+  download(token: string): Download;
   /**
    * Returns the column headers
    */

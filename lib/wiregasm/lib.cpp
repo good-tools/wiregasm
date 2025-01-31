@@ -1220,7 +1220,7 @@ static GString *wg_session_eo_register_tap_listener(register_eo_t *eo, const cha
       NULL);
 }
 
-bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char **err_ret)
+bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char *err_ret)
 {
   bool ok = true;
   register_eo_t *eo = NULL;
@@ -1233,7 +1233,7 @@ bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, cha
   if (!eo)
   {
     ok = false;
-    *err_ret = g_strdup_printf("eo=%s not found", tap_type + 3);
+    err_ret = g_strdup_printf("eo=%s not found", tap_type + 3);
   }
 
   if (ok)
@@ -1242,7 +1242,7 @@ bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, cha
     if (tap_error)
     {
       ok = false;
-      *err_ret = g_strdup_printf("error %s", tap_error->str);
+      err_ret = g_strdup_printf("error %s", tap_error->str);
       g_string_free(tap_error, TRUE);
     }
   }
@@ -1260,25 +1260,26 @@ bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, cha
 }
 
 /**
- * wg_session_process_download()
- *
  * Process download request
  *
  * Input:
  *   (m) token  - token to download
  *
  * Output object with attributes:
- *   (o) file - suggested name of file
- *   (o) mime - suggested content type
- *   (o) data - payload base64 encoded
+ *  (m) error - error message
+ *  (o) data - object with attributes:
+ *    (o) file - suggested name of file
+ *    (o) mime - suggested content type
+ *    (o) data - payload base64 encoded
  */
-DownloadFile wg_session_process_download(capture_file *cfile, const char *tok_token, char **err_ret)
+DownloadResponse wg_session_process_download(capture_file *cfile, const char *tok_token)
 {
-  DownloadFile f;
+  DownloadResponse res;
+
   if (!tok_token)
   {
-    *err_ret = g_strdup_printf("missing token");
-    return f;
+    res.error = "missing token";
+    return res;
   }
 
   if (!strncmp(tok_token, "eo:", 3))
@@ -1286,6 +1287,8 @@ DownloadFile wg_session_process_download(capture_file *cfile, const char *tok_to
     // get eo:<name> from eo:<name>_<row>
     char *tap_type = g_strdup(tok_token);
     char *tmp = strrchr(tap_type, '_');
+    char *err_ret = NULL;
+
     if (tmp)
       *tmp = '\0';
 
@@ -1294,8 +1297,11 @@ DownloadFile wg_session_process_download(capture_file *cfile, const char *tok_to
         !wg_session_eo_retap_listener(cfile, tap_type, err_ret))
     {
       g_free(tap_type);
-      *err_ret = g_strdup_printf("invalid token");
-      return f;
+      if (err_ret)
+        res.error = err_ret;
+      else
+        res.error = "invalid token";
+      return res;
     }
 
     g_free(tap_type);
@@ -1323,16 +1329,16 @@ DownloadFile wg_session_process_download(capture_file *cfile, const char *tok_to
     {
       const char *mime = (eo_entry->content_type) ? eo_entry->content_type : "application/octet-stream";
       const char *filename = (eo_entry->filename) ? eo_entry->filename : tok_token;
-      f.file = filename;
-      f.mime = mime;
-      f.data = g_base64_encode(eo_entry->payload_data, eo_entry->payload_len);
+      res.download.file = filename;
+      res.download.mime = mime;
+      res.download.data = g_base64_encode(eo_entry->payload_data, eo_entry->payload_len);
     }
-    return f;
+    return res;
   }
   else
   {
-    *err_ret = g_strdup_printf("unrecognized token");
-    return f;
+    res.error = "unrecognized token";
+    return res;
   }
 }
 
@@ -1425,7 +1431,7 @@ TapResponse wg_session_process_tap(capture_file *cfile, TapInput taps)
 
       if (!eo)
       {
-        buf.err = g_strdup_printf("eo=%s not found", tok_tap + 3);
+        buf.error = g_strdup_printf("eo=%s not found", tok_tap + 3);
         return buf;
       }
 
@@ -1439,13 +1445,13 @@ TapResponse wg_session_process_tap(capture_file *cfile, TapInput taps)
     }
     else
     {
-      buf.err = g_strdup_printf("%s not recognized", tok_tap);
+      buf.error = g_strdup_printf("%s not recognized", tok_tap);
       return buf;
     }
 
     if (tap_error)
     {
-      buf.err = g_strdup_printf("name=%s error=%s", tok_tap, tap_error->str);
+      buf.error = g_strdup_printf("name=%s error=%s", tok_tap, tap_error->str);
       g_string_free(tap_error, true);
       if (tap_free)
         tap_free(tap_data);

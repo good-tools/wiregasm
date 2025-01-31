@@ -71,7 +71,7 @@ FramesResponse wg_process_frames(capture_file *cfile, GHashTable *filter_table, 
 Frame wg_process_frame(capture_file *cfile, guint32 framenum, char **err_ret);
 Follow wg_process_follow(capture_file *cfile, const char *follow, const char *filter, char **err_ret);
 bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char **err_ret);
-DownloadFile wg_session_process_download(capture_file *cfile, const char *token, char **err_ret);
+DownloadResponse wg_session_process_download(capture_file *cfile, const char *token);
 TapResponse wg_session_process_tap(capture_file *cfile, TapInput taps);
 vector<CompleteField> wg_session_process_complete(const char *field);
 void cf_close(capture_file *cf);

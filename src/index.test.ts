@@ -4,6 +4,7 @@ import { PrefType, Wiregasm, WiregasmLib, WiregasmLibOverrides } from ".";
 
 import loadWiregasm from "../built/bin/wiregasm.js";
 import pako from "pako";
+import exp from "constants";
 
 // overrides need to be copied over to every instance
 const buildTestOverrides = (): WiregasmLibOverrides => {
@@ -183,7 +184,7 @@ describe("Wiregasm Library - Export Objects", () => {
     expect(ret.code).toEqual(0);
     const res = wg.tap({ "tap0": "eo:http" });
     expect(res).toStrictEqual({
-      "err": "",
+      "error": "",
       "taps": [
         {
           "objects": [
@@ -225,7 +226,7 @@ describe("Wiregasm Library - Export Objects", () => {
     const res = wg.tap({ "tap0": "eo:tftp" });
 
     expect(res).toStrictEqual({
-      "err": "",
+      "error": "",
       "taps": [
         {
           "objects": [
@@ -246,19 +247,21 @@ describe("Wiregasm Library - Export Objects", () => {
     },);
   });
 
-  test("downloadFile works", async () => {
+  test("download works", async () => {
     const data = await fs.readFile("samples/http.cap");
     const ret = wg.load("dhcp.pcap", data);
     expect(ret.code).toEqual(0);
-    const download = wg.download_file("eo:http_0");
-    expect(download.data).not.toBe("");
-    expect(download.mime).toBe("text/html");
-    expect(download.file).not.toBe("");
+    const download = wg.download("eo:http_0");
+    expect(download.download.data).not.toBe("");
+    expect(download.download.mime).toBe("text/html");
+    expect(download.download.file).not.toBe("");
+    expect(download.error).toBe("");
 
-    const second_file = wg.download_file("eo:http_1");
-    expect(second_file.data).not.toBe("");
-    expect(second_file.mime).toBe("text/html");
-    expect(second_file.file).toBe("download.html");
+    const second_file = wg.download("eo:http_1");
+    expect(second_file.download.data).not.toBe("");
+    expect(second_file.download.mime).toBe("text/html");
+    expect(second_file.download.file).toBe("download.html");
+    expect(second_file.error).toBe("");
   });
 
   describe("Taps: negative cases", () => {
@@ -268,7 +271,7 @@ describe("Wiregasm Library - Export Objects", () => {
       expect(ret.code).toEqual(0);
       const res = wg.tap({ "tap1": "eo:http" });
       expect(res).toStrictEqual({
-        "err": "",
+        "error": "",
         "taps": [],
       },);
     });
@@ -280,7 +283,7 @@ describe("Wiregasm Library - Export Objects", () => {
       const UNSUPPORTED_VALUE = "stat:http";
       const res = wg.tap({ "tap0": UNSUPPORTED_VALUE });
       expect(res).toStrictEqual({
-        "err": `${UNSUPPORTED_VALUE} not recognized`,
+        "error": `${UNSUPPORTED_VALUE} not recognized`,
         "taps": [],
       },);
     });
@@ -292,7 +295,7 @@ describe("Wiregasm Library - Export Objects", () => {
       const UNSUPPORTED_VALUE = "eo:mmm";
       const res = wg.tap({ "tap0": UNSUPPORTED_VALUE });
       expect(res).toStrictEqual({
-        "err": "eo=mmm not found",
+        "error": "eo=mmm not found",
         "taps": [],
       },);
     });
@@ -303,7 +306,7 @@ describe("Wiregasm Library - Export Objects", () => {
       expect(ret.code).toEqual(0);
       const res = wg.tap({});
       expect(res).toStrictEqual({
-        "err": "",
+        "error": "",
         "taps": [],
       },);
     });

@@ -26,7 +26,7 @@ EMSCRIPTEN_BINDINGS(TapResponse)
 {
   value_object<TapResponse>("TapResponse")
       .field("taps", &TapResponse::taps)
-      .field("err", &TapResponse::err);
+      .field("error", &TapResponse::error);
 }
 
 EMSCRIPTEN_BINDINGS(ExportObject)
@@ -57,7 +57,7 @@ EMSCRIPTEN_BINDINGS(DissectSession)
       .function("getFrames", &DissectSession::getFrames)
       .function("getFrame", &DissectSession::getFrame)
       .function("tap", &DissectSession::tap)
-      .function("downloadFile", &DissectSession::downloadFile)
+      .function("download", &DissectSession::download)
       .function("follow", &DissectSession::follow);
 }
 
@@ -240,10 +240,17 @@ EMSCRIPTEN_BINDINGS(stl_wrappers)
   register_map<string, string>("map<string, string>");
 }
 
-EMSCRIPTEN_BINDINGS(DownloadFile)
+EMSCRIPTEN_BINDINGS(Download)
 {
-  value_object<DownloadFile>("DownloadFile")
-      .field("file", &DownloadFile::file)
-      .field("mime", &DownloadFile::mime)
-      .field("data", &DownloadFile::data);
+  value_object<Download>("Download")
+      .field("file", &Download::file)
+      .field("mime", &Download::mime)
+      .field("data", &Download::data);
+}
+
+EMSCRIPTEN_BINDINGS(DownloadResponse)
+{
+  value_object<DownloadResponse>("DownloadResponse")
+      .field("error", &DownloadResponse::error)
+      .field("download", &DownloadResponse::download);
 }

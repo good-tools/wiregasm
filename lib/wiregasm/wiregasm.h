@@ -128,7 +128,7 @@ using TapInput = std::map<string, string>;
 struct TapResponse
 {
   vector<ExportObjectTap> taps;
-  string err;
+  string error;
 };
 
 struct PrefEnum
@@ -182,11 +182,17 @@ struct FilterCompletionResponse
   vector<CompleteField> fields;
 };
 
-struct DownloadFile
+struct Download
 {
   string file;
   string mime;
   string data;
+};
+
+struct DownloadResponse
+{
+  string error;
+  Download download;
 };
 
 // globals
@@ -220,7 +226,7 @@ public:
   Frame getFrame(int number);
   Follow follow(string follow, string filter);
   TapResponse tap(string taps);
-  DownloadFile downloadFile(string token);
+  DownloadResponse download(string token);
   ~DissectSession();
 };
 
