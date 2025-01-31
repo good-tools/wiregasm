@@ -5,6 +5,8 @@
 #include <vector>
 #include <glib.h>
 #include <wireshark/cfile.h>
+#include <map>
+#include <any>
 
 using namespace std;
 
@@ -104,6 +106,31 @@ struct CheckFilterResponse
   string error;
 };
 
+struct Obj
+{
+  int pkt;
+  string hostname;
+  string type;
+  string filename;
+  string _download;
+  size_t len;
+};
+
+struct EoRes
+{
+  string tap;
+  string type;
+  string proto;
+  vector<Obj> objects;
+};
+
+using TapInput = std::map<string, string>;
+struct TapResponse
+{
+  vector<EoRes> taps;
+  string err;
+};
+
 struct PrefEnum
 {
   string name;
@@ -192,7 +219,7 @@ public:
   FramesResponse getFrames(string filter, int skip, int limit);
   Frame getFrame(int number);
   Follow follow(string follow, string filter);
-  gboolean tap(string tap_type);
+  TapResponse tap(string taps);
   DownloadFile downloadFile(string token);
   ~DissectSession();
 };

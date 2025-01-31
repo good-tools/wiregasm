@@ -22,6 +22,33 @@ EMSCRIPTEN_BINDINGS(Wiregasm)
   emscripten::function("applyPreferences", &wg_prefs_apply_all);
 }
 
+EMSCRIPTEN_BINDINGS(TapResponse)
+{
+  value_object<TapResponse>("TapResponse")
+      .field("taps", &TapResponse::taps)
+      .field("err", &TapResponse::err);
+}
+
+EMSCRIPTEN_BINDINGS(Obj)
+{
+  value_object<Obj>("Obj")
+      .field("pkt", &Obj::pkt)
+      .field("hostname", &Obj::hostname)
+      .field("type", &Obj::type)
+      .field("len", &Obj::len)
+      .field("filename", &Obj::filename)
+      .field("_download", &Obj::_download);
+}
+
+EMSCRIPTEN_BINDINGS(EoRes)
+{
+  value_object<EoRes>("EoRes")
+      .field("tap", &EoRes::tap)
+      .field("type", &EoRes::type)
+      .field("proto", &EoRes::proto)
+      .field("objects", &EoRes::objects);
+}
+
 EMSCRIPTEN_BINDINGS(DissectSession)
 {
   class_<DissectSession>("DissectSession")
@@ -208,6 +235,9 @@ EMSCRIPTEN_BINDINGS(stl_wrappers)
   register_vector<PrefEnum>("VectorPrefEnum");
   // Frame::follow is a vector of vectors of strings
   register_vector<vector<string>>("VectorVectorString");
+  register_vector<Obj>("VectorObj");
+  register_vector<EoRes>("VectorEoRes");
+  register_map<string, string>("map<string, string>");
 }
 
 EMSCRIPTEN_BINDINGS(DownloadFile)

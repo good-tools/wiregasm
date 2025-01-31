@@ -4,9 +4,9 @@
 #include <epan/wslua/init_wslua.h>
 #include <epan/prefs-int.h>
 #include <epan/prefs.h>
+#include <emscripten/val.h>
 
 using namespace std;
-
 // XXX: g_io_channel_unix_new isn't exported in glib after
 // the emscrpten patch, but is referenced in gtester.c
 //
@@ -65,7 +65,8 @@ string wg_upload_file(string name, int buffer_ptr, size_t size)
 
 bool wg_reload_lua_plugins()
 {
-  if (!wg_initialized) {
+  if (!wg_initialized)
+  {
     return false;
   }
 
@@ -152,61 +153,61 @@ void wg_set_pref_values(pref_t *pref, PrefData *res)
 
   switch (res->type)
   {
-    case PREF_UINT:
-      res->uint_value = prefs_get_uint_value_real(pref, pref_current);
-      if (prefs_get_uint_base(pref) != 10)
-        res->uint_base_value = prefs_get_uint_base(pref);
-      break;
+  case PREF_UINT:
+    res->uint_value = prefs_get_uint_value_real(pref, pref_current);
+    if (prefs_get_uint_base(pref) != 10)
+      res->uint_base_value = prefs_get_uint_base(pref);
+    break;
 
-    case PREF_BOOL:
-      res->bool_value = prefs_get_bool_value(pref, pref_current);
-      break;
+  case PREF_BOOL:
+    res->bool_value = prefs_get_bool_value(pref, pref_current);
+    break;
 
-    case PREF_STRING:
-    case PREF_SAVE_FILENAME:
-    case PREF_OPEN_FILENAME:
-    case PREF_DIRNAME:
-    case PREF_PASSWORD:
-      res->string_value = string(prefs_get_string_value(pref, pref_current));
-      break;
+  case PREF_STRING:
+  case PREF_SAVE_FILENAME:
+  case PREF_OPEN_FILENAME:
+  case PREF_DIRNAME:
+  case PREF_PASSWORD:
+    res->string_value = string(prefs_get_string_value(pref, pref_current));
+    break;
 
-    case PREF_RANGE:
-    case PREF_DECODE_AS_RANGE:
+  case PREF_RANGE:
+  case PREF_DECODE_AS_RANGE:
+  {
+    char *range_str = range_convert_range(NULL, prefs_get_range_value_real(pref, pref_current));
+    res->range_value = string(range_str);
+    wmem_free(NULL, range_str);
+    break;
+  }
+  case PREF_ENUM:
+  {
+    const enum_val_t *enums;
+
+    for (enums = prefs_get_enumvals(pref); enums->name; enums++)
+    {
+      PrefEnum e;
+      e.name = string(enums->name);
+      e.description = string(enums->description);
+      e.value = enums->value;
+      e.selected = false;
+
+      if (enums->value == prefs_get_enum_value(pref, pref_current))
       {
-        char *range_str = range_convert_range(NULL, prefs_get_range_value_real(pref, pref_current));
-        res->range_value = string(range_str);
-        wmem_free(NULL, range_str);
-        break;
-      }
-    case PREF_ENUM:
-      {
-        const enum_val_t *enums;
-
-        for (enums = prefs_get_enumvals(pref); enums->name; enums++)
-        {
-          PrefEnum e;
-          e.name = string(enums->name);
-          e.description = string(enums->description);
-          e.value = enums->value;
-          e.selected = false;
-          
-          if (enums->value == prefs_get_enum_value(pref, pref_current))
-          {
-            e.selected = true;
-          }
-
-          res->enum_value.push_back(e);
-        }
-        break;
+        e.selected = true;
       }
 
-    case PREF_UAT:
-    case PREF_COLOR:
-    case PREF_CUSTOM:
-    case PREF_STATIC_TEXT:
-    case PREF_OBSOLETE:
-        /* TODO */
-        break;
+      res->enum_value.push_back(e);
+    }
+    break;
+  }
+
+  case PREF_UAT:
+  case PREF_COLOR:
+  case PREF_CUSTOM:
+  case PREF_STATIC_TEXT:
+  case PREF_OBSOLETE:
+    /* TODO */
+    break;
   }
 }
 
@@ -216,8 +217,9 @@ PrefResponse wg_get_pref(string module_name, string pref_name)
   res.code = -1;
 
   pref_t *pref = prefs_find_preference(prefs_find_module(module_name.c_str()), pref_name.c_str());
-  if (pref == NULL) {
-      return res;
+  if (pref == NULL)
+  {
+    return res;
   }
 
   res.code = 0;
@@ -249,15 +251,18 @@ guint wg_list_modules_cb(module_t *module, gpointer user_data)
 
   m.use_gui = module->use_gui;
 
-  if (module->name) {
+  if (module->name)
+  {
     m.name = string(module->name);
   }
 
-  if (module->title) {
+  if (module->title)
+  {
     m.title = string(module->title);
   }
 
-  if (module->description) {
+  if (module->description)
+  {
     m.description = string(module->description);
   }
 
@@ -271,7 +276,6 @@ guint wg_list_modules_cb(module_t *module, gpointer user_data)
 
   return 0;
 }
-
 
 vector<PrefModule> wg_list_modules()
 {
@@ -295,7 +299,7 @@ guint wg_list_preferences_cb(pref_t *pref, gpointer user_data)
 vector<PrefData> wg_list_preferences(string module_name)
 {
   vector<PrefData> prefs;
-  module_t * mod = prefs_find_module(module_name.c_str());
+  module_t *mod = prefs_find_module(module_name.c_str());
 
   if (mod != NULL)
   {
@@ -322,17 +326,20 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
   int type = prefs_get_type(p);
 
   // handle decode as range ourselves
-  if (type == PREF_DECODE_AS_RANGE) {
+  if (type == PREF_DECODE_AS_RANGE)
+  {
     range_t *new_range = NULL;
     convert_ret_t ret = range_convert_str(NULL, &new_range, value.c_str(), prefs_get_max_value(p));
 
-    if (ret != CVT_NO_ERROR) {
+    if (ret != CVT_NO_ERROR)
+    {
       res.code = -1;
       res.error = "Invalid range";
       return res;
     }
 
-    if (prefs_set_range_value(p, new_range, pref_stashed)) {
+    if (prefs_set_range_value(p, new_range, pref_stashed))
+    {
       pref_unstash_data_t unstashed_data;
 
       unstashed_data.module = mod;
@@ -473,21 +480,25 @@ Frame DissectSession::getFrame(int number)
   return f;
 }
 
-
-gboolean DissectSession::tap(string tap_type)
+TapResponse DissectSession::tap(string json)
 {
-  char *err_ret = NULL;
-  gboolean res = wg_session_eo_retap_listener(&this->capture_file, tap_type.c_str(), &err_ret);
+  TapInput taps;
+  emscripten::val JSON = emscripten::val::global("JSON");
+  emscripten::val res = JSON.call<emscripten::val>("parse", json);
 
-  // XXX: propagate?
-  if (err_ret)
+  // convert to map using Object.entries
+  emscripten::val entries = emscripten::val::global("Object").call<emscripten::val>("entries", res);
+  // Iterate through the entries and add to the map
+  for (int i = 0; i < entries["length"].as<int>(); i++)
   {
-    g_free(err_ret);
+    emscripten::val entry = entries[i];
+    string key = entry[0].as<string>();
+    string value = entry[1].as<string>();
+    taps[key] = value;
   }
 
-  return res;
+  return wg_session_process_tap(&this->capture_file, taps);
 }
-
 
 DownloadFile DissectSession::downloadFile(string token)
 {

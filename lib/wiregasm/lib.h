@@ -72,10 +72,11 @@ void wg_session_filter_free(gpointer data);
 int wg_session_process_load(capture_file *cfile, const char *path, summary_tally *summary, char **err_ret);
 FramesResponse wg_process_frames(capture_file *cfile, GHashTable *filter_table, const char *filter, guint32 skip, guint32 limit, char **err_ret);
 Frame wg_process_frame(capture_file *cfile, guint32 framenum, char **err_ret);
-Follow wg_process_follow(capture_file *cfile, const char* follow, const char* filter, char **err_ret);
+Follow wg_process_follow(capture_file *cfile, const char *follow, const char *filter, char **err_ret);
 gboolean wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char **err_ret);
 DownloadFile wg_session_process_download(capture_file *cfile, const char *token, char **err_ret);
-vector<CompleteField> wg_session_process_complete(const char* field);
+TapResponse wg_session_process_tap(capture_file *cfile, TapInput taps);
+vector<CompleteField> wg_session_process_complete(const char *field);
 void cf_close(capture_file *cf);
 
 #endif

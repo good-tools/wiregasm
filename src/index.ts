@@ -8,6 +8,7 @@ import {
   Frame,
   FramesResponse,
   LoadResponse,
+  TapInput,
   Pref,
   PrefModule,
   PrefSetResult,
@@ -109,8 +110,18 @@ export class Wiregasm {
     };
   }
 
-  tap(tap_type: string) {
-    return this.session.tap(tap_type);
+  tap(taps: TapInput) {
+    const out = this.session.tap(JSON.stringify(taps));
+    return {
+      taps: vectorToArray(out.taps).map((tap) => {
+        return {
+          ...tap,
+          objects: vectorToArray(tap.objects),
+        };
+      }),
+      err: out.err,
+    };;
+
   }
 
   download_file(token: string): DownloadFile {

@@ -167,6 +167,24 @@ export interface DownloadFile {
   data: string;
 }
 
+
+export type TapInput = Record<string, string>;
+
+interface Obj {
+  hostname: string;
+  pkt: number;
+  type: string;
+  filename: string;
+  _download: string;
+  len: number;
+}
+export interface TapResponse {
+  type: string;
+  tap: string;
+  proto: string;
+  objects: Vector<Obj>;
+}
+
 export interface DissectSession {
   /**
    * Free up any memory used by the session
@@ -198,7 +216,10 @@ export interface DissectSession {
 
   follow(follow: string, filter: string): Follow;
 
-  tap(tap_type: string): boolean;
+  tap(taps: string): {
+    taps: Vector<TapResponse>;
+    err: string;
+  };
 
   downloadFile(token: string): DownloadFile;
 }
@@ -343,8 +364,6 @@ export interface WiregasmLib extends EmscriptenModule {
   checkFilter(filter: string): CheckFilterResponse;
 
   completeFilter(filter: string): { fields: Vector<CompleteField> };
-
-  tap(tap_type: string): boolean;
 
   downloadFile(token: string): DownloadFile;
   /**
