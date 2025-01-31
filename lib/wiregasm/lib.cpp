@@ -1,32 +1,17 @@
 #include "lib.h"
 #include "wiregasm.h"
-// #include <epan/sequence_analysis.h>
-// #include <ui/io_graph_item.h>
 
-#include <epan/stats_tree_priv.h>
-#include <epan/stat_tap_ui.h>
-#include <epan/conversation_table.h>
-#include <epan/expert.h>
+// #include <epan/stats_tree_priv.h>
+// #include <epan/stat_tap_ui.h>
+// #include <epan/conversation_table.h>
+// #include <epan/expert.h>
 #include <epan/export_object.h>
-#include <epan/follow.h>
-#include <epan/rtd_table.h>
-#include <epan/srt_table.h>
+// #include <epan/follow.h>
+// #include <epan/rtd_table.h>
+// #include <epan/srt_table.h>
 
 static guint32 cum_bytes;
 static frame_data ref_frame;
-
-struct sharkd_hosts_req
-{
-  const char *tap_name;
-  gboolean dump_v4;
-  gboolean dump_v6;
-};
-
-struct sharkd_expert_tap
-{
-  GSList *details;
-  GStringChunk *text;
-};
 
 struct wg_export_object_list
 {
@@ -38,13 +23,6 @@ struct wg_export_object_list
 };
 
 static struct wg_export_object_list *wg_eo_list;
-
-// struct wg_download_rtp
-// {
-//     rtpstream_id_t id;
-//     GSList *packets;
-//     double start_time;
-// };
 
 void cf_close(capture_file *cf)
 {
@@ -1368,8 +1346,6 @@ DownloadFile wg_session_process_download(capture_file *cfile, const char *tok_to
 }
 
 /**
- * sharkd_session_process_tap_eo_cb()
- *
  * Output eo tap:
  *   (m) tap        - tap name
  *   (m) type       - tap output type
@@ -1381,28 +1357,29 @@ DownloadFile wg_session_process_download(capture_file *cfile, const char *tok_to
  *                  (o) filename - filename
  *                  (m) len - object length
  */
-static EoRes
+static ExportObjectTap
 wg_session_process_tap_eo_cb(void *tapdata)
 {
   export_object_list_t *tap_object = (export_object_list_t *)tapdata;
   struct wg_export_object_list *object_list = (struct wg_export_object_list *)tap_object->gui_data;
   GSList *slist;
-  int i = 0;
-
-  EoRes res;
-
+  ExportObjectTap res;
   res.tap = object_list->type;
   res.type = "eo";
   res.proto = object_list->proto;
+  int i = 0;
 
   for (slist = object_list->entries; slist; slist = slist->next)
   {
     const export_object_entry_t *eo_entry = (export_object_entry_t *)slist->data;
-    Obj obj;
+    ExportObject obj;
     obj.pkt = eo_entry->pkt_num;
-    obj.hostname = eo_entry->hostname;
-    obj.type = eo_entry->content_type;
-    obj.filename = eo_entry->filename;
+    if (eo_entry->hostname)
+      obj.hostname = eo_entry->hostname;
+    if (eo_entry->content_type)
+      obj.type = eo_entry->content_type;
+    if (eo_entry->filename)
+      obj.filename = eo_entry->filename;
     obj._download = g_strdup_printf("%s_%d", object_list->type, i);
     obj.len = eo_entry->payload_len;
     res.objects.push_back(obj);

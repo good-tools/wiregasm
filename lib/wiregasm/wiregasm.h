@@ -106,9 +106,9 @@ struct CheckFilterResponse
   string error;
 };
 
-struct Obj
+struct ExportObject
 {
-  int pkt;
+  unsigned pkt;
   string hostname;
   string type;
   string filename;
@@ -116,18 +116,18 @@ struct Obj
   size_t len;
 };
 
-struct EoRes
+struct ExportObjectTap
 {
   string tap;
   string type;
   string proto;
-  vector<Obj> objects;
+  vector<ExportObject> objects;
 };
 
 using TapInput = std::map<string, string>;
 struct TapResponse
 {
-  vector<EoRes> taps;
+  vector<ExportObjectTap> taps;
   string err;
 };
 
