@@ -254,7 +254,6 @@ describe("Wiregasm Library Wrapper", () => {
     },);
   });
 
-
   test("taps: error is shown for unsupported eo subtype", async () => {
     const data = await fs.readFile("samples/http.cap");
     const ret = wg.load("http.cap", data);
@@ -263,6 +262,18 @@ describe("Wiregasm Library Wrapper", () => {
 
     expect(res).toStrictEqual({
       "err": "eo=mmm not found",
+      "taps": [],
+    },);
+  });
+
+  test("taps: empty object", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({});
+
+    expect(res).toStrictEqual({
+      "err": "",
       "taps": [],
     },);
   });
