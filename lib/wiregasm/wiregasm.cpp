@@ -15,9 +15,9 @@ using namespace std;
 //   return NULL;
 // }
 
-static const char* UPLOAD_DIR = "/uploads";
+static const char *UPLOAD_DIR = "/uploads";
 static gboolean wg_initialized = FALSE;
-static e_prefs* prefs_p;
+static e_prefs *prefs_p;
 
 
 template <typename T = string>
@@ -51,7 +51,7 @@ vector<string> wg_get_columns()
 {
   vector<string> v;
 
-  column_info* cinfo = NULL;
+  column_info *cinfo = NULL;
   build_column_format_array(cinfo, prefs_p->num_cols, TRUE);
 
   for (int i = 0; i < cinfo->num_cols; i++)
@@ -69,9 +69,9 @@ vector<string> wg_get_columns()
 
 string wg_upload_file(string name, int buffer_ptr, size_t size)
 {
-  char* path = g_build_filename(UPLOAD_DIR, name.c_str(), nullptr);
+  char *path = g_build_filename(UPLOAD_DIR, name.c_str(), nullptr);
 
-  gchar* buffer = (gchar*)buffer_ptr;
+  gchar *buffer = (gchar *)buffer_ptr;
 
   g_file_set_contents(path, buffer, size, NULL);
 
@@ -132,7 +132,7 @@ bool wg_init()
 
   on_status(INFO, "Initializing color filters");
 
-  gchar* err_msg;
+  gchar *err_msg;
   if (!color_filters_init(&err_msg, NULL))
   {
     on_status(WARN, err_msg);
@@ -161,7 +161,7 @@ void wg_prefs_apply_all()
   prefs_apply_all();
 }
 
-void wg_set_pref_values(pref_t* pref, PrefData* res)
+void wg_set_pref_values(pref_t *pref, PrefData *res)
 {
   res->name = prefs_get_name(pref);
   res->title = prefs_get_title(pref);
@@ -192,14 +192,14 @@ void wg_set_pref_values(pref_t* pref, PrefData* res)
     case PREF_RANGE:
     case PREF_DECODE_AS_RANGE:
     {
-      char* range_str = range_convert_range(NULL, prefs_get_range_value_real(pref, pref_current));
+      char *range_str = range_convert_range(NULL, prefs_get_range_value_real(pref, pref_current));
       res->range_value = string(range_str);
       wmem_free(NULL, range_str);
       break;
     }
     case PREF_ENUM:
     {
-      const enum_val_t* enums;
+      const enum_val_t *enums;
 
       for (enums = prefs_get_enumvals(pref); enums->name; enums++)
       {
@@ -234,7 +234,7 @@ PrefResponse wg_get_pref(string module_name, string pref_name)
   PrefResponse res;
   res.code = -1;
 
-  pref_t* pref = prefs_find_preference(prefs_find_module(module_name.c_str()), pref_name.c_str());
+  pref_t *pref = prefs_find_preference(prefs_find_module(module_name.c_str()), pref_name.c_str());
   if (pref == NULL)
   {
     return res;
@@ -253,9 +253,9 @@ struct PrefModuleHolder
   bool root;
 };
 
-guint wg_list_modules_cb(module_t* module, gpointer user_data)
+guint wg_list_modules_cb(module_t *module, gpointer user_data)
 {
-  PrefModuleHolder* holder = (PrefModuleHolder*)user_data;
+  PrefModuleHolder *holder = (PrefModuleHolder *)user_data;
 
   if (holder->root && module->parent != NULL)
   {
@@ -303,9 +303,9 @@ vector<PrefModule> wg_list_modules()
   return holder.modules;
 }
 
-guint wg_list_preferences_cb(pref_t* pref, gpointer user_data)
+guint wg_list_preferences_cb(pref_t *pref, gpointer user_data)
 {
-  vector<PrefData>* prefs = (vector<PrefData> *)user_data;
+  vector<PrefData> *prefs = (vector<PrefData> *)user_data;
 
   PrefData p;
   wg_set_pref_values(pref, &p);
@@ -317,7 +317,7 @@ guint wg_list_preferences_cb(pref_t* pref, gpointer user_data)
 vector<PrefData> wg_list_preferences(string module_name)
 {
   vector<PrefData> prefs;
-  module_t* mod = prefs_find_module(module_name.c_str());
+  module_t *mod = prefs_find_module(module_name.c_str());
 
   if (mod != NULL)
   {
@@ -331,8 +331,8 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
 {
   SetPrefResponse res;
 
-  module_t* mod = prefs_find_module(module_name.c_str());
-  pref_t* p = prefs_find_preference(mod, pref_name.c_str());
+  module_t *mod = prefs_find_module(module_name.c_str());
+  pref_t *p = prefs_find_preference(mod, pref_name.c_str());
 
   if (p == NULL)
   {
@@ -346,7 +346,7 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
   // handle decode as range ourselves
   if (type == PREF_DECODE_AS_RANGE)
   {
-    range_t* new_range = NULL;
+    range_t *new_range = NULL;
     convert_ret_t ret = range_convert_str(NULL, &new_range, value.c_str(), prefs_get_max_value(p));
 
     if (ret != CVT_NO_ERROR)
@@ -375,7 +375,7 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
 
   char pref[4096];
   prefs_set_pref_e ret;
-  char* errmsg = NULL;
+  char *errmsg = NULL;
 
   snprintf(pref, sizeof(pref), "%s.%s:%s", module_name.c_str(), pref_name.c_str(), value.c_str());
 
@@ -396,8 +396,8 @@ CheckFilterResponse wg_check_filter(string filter)
 {
   CheckFilterResponse res;
 
-  char* err_msg = NULL;
-  dfilter_t* dfp;
+  char *err_msg = NULL;
+  dfilter_t *dfp;
 
   if (dfilter_compile(filter.c_str(), &dfp, &err_msg))
   {
@@ -427,7 +427,7 @@ DissectSession::DissectSession(string _path) : path(_path)
 
 LoadResponse DissectSession::load()
 {
-  char* err_ret = NULL;
+  char *err_ret = NULL;
 
   LoadResponse r;
 
@@ -458,7 +458,7 @@ LoadResponse DissectSession::load()
 
 Follow DissectSession::follow(string follow, string filter)
 {
-  char* err_ret = NULL;
+  char *err_ret = NULL;
   Follow ret = wg_process_follow(&this->capture_file, follow.c_str(), filter.c_str(), &err_ret);
 
   // XXX: propagate?
@@ -472,7 +472,7 @@ Follow DissectSession::follow(string follow, string filter)
 
 FramesResponse DissectSession::getFrames(string filter, int skip, int limit)
 {
-  char* err_ret = NULL;
+  char *err_ret = NULL;
   FramesResponse ret = wg_process_frames(&this->capture_file, this->filter_table, filter.c_str(), skip, limit, &err_ret);
 
   // XXX: propagate?
@@ -486,7 +486,7 @@ FramesResponse DissectSession::getFrames(string filter, int skip, int limit)
 
 Frame DissectSession::getFrame(int number)
 {
-  char* err_ret = NULL;
+  char *err_ret = NULL;
   Frame f = wg_process_frame(&this->capture_file, number, &err_ret);
 
   // XXX: propagate?

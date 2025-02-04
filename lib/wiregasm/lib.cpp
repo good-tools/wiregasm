@@ -6,16 +6,16 @@ static frame_data ref_frame;
 
 struct wg_export_object_list
 {
-  struct wg_export_object_list* next;
+  struct wg_export_object_list *next;
 
-  char* type;
-  const char* proto;
-  GSList* entries;
+  char *type;
+  const char *proto;
+  GSList *entries;
 };
 
-static struct wg_export_object_list* wg_eo_list;
+static struct wg_export_object_list *wg_eo_list;
 
-void cf_close(capture_file* cf)
+void cf_close(capture_file *cf)
 {
   if (cf->state == FILE_CLOSED)
     return; /* Nothing to do */
@@ -41,14 +41,14 @@ void cf_close(capture_file* cf)
   cf->state = FILE_CLOSED;
 }
 
-frame_data*
-wg_get_frame(capture_file* cfile, guint32 framenum)
+frame_data *
+wg_get_frame(capture_file *cfile, guint32 framenum)
 {
   return frame_data_sequence_find(cfile->provider.frames, framenum);
 }
 
-static const nstime_t*
-wg_get_frame_ts(struct packet_provider_data* prov, guint32 frame_num)
+static const nstime_t *
+wg_get_frame_ts(struct packet_provider_data *prov, guint32 frame_num)
 {
   if (prov->ref && prov->ref->num == frame_num)
     return &prov->ref->abs_ts;
@@ -61,7 +61,7 @@ wg_get_frame_ts(struct packet_provider_data* prov, guint32 frame_num)
 
   if (prov->frames)
   {
-    frame_data* fd = frame_data_sequence_find(prov->frames, frame_num);
+    frame_data *fd = frame_data_sequence_find(prov->frames, frame_num);
 
     return (fd) ? &fd->abs_ts : NULL;
   }
@@ -69,8 +69,8 @@ wg_get_frame_ts(struct packet_provider_data* prov, guint32 frame_num)
   return NULL;
 }
 
-static epan_t*
-wg_epan_new(capture_file* cf)
+static epan_t *
+wg_epan_new(capture_file *cf)
 {
   static const struct packet_provider_funcs funcs = {
       wg_get_frame_ts,
@@ -82,10 +82,10 @@ wg_epan_new(capture_file* cf)
 }
 
 cf_status_t
-cf_open(capture_file* cf, const char* fname, unsigned int type, gboolean is_tempfile, int* err)
+cf_open(capture_file *cf, const char *fname, unsigned int type, gboolean is_tempfile, int *err)
 {
-  wtap* wth;
-  gchar* err_info;
+  wtap *wth;
+  gchar *err_info;
 
   wth = wtap_open_offline(fname, type, err, &err_info, TRUE);
   if (wth == NULL)
@@ -135,14 +135,14 @@ fail:
 }
 
 cf_status_t
-wg_cf_open(capture_file* cfile, const char* fname, unsigned int type, gboolean is_tempfile, int* err)
+wg_cf_open(capture_file *cfile, const char *fname, unsigned int type, gboolean is_tempfile, int *err)
 {
   return cf_open(cfile, fname, type, is_tempfile, err);
 }
 
 static gboolean
-process_packet(capture_file* cf, epan_dissect_t* edt,
-               gint64 offset, wtap_rec* rec, Buffer* buf)
+process_packet(capture_file *cf, epan_dissect_t *edt,
+               gint64 offset, wtap_rec *rec, Buffer *buf)
 {
   frame_data fdlocal;
   gboolean passed;
@@ -231,14 +231,14 @@ process_packet(capture_file* cf, epan_dissect_t* edt,
 }
 
 static int
-load_cap_file(capture_file* cf, int max_packet_count, gint64 max_byte_count, summary_tally* summary)
+load_cap_file(capture_file *cf, int max_packet_count, gint64 max_byte_count, summary_tally *summary)
 {
   int err;
-  gchar* err_info = NULL;
+  gchar *err_info = NULL;
   gint64 data_offset;
   wtap_rec rec;
   Buffer buf;
-  epan_dissect_t* edt = NULL;
+  epan_dissect_t *edt = NULL;
 
   {
     /* Allocate a frame_data_sequence for all the frames. */
@@ -319,24 +319,24 @@ load_cap_file(capture_file* cf, int max_packet_count, gint64 max_byte_count, sum
   return err;
 }
 
-int wg_load_cap_file(capture_file* cfile, summary_tally* summary)
+int wg_load_cap_file(capture_file *cfile, summary_tally *summary)
 {
   return load_cap_file(cfile, 0, 0, summary);
 }
 
-int wg_retap(capture_file* cfile)
+int wg_retap(capture_file *cfile)
 {
   guint32 framenum;
-  frame_data* fdata;
+  frame_data *fdata;
   Buffer buf;
   wtap_rec rec;
   int err;
-  char* err_info = NULL;
+  char *err_info = NULL;
 
   guint tap_flags;
   gboolean create_proto_tree;
   epan_dissect_t edt;
-  column_info* cinfo;
+  column_info *cinfo;
 
   /* Get the union of the flags for all tap listeners. */
   tap_flags = union_of_tap_listener_flags();
@@ -386,7 +386,7 @@ int wg_retap(capture_file* cfile)
   return 0;
 }
 
-int wg_session_process_load(capture_file* cfile, const char* path, summary_tally* summary, char** err_ret)
+int wg_session_process_load(capture_file *cfile, const char *path, summary_tally *summary, char **err_ret)
 {
   int ret = 0;
 
@@ -415,22 +415,22 @@ int wg_session_process_load(capture_file* cfile, const char* path, summary_tally
 
 void wg_session_filter_free(gpointer data)
 {
-  struct wg_filter_item* l = (struct wg_filter_item*)data;
+  struct wg_filter_item *l = (struct wg_filter_item *)data;
 
   g_free(l->filtered);
   g_free(l);
 }
 
 vector<ProtoTree>
-wg_session_process_frame_cb_tree(epan_dissect_t* edt, proto_tree* tree, tvbuff_t** tvbs, gboolean display_hidden)
+wg_session_process_frame_cb_tree(epan_dissect_t *edt, proto_tree *tree, tvbuff_t **tvbs, gboolean display_hidden)
 {
-  proto_node* node;
+  proto_node *node;
 
   vector<ProtoTree> res;
 
   for (node = tree->first_child; node; node = node->next)
   {
-    field_info* finfo = PNODE_FINFO(node);
+    field_info *finfo = PNODE_FINFO(node);
 
     if (!finfo)
       continue;
@@ -482,7 +482,7 @@ wg_session_process_frame_cb_tree(epan_dissect_t* edt, proto_tree* tree, tvbuff_t
 
     if (finfo->hfinfo)
     {
-      char* filter;
+      char *filter;
 
       if (finfo->hfinfo->type == FT_PROTOCOL)
       {
@@ -495,7 +495,7 @@ wg_session_process_frame_cb_tree(epan_dissect_t* edt, proto_tree* tree, tvbuff_t
       }
       else if (FI_GET_FLAG(finfo, FI_URL) && finfo->hfinfo->type == FT_STRING)
       {
-        char* url = fvalue_to_string_repr(NULL, &finfo->value, FTREPR_DISPLAY, finfo->hfinfo->display);
+        char *url = fvalue_to_string_repr(NULL, &finfo->value, FTREPR_DISPLAY, finfo->hfinfo->display);
         t.type = "url";
         t.url = url;
         wmem_free(NULL, url);
@@ -510,9 +510,9 @@ wg_session_process_frame_cb_tree(epan_dissect_t* edt, proto_tree* tree, tvbuff_t
       }
     }
 
-    if (((proto_tree*)node)->first_child)
+    if (((proto_tree *)node)->first_child)
     {
-      vector<ProtoTree> children = wg_session_process_frame_cb_tree(edt, (proto_tree*)node, tvbs, display_hidden);
+      vector<ProtoTree> children = wg_session_process_frame_cb_tree(edt, (proto_tree *)node, tvbs, display_hidden);
       t.tree = children;
     }
 
@@ -524,17 +524,17 @@ wg_session_process_frame_cb_tree(epan_dissect_t* edt, proto_tree* tree, tvbuff_t
 
 struct VisitData
 {
-  packet_info* pi;
-  vector<vector<string>>* followArray;
+  packet_info *pi;
+  vector<vector<string>> *followArray;
 };
 
 static gboolean
-wg_session_follower_visit_cb(const void* key _U_, void* value, void* user_data)
+wg_session_follower_visit_cb(const void *key _U_, void *value, void *user_data)
 {
-  register_follow_t* follower = (register_follow_t*)value;
-  VisitData* visitData = (VisitData*)user_data;
-  packet_info* pi = visitData->pi;
-  vector<vector<string>>* followArray = visitData->followArray;
+  register_follow_t *follower = (register_follow_t *)value;
+  VisitData *visitData = (VisitData *)user_data;
+  packet_info *pi = visitData->pi;
+  vector<vector<string>> *followArray = visitData->followArray;
 
   const int proto_id = get_follow_proto_id(follower);
   guint32 ignore_stream;
@@ -542,8 +542,8 @@ wg_session_follower_visit_cb(const void* key _U_, void* value, void* user_data)
 
   if (proto_is_frame_protocol(pi->layers, proto_get_protocol_filter_name(proto_id)))
   {
-    const char* layer_proto = proto_get_protocol_short_name(find_protocol_by_id(proto_id));
-    char* follow_filter;
+    const char *layer_proto = proto_get_protocol_short_name(find_protocol_by_id(proto_id));
+    char *follow_filter;
 
     follow_filter = get_follow_conv_func(follower)(NULL, pi, &ignore_stream, &ignore_sub_stream);
     // [['HTTP', 'tcp.stream eq 0'],['TCP', 'tcp.stream eq 0']]
@@ -556,13 +556,13 @@ wg_session_follower_visit_cb(const void* key _U_, void* value, void* user_data)
   return false;
 }
 
-void wg_session_process_frame_cb(capture_file* cfile, epan_dissect_t* edt, proto_tree* tree, struct epan_column_info* cinfo, const GSList* data_src, void* data)
+void wg_session_process_frame_cb(capture_file *cfile, epan_dissect_t *edt, proto_tree *tree, struct epan_column_info *cinfo, const GSList *data_src, void *data)
 {
-  packet_info* pi = &edt->pi;
-  frame_data* fdata = pi->fd;
+  packet_info *pi = &edt->pi;
+  frame_data *fdata = pi->fd;
   wtap_block_t pkt_block = fdata->has_modified_block ? cap_file_provider_get_modified_block(&cfile->provider, fdata) : pi->rec->block;
 
-  Frame* f = (Frame*)data;
+  Frame *f = (Frame *)data;
 
   if (pkt_block)
   {
@@ -570,7 +570,7 @@ void wg_session_process_frame_cb(capture_file* cfile, epan_dissect_t* edt, proto
 
     for (guint i = 0; i < n; i++)
     {
-      gchar* comment;
+      gchar *comment;
       if (WTAP_OPTTYPE_SUCCESS == wtap_block_get_nth_string_option_value(pkt_block, OPT_COMMENT, i, &comment))
       {
         f->comments.push_back(std::string(comment));
@@ -580,17 +580,17 @@ void wg_session_process_frame_cb(capture_file* cfile, epan_dissect_t* edt, proto
 
   if (tree)
   {
-    tvbuff_t** tvbs = NULL;
+    tvbuff_t **tvbs = NULL;
 
     /* arrayize data src, to speedup searching for ds_tvb index */
     if (data_src && data_src->next /* only needed if there are more than one data source */)
     {
-      guint count = g_slist_length((GSList*)data_src);
-      tvbs = (tvbuff_t**)g_malloc0((count + 1) * sizeof(*tvbs));
+      guint count = g_slist_length((GSList *)data_src);
+      tvbs = (tvbuff_t **)g_malloc0((count + 1) * sizeof(*tvbs));
 
       for (guint i = 0; i < count; i++)
       {
-        const struct data_source* src = (const struct data_source*)g_slist_nth_data((GSList*)data_src, i);
+        const struct data_source *src = (const struct data_source *)g_slist_nth_data((GSList *)data_src, i);
 
         tvbs[i] = get_data_source_tvb(src);
       }
@@ -606,15 +606,15 @@ void wg_session_process_frame_cb(capture_file* cfile, epan_dissect_t* edt, proto
 
   while (data_src)
   {
-    struct data_source* src = (struct data_source*)data_src->data;
-    tvbuff_t* tvb;
+    struct data_source *src = (struct data_source *)data_src->data;
+    tvbuff_t *tvb;
     guint length;
 
     tvb = get_data_source_tvb(src);
     length = tvb_captured_length(tvb);
-    char* src_name = get_data_source_name(src);
-    const guchar* cp = tvb_get_ptr(tvb, 0, length);
-    char* encoded = g_base64_encode(cp, length);
+    char *src_name = get_data_source_name(src);
+    const guchar *cp = tvb_get_ptr(tvb, 0, length);
+    char *encoded = g_base64_encode(cp, length);
 
     f->data_sources.push_back(DataSource{ string(src_name), string(encoded) });
 
@@ -630,21 +630,21 @@ void wg_session_process_frame_cb(capture_file* cfile, epan_dissect_t* edt, proto
   visitData.followArray = &followArray; // Assign the address of followArray to visitData.followArray
   follow_iterate_followers(wg_session_follower_visit_cb, &visitData);
   // Assign followArray to f->follow
-  for (const auto& follow : *visitData.followArray)
+  for (const auto &follow : *visitData.followArray)
   {
     f->follow.push_back(follow);
   }
 }
 
-Follow wg_session_process_follow(capture_file* cfile, const char* tok_follow, const char* tok_filter, char** err_ret)
+Follow wg_session_process_follow(capture_file *cfile, const char *tok_follow, const char *tok_filter, char **err_ret)
 {
-  register_follow_t* follower;
-  GString* tap_error;
+  register_follow_t *follower;
+  GString *tap_error;
 
-  follow_info_t* follow_info;
+  follow_info_t *follow_info;
 
-  const char* host;
-  char* port;
+  const char *host;
+  char *port;
   Follow f;
 
   follower = get_follow_by_name(tok_follow);
@@ -688,12 +688,12 @@ Follow wg_session_process_follow(capture_file* cfile, const char* tok_follow, co
 
   if (follow_info->payload)
   {
-    follow_record_t* follow_record;
-    GList* cur;
+    follow_record_t *follow_record;
+    GList *cur;
     for (cur = g_list_last(follow_info->payload); cur; cur = g_list_previous(cur))
     {
-      follow_record = (follow_record_t*)cur->data;
-      char* encoded = g_base64_encode(follow_record->data->data, follow_record->data->len);
+      follow_record = (follow_record_t *)cur->data;
+      char *encoded = g_base64_encode(follow_record->data->data, follow_record->data->len);
       f.payloads.push_back(FollowPayload{ int(follow_record->packet_num), string(encoded), static_cast<unsigned int>(follow_record->is_server ? 1 : 0) });
     }
   }
@@ -703,15 +703,15 @@ Follow wg_session_process_follow(capture_file* cfile, const char* tok_follow, co
   return f;
 }
 
-void wg_session_process_frames_cb(capture_file* cfile, epan_dissect_t* edt, proto_tree* tree _U_,
-                                  struct epan_column_info* cinfo, const GSList* data_src _U_, void* data)
+void wg_session_process_frames_cb(capture_file *cfile, epan_dissect_t *edt, proto_tree *tree _U_,
+                                  struct epan_column_info *cinfo, const GSList *data_src _U_, void *data)
 {
-  packet_info* pi = &edt->pi;
-  frame_data* fdata = pi->fd;
+  packet_info *pi = &edt->pi;
+  frame_data *fdata = pi->fd;
   wtap_block_t pkt_block = NULL;
-  char* comment;
+  char *comment;
 
-  vector<FrameMeta>* store = (vector<FrameMeta> *)data;
+  vector<FrameMeta> *store = (vector<FrameMeta> *)data;
 
   FrameMeta f;
   f.number = pi->num;
@@ -758,13 +758,13 @@ void wg_session_process_frames_cb(capture_file* cfile, epan_dissect_t* edt, prot
 }
 
 enum dissect_request_status
-  wg_dissect_request(capture_file* cfile, guint32 framenum, guint32 frame_ref_num,
-                     guint32 prev_dis_num, wtap_rec* rec, Buffer* buf,
-                     column_info* cinfo, guint32 dissect_flags,
-                     wg_dissect_func_t cb, void* data,
-                     int* err, gchar** err_info)
+  wg_dissect_request(capture_file *cfile, guint32 framenum, guint32 frame_ref_num,
+                     guint32 prev_dis_num, wtap_rec *rec, Buffer *buf,
+                     column_info *cinfo, guint32 dissect_flags,
+                     wg_dissect_func_t cb, void *data,
+                     int *err, gchar **err_info)
 {
-  frame_data* fdata;
+  frame_data *fdata;
   epan_dissect_t edt;
   gboolean create_proto_tree;
 
@@ -819,19 +819,19 @@ enum dissect_request_status
   return DISSECT_REQUEST_SUCCESS;
 }
 
-int wg_filter(capture_file* cfile, const char* dftext, guint8** result, guint* passed)
+int wg_filter(capture_file *cfile, const char *dftext, guint8 **result, guint *passed)
 {
-  dfilter_t* dfcode = NULL;
+  dfilter_t *dfcode = NULL;
 
   guint32 framenum, prev_dis_num = 0;
   guint32 frames_count;
   Buffer buf;
   wtap_rec rec;
   int err;
-  char* err_info = NULL;
+  char *err_info = NULL;
 
   guint passed_frames = 0;
-  guint8* result_bits;
+  guint8 *result_bits;
   guint8 passed_bits;
 
   epan_dissect_t edt;
@@ -857,11 +857,11 @@ int wg_filter(capture_file* cfile, const char* dftext, guint8** result, guint* p
   epan_dissect_init(&edt, cfile->epan, TRUE, FALSE);
 
   passed_bits = 0;
-  result_bits = (guint8*)g_malloc(2 + (frames_count / 8));
+  result_bits = (guint8 *)g_malloc(2 + (frames_count / 8));
 
   for (framenum = 1; framenum <= frames_count; framenum++)
   {
-    frame_data* fdata = wg_get_frame(cfile, framenum);
+    frame_data *fdata = wg_get_frame(cfile, framenum);
 
     if ((framenum & 7) == 0)
     {
@@ -911,15 +911,15 @@ int wg_filter(capture_file* cfile, const char* dftext, guint8** result, guint* p
   return framenum;
 }
 
-const struct wg_filter_item*
-session_filter_data(GHashTable* filter_table, capture_file* cfile, const char* filter)
+const struct wg_filter_item *
+session_filter_data(GHashTable *filter_table, capture_file *cfile, const char *filter)
 {
-  struct wg_filter_item* l;
+  struct wg_filter_item *l;
 
-  l = (struct wg_filter_item*)g_hash_table_lookup(filter_table, filter);
+  l = (struct wg_filter_item *)g_hash_table_lookup(filter_table, filter);
   if (!l)
   {
-    guint8* filtered = NULL;
+    guint8 *filtered = NULL;
     guint passed = 0;
 
     int ret = wg_filter(cfile, filter, &filtered, &passed);
@@ -937,9 +937,9 @@ session_filter_data(GHashTable* filter_table, capture_file* cfile, const char* f
   return l;
 }
 
-Frame wg_process_frame(capture_file* cfile, guint32 framenum, char** err_ret)
+Frame wg_process_frame(capture_file *cfile, guint32 framenum, char **err_ret)
 {
-  column_info* cinfo = NULL;
+  column_info *cinfo = NULL;
 
   guint32 ref_frame_num, prev_dis_num;
   guint32 dissect_flags = WG_DISSECT_FLAG_NULL;
@@ -947,7 +947,7 @@ Frame wg_process_frame(capture_file* cfile, guint32 framenum, char** err_ret)
   Buffer rec_buf; /* Record data */
   enum dissect_request_status status;
   int err;
-  gchar* err_info;
+  gchar *err_info;
 
   ref_frame_num = (framenum != 1) ? 1 : 0;
   prev_dis_num = framenum - 1;
@@ -990,20 +990,20 @@ Frame wg_process_frame(capture_file* cfile, guint32 framenum, char** err_ret)
   return f;
 }
 
-FramesResponse wg_process_frames(capture_file* cfile, GHashTable* filter_table, const char* filter, guint32 skip, guint32 limit, char** err_ret)
+FramesResponse wg_process_frames(capture_file *cfile, GHashTable *filter_table, const char *filter, guint32 skip, guint32 limit, char **err_ret)
 {
-  const guint8* filter_data = NULL;
+  const guint8 *filter_data = NULL;
 
   wtap_rec rec;   /* Record metadata */
   Buffer rec_buf; /* Record data */
-  column_info* cinfo = &cfile->cinfo;
+  column_info *cinfo = &cfile->cinfo;
 
   FramesResponse result;
   result.matched = 0;
 
   vector<FrameMeta> res;
 
-  const struct wg_filter_item* filter_item;
+  const struct wg_filter_item *filter_item;
 
   filter_item = session_filter_data(filter_table, cfile, filter);
   if (!filter_item)
@@ -1019,10 +1019,10 @@ FramesResponse wg_process_frames(capture_file* cfile, GHashTable* filter_table, 
 
   for (guint32 framenum = 1; framenum <= cfile->count; framenum++)
   {
-    frame_data* fdata;
+    frame_data *fdata;
     enum dissect_request_status status;
     int err;
-    gchar* err_info;
+    gchar *err_info;
 
     if (filter_data && !(filter_data[framenum / 8] & (1 << (framenum % 8))))
       continue;
@@ -1075,7 +1075,7 @@ FramesResponse wg_process_frames(capture_file* cfile, GHashTable* filter_table, 
   return result;
 }
 
-Follow wg_process_follow(capture_file* cfile, const char* follow, const char* filter, char** err_ret)
+Follow wg_process_follow(capture_file *cfile, const char *follow, const char *filter, char **err_ret)
 {
   Follow fdata = wg_session_process_follow(cfile, follow, filter, err_ret);
   return fdata;
@@ -1094,7 +1094,7 @@ Follow wg_process_follow(capture_file* cfile, const char* follow, const char* fi
  *         name - field name
  */
 vector<CompleteField>
-wg_session_process_complete(const char* tok_field)
+wg_session_process_complete(const char *tok_field)
 {
   vector<CompleteField> res;
   if (tok_field != NULL && tok_field[0])
@@ -1102,16 +1102,16 @@ wg_session_process_complete(const char* tok_field)
     const size_t filter_length = strlen(tok_field);
     const int filter_with_dot = !!strchr(tok_field, '.');
 
-    void* proto_cookie;
-    void* field_cookie;
+    void *proto_cookie;
+    void *field_cookie;
     int proto_id;
 
     for (proto_id = proto_get_first_protocol(&proto_cookie); proto_id != -1; proto_id = proto_get_next_protocol(&proto_cookie))
     {
-      protocol_t* protocol = find_protocol_by_id(proto_id);
-      const char* protocol_filter;
-      const char* protocol_name;
-      header_field_info* hfinfo;
+      protocol_t *protocol = find_protocol_by_id(proto_id);
+      const char *protocol_filter;
+      const char *protocol_name;
+      header_field_info *hfinfo;
 
       if (!proto_is_protocol_enabled(protocol))
         continue;
@@ -1152,10 +1152,10 @@ wg_session_process_complete(const char* tok_field)
   return res;
 }
 
-static struct wg_export_object_list*
-wg_eo_object_list_get_entry_by_type(void* gui_data, const char* tap_type)
+static struct wg_export_object_list *
+wg_eo_object_list_get_entry_by_type(void *gui_data, const char *tap_type)
 {
-  struct wg_export_object_list* object_list = (struct wg_export_object_list*)gui_data;
+  struct wg_export_object_list *object_list = (struct wg_export_object_list *)gui_data;
   for (; object_list; object_list = object_list->next)
   {
     if (!strcmp(object_list->type, tap_type))
@@ -1164,26 +1164,26 @@ wg_eo_object_list_get_entry_by_type(void* gui_data, const char* tap_type)
   return NULL;
 }
 
-static export_object_entry_t*
-wg_eo_object_list_get_entry(void* gui_data, int row)
+static export_object_entry_t *
+wg_eo_object_list_get_entry(void *gui_data, int row)
 {
-  struct wg_export_object_list* object_list = (struct wg_export_object_list*)gui_data;
+  struct wg_export_object_list *object_list = (struct wg_export_object_list *)gui_data;
 
-  return (export_object_entry_t*)g_slist_nth_data(object_list->entries, row);
+  return (export_object_entry_t *)g_slist_nth_data(object_list->entries, row);
 }
 
 static void
-wg_eo_object_list_add_entry(void* gui_data, export_object_entry_t* entry)
+wg_eo_object_list_add_entry(void *gui_data, export_object_entry_t *entry)
 {
-  struct wg_export_object_list* object_list = (struct wg_export_object_list*)gui_data;
+  struct wg_export_object_list *object_list = (struct wg_export_object_list *)gui_data;
 
   object_list->entries = g_slist_append(object_list->entries, entry);
 }
 
-static GString* wg_session_eo_register_tap_listener(register_eo_t* eo, const char* tap_type, const char* tap_filter, tap_draw_cb tap_draw, void** ptap_data, GFreeFunc* ptap_free)
+static GString *wg_session_eo_register_tap_listener(register_eo_t *eo, const char *tap_type, const char *tap_filter, tap_draw_cb tap_draw, void **ptap_data, GFreeFunc *ptap_free)
 {
-  export_object_list_t* eo_object;
-  struct wg_export_object_list* object_list;
+  export_object_list_t *eo_object;
+  struct wg_export_object_list *object_list;
 
   object_list = wg_eo_object_list_get_entry_by_type(wg_eo_list, tap_type);
   if (object_list)
@@ -1204,7 +1204,7 @@ static GString* wg_session_eo_register_tap_listener(register_eo_t* eo, const cha
   eo_object = g_new0(export_object_list_t, 1);
   eo_object->add_entry = wg_eo_object_list_add_entry;
   eo_object->get_entry = wg_eo_object_list_get_entry;
-  eo_object->gui_data = (void*)object_list;
+  eo_object->gui_data = (void *)object_list;
 
   *ptap_data = eo_object;
   *ptap_free = g_free;
@@ -1220,12 +1220,12 @@ static GString* wg_session_eo_register_tap_listener(register_eo_t* eo, const cha
       NULL);
 }
 
-bool wg_session_eo_retap_listener(capture_file* cfile, const char* tap_type, char* err_ret)
+bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char *err_ret)
 {
   bool ok = true;
-  register_eo_t* eo = NULL;
-  GString* tap_error = NULL;
-  void* tap_data = NULL;
+  register_eo_t *eo = NULL;
+  GString *tap_error = NULL;
+  void *tap_data = NULL;
   GFreeFunc tap_free = NULL;
 
   // get <name> from eo:<name>, get_eo_by_name only needs the name (http etc.)
@@ -1272,7 +1272,7 @@ bool wg_session_eo_retap_listener(capture_file* cfile, const char* tap_type, cha
  *    (o) mime - suggested content type
  *    (o) data - payload base64 encoded
  */
-DownloadResponse wg_session_process_download(capture_file* cfile, const char* tok_token)
+DownloadResponse wg_session_process_download(capture_file *cfile, const char *tok_token)
 {
   DownloadResponse res;
 
@@ -1285,9 +1285,9 @@ DownloadResponse wg_session_process_download(capture_file* cfile, const char* to
   if (!strncmp(tok_token, "eo:", 3))
   {
     // get eo:<name> from eo:<name>_<row>
-    char* tap_type = g_strdup(tok_token);
-    char* tmp = strrchr(tap_type, '_');
-    char* err_ret = NULL;
+    char *tap_type = g_strdup(tok_token);
+    char *tmp = strrchr(tap_type, '_');
+    char *err_ret = NULL;
 
     if (tmp)
       *tmp = '\0';
@@ -1306,8 +1306,8 @@ DownloadResponse wg_session_process_download(capture_file* cfile, const char* to
 
     g_free(tap_type);
 
-    struct wg_export_object_list* object_list;
-    const export_object_entry_t* eo_entry = NULL;
+    struct wg_export_object_list *object_list;
+    const export_object_entry_t *eo_entry = NULL;
 
     for (object_list = wg_eo_list; object_list; object_list = object_list->next)
     {
@@ -1320,15 +1320,15 @@ DownloadResponse wg_session_process_download(capture_file* cfile, const char* to
         if (sscanf(&tok_token[eo_type_len + 1], "%d", &row) != 1)
           break;
 
-        eo_entry = (export_object_entry_t*)g_slist_nth_data(object_list->entries, row);
+        eo_entry = (export_object_entry_t *)g_slist_nth_data(object_list->entries, row);
         break;
       }
     }
 
     if (eo_entry)
     {
-      const char* mime = (eo_entry->content_type) ? eo_entry->content_type : "application/octet-stream";
-      const char* filename = (eo_entry->filename) ? eo_entry->filename : tok_token;
+      const char *mime = (eo_entry->content_type) ? eo_entry->content_type : "application/octet-stream";
+      const char *filename = (eo_entry->filename) ? eo_entry->filename : tok_token;
       res.download.file = filename;
       res.download.mime = mime;
       res.download.data = g_base64_encode(eo_entry->payload_data, eo_entry->payload_len);
@@ -1355,11 +1355,11 @@ DownloadResponse wg_session_process_download(capture_file* cfile, const char* to
  *                  (m) len - object length
  */
 static ExportObjectTap
-wg_session_process_tap_eo_cb(void* tapdata)
+wg_session_process_tap_eo_cb(void *tapdata)
 {
-  export_object_list_t* tap_object = (export_object_list_t*)tapdata;
-  struct wg_export_object_list* object_list = (struct wg_export_object_list*)tap_object->gui_data;
-  GSList* slist;
+  export_object_list_t *tap_object = (export_object_list_t *)tapdata;
+  struct wg_export_object_list *object_list = (struct wg_export_object_list *)tap_object->gui_data;
+  GSList *slist;
   ExportObjectTap res;
   res.tap = object_list->type;
   res.type = "eo";
@@ -1368,7 +1368,7 @@ wg_session_process_tap_eo_cb(void* tapdata)
 
   for (slist = object_list->entries; slist; slist = slist->next)
   {
-    const export_object_entry_t* eo_entry = (export_object_entry_t*)slist->data;
+    const export_object_entry_t *eo_entry = (export_object_entry_t *)slist->data;
     ExportObject obj;
     obj.pkt = eo_entry->pkt_num;
     if (eo_entry->hostname)
@@ -1403,10 +1403,10 @@ wg_session_process_tap_eo_cb(void* tapdata)
  *
  *   (m) err   - error code
  */
-TapResponse wg_session_process_tap(capture_file* cfile, TapInput taps)
+TapResponse wg_session_process_tap(capture_file *cfile, TapInput taps)
 {
   TapResponse buf;
-  void* taps_data[16];
+  void *taps_data[16];
   GFreeFunc taps_free[16];
   int taps_count = 0;
   int i;
@@ -1414,20 +1414,20 @@ TapResponse wg_session_process_tap(capture_file* cfile, TapInput taps)
   for (i = 0; i < 16; i++)
   {
     char tapbuf[32];
-    const char* tap_filter = "";
-    void* tap_data = NULL;
+    const char *tap_filter = "";
+    void *tap_data = NULL;
     GFreeFunc tap_free = NULL;
-    GString* tap_error = NULL;
+    GString *tap_error = NULL;
 
     snprintf(tapbuf, sizeof(tapbuf), "tap%d", i);
     if (taps.find(tapbuf) == taps.end())
       break;
 
-    const char* tok_tap = taps[tapbuf].c_str();
+    const char *tok_tap = taps[tapbuf].c_str();
 
     if (!strncmp(tok_tap, "eo:", 3))
     {
-      register_eo_t* eo = get_eo_by_name(tok_tap + 3);
+      register_eo_t *eo = get_eo_by_name(tok_tap + 3);
 
       if (!eo)
       {
@@ -1474,7 +1474,7 @@ TapResponse wg_session_process_tap(capture_file* cfile, TapInput taps)
   {
     if (taps_data[i])
     {
-      if (strncmp(((struct wg_export_object_list*)taps_data[i])->type, "eo", 2))
+      if (strncmp(((struct wg_export_object_list *)taps_data[i])->type, "eo", 2))
       {
         buf.taps.push_back(wg_session_process_tap_eo_cb(taps_data[i]));
       }
