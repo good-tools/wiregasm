@@ -119,8 +119,7 @@ export class Wiregasm {
         ...tap,
         objects: vectorToArray(tap.objects),
       })),
-    };;
-
+    }
   }
 
   download(token: string): DownloadResponse {

@@ -217,7 +217,7 @@ class DissectSession
 private:
   string path;
   capture_file capture_file;
-  GHashTable *filter_table;
+  GHashTable* filter_table;
 
 public:
   DissectSession(string _path);
