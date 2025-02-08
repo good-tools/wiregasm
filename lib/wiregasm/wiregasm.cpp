@@ -172,41 +172,41 @@ void wg_set_pref_values(pref_t *pref, PrefData *res)
 
     case PREF_RANGE:
     case PREF_DECODE_AS_RANGE:
-      {
-        char *range_str = range_convert_range(NULL, prefs_get_range_value_real(pref, pref_current));
-        res->range_value = string(range_str);
-        wmem_free(NULL, range_str);
-        break;
-      }
+    {
+      char *range_str = range_convert_range(NULL, prefs_get_range_value_real(pref, pref_current));
+      res->range_value = string(range_str);
+      wmem_free(NULL, range_str);
+      break;
+    }
     case PREF_ENUM:
+    {
+      const enum_val_t *enums;
+
+      for (enums = prefs_get_enumvals(pref); enums->name; enums++)
       {
-        const enum_val_t *enums;
+        PrefEnum e;
+        e.name = string(enums->name);
+        e.description = string(enums->description);
+        e.value = enums->value;
+        e.selected = false;
 
-        for (enums = prefs_get_enumvals(pref); enums->name; enums++)
+        if (enums->value == prefs_get_enum_value(pref, pref_current))
         {
-          PrefEnum e;
-          e.name = string(enums->name);
-          e.description = string(enums->description);
-          e.value = enums->value;
-          e.selected = false;
-          
-          if (enums->value == prefs_get_enum_value(pref, pref_current))
-          {
-            e.selected = true;
-          }
-
-          res->enum_value.push_back(e);
+          e.selected = true;
         }
-        break;
+
+        res->enum_value.push_back(e);
       }
+      break;
+    }
 
     case PREF_UAT:
     case PREF_COLOR:
     case PREF_CUSTOM:
     case PREF_STATIC_TEXT:
     case PREF_OBSOLETE:
-        /* TODO */
-        break;
+      /* TODO */
+      break;
   }
 }
 
@@ -217,7 +217,7 @@ PrefResponse wg_get_pref(string module_name, string pref_name)
 
   pref_t *pref = prefs_find_preference(prefs_find_module(module_name.c_str()), pref_name.c_str());
   if (pref == NULL) {
-      return res;
+    return res;
   }
 
   res.code = 0;
@@ -295,7 +295,7 @@ guint wg_list_preferences_cb(pref_t *pref, gpointer user_data)
 vector<PrefData> wg_list_preferences(string module_name)
 {
   vector<PrefData> prefs;
-  module_t * mod = prefs_find_module(module_name.c_str());
+  module_t *mod = prefs_find_module(module_name.c_str());
 
   if (mod != NULL)
   {
