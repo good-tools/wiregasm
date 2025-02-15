@@ -24,9 +24,9 @@ struct ProtoTree
 };
 
 struct FollowPayload {
-    int number;
-    string data;
-    unsigned int server;
+  int number;
+  string data;
+  unsigned int server;
 };
 
 struct Follow
@@ -116,7 +116,7 @@ struct PrefData
   string name;
   string title;
   string description;
-  
+
   int type;
 
   // TODO: make these optional, emscripten now supports optional fields

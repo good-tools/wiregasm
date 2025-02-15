@@ -25,172 +25,172 @@ EMSCRIPTEN_BINDINGS(Wiregasm)
 EMSCRIPTEN_BINDINGS(DissectSession)
 {
   class_<DissectSession>("DissectSession")
-      .constructor<std::string>()
-      .function("load", &DissectSession::load)
-      .function("getFrames", &DissectSession::getFrames)
-      .function("getFrame", &DissectSession::getFrame)
-      .function("follow", &DissectSession::follow);
+    .constructor<std::string>()
+    .function("load", &DissectSession::load)
+    .function("getFrames", &DissectSession::getFrames)
+    .function("getFrame", &DissectSession::getFrame)
+    .function("follow", &DissectSession::follow);
 }
 
 EMSCRIPTEN_BINDINGS(ProtoTree)
 {
   value_object<ProtoTree>("ProtoTree")
-      .field("label", &ProtoTree::label)
-      .field("filter", &ProtoTree::filter)
-      .field("start", &ProtoTree::start)
-      .field("length", &ProtoTree::length)
-      .field("data_source_idx", &ProtoTree::data_source_idx)
-      .field("tree", &ProtoTree::tree)
-      .field("severity", &ProtoTree::severity)
-      .field("type", &ProtoTree::type)
-      .field("fnum", &ProtoTree::fnum)
-      .field("url", &ProtoTree::url);
+    .field("label", &ProtoTree::label)
+    .field("filter", &ProtoTree::filter)
+    .field("start", &ProtoTree::start)
+    .field("length", &ProtoTree::length)
+    .field("data_source_idx", &ProtoTree::data_source_idx)
+    .field("tree", &ProtoTree::tree)
+    .field("severity", &ProtoTree::severity)
+    .field("type", &ProtoTree::type)
+    .field("fnum", &ProtoTree::fnum)
+    .field("url", &ProtoTree::url);
 }
 
 EMSCRIPTEN_BINDINGS(PrefData)
 {
   value_object<PrefData>("PrefData")
-      .field("name", &PrefData::name)
-      .field("title", &PrefData::title)
-      .field("description", &PrefData::description)
-      .field("type", &PrefData::type)
-      .field("uint_value", &PrefData::uint_value)
-      .field("uint_base_value", &PrefData::uint_base_value)
-      .field("bool_value", &PrefData::bool_value)
-      .field("string_value", &PrefData::string_value)
-      .field("enum_value", &PrefData::enum_value)
-      .field("range_value", &PrefData::range_value);
+    .field("name", &PrefData::name)
+    .field("title", &PrefData::title)
+    .field("description", &PrefData::description)
+    .field("type", &PrefData::type)
+    .field("uint_value", &PrefData::uint_value)
+    .field("uint_base_value", &PrefData::uint_base_value)
+    .field("bool_value", &PrefData::bool_value)
+    .field("string_value", &PrefData::string_value)
+    .field("enum_value", &PrefData::enum_value)
+    .field("range_value", &PrefData::range_value);
 }
 
 EMSCRIPTEN_BINDINGS(PrefResponse)
 {
   value_object<PrefResponse>("PrefResponse")
-      .field("code", &PrefResponse::code)
-      .field("data", &PrefResponse::data);
+    .field("code", &PrefResponse::code)
+    .field("data", &PrefResponse::data);
 }
 
 EMSCRIPTEN_BINDINGS(SetPrefResponse)
 {
   value_object<SetPrefResponse>("SetPrefResponse")
-      .field("code", &SetPrefResponse::code)
-      .field("error", &SetPrefResponse::error);
+    .field("code", &SetPrefResponse::code)
+    .field("error", &SetPrefResponse::error);
 }
 
 EMSCRIPTEN_BINDINGS(PrefEnum)
 {
   value_object<PrefEnum>("PrefEnum")
-      .field("name", &PrefEnum::name)
-      .field("description", &PrefEnum::description)
-      .field("value", &PrefEnum::value)
-      .field("selected", &PrefEnum::selected);
+    .field("name", &PrefEnum::name)
+    .field("description", &PrefEnum::description)
+    .field("value", &PrefEnum::value)
+    .field("selected", &PrefEnum::selected);
 }
 
 EMSCRIPTEN_BINDINGS(PrefModule)
 {
   value_object<PrefModule>("PrefModule")
-      .field("name", &PrefModule::name)
-      .field("title", &PrefModule::title)
-      .field("description", &PrefModule::description)
-      .field("submodules", &PrefModule::submodules)
-      .field("use_gui", &PrefModule::use_gui);
+    .field("name", &PrefModule::name)
+    .field("title", &PrefModule::title)
+    .field("description", &PrefModule::description)
+    .field("submodules", &PrefModule::submodules)
+    .field("use_gui", &PrefModule::use_gui);
 }
 
 EMSCRIPTEN_BINDINGS(DataSource)
 {
   value_object<DataSource>("DataSource")
-      .field("name", &DataSource::name)
-      .field("data", &DataSource::data);
+    .field("name", &DataSource::name)
+    .field("data", &DataSource::data);
 }
 
 EMSCRIPTEN_BINDINGS(Frame)
 {
   value_object<Frame>("Frame")
-      .field("number", &Frame::number)
-      .field("comments", &Frame::comments)
-      .field("data_sources", &Frame::data_sources)
-      .field("tree", &Frame::tree)
-      .field("follow", &Frame::follow);
+    .field("number", &Frame::number)
+    .field("comments", &Frame::comments)
+    .field("data_sources", &Frame::data_sources)
+    .field("tree", &Frame::tree)
+    .field("follow", &Frame::follow);
 }
 
 EMSCRIPTEN_BINDINGS(FrameMeta)
 {
   value_object<FrameMeta>("FrameMeta")
-      .field("number", &FrameMeta::number)
-      .field("comments", &FrameMeta::comments)
-      .field("ignored", &FrameMeta::ignored)
-      .field("marked", &FrameMeta::marked)
-      .field("bg", &FrameMeta::bg)
-      .field("fg", &FrameMeta::fg)
-      .field("columns", &FrameMeta::columns);
+    .field("number", &FrameMeta::number)
+    .field("comments", &FrameMeta::comments)
+    .field("ignored", &FrameMeta::ignored)
+    .field("marked", &FrameMeta::marked)
+    .field("bg", &FrameMeta::bg)
+    .field("fg", &FrameMeta::fg)
+    .field("columns", &FrameMeta::columns);
 }
 
 EMSCRIPTEN_BINDINGS(LoadResponse)
 {
   value_object<LoadResponse>("LoadResponse")
-      .field("code", &LoadResponse::code)
-      .field("error", &LoadResponse::error)
-      .field("summary", &LoadResponse::summary);
+    .field("code", &LoadResponse::code)
+    .field("error", &LoadResponse::error)
+    .field("summary", &LoadResponse::summary);
 }
 
 EMSCRIPTEN_BINDINGS(FramesResponse)
 {
   value_object<FramesResponse>("FramesResponse")
-      .field("frames", &FramesResponse::frames)
-      .field("matched", &FramesResponse::matched);
+    .field("frames", &FramesResponse::frames)
+    .field("matched", &FramesResponse::matched);
 }
 
 EMSCRIPTEN_BINDINGS(CheckFilterResponse)
 {
   value_object<CheckFilterResponse>("CheckFilterResponse")
-      .field("ok", &CheckFilterResponse::ok)
-      .field("error", &CheckFilterResponse::error);
+    .field("ok", &CheckFilterResponse::ok)
+    .field("error", &CheckFilterResponse::error);
 }
 
 EMSCRIPTEN_BINDINGS(FilterCompletionResponse)
 {
   value_object<FilterCompletionResponse>("FilterCompletionResponse")
-      .field("fields", &FilterCompletionResponse::fields);
+    .field("fields", &FilterCompletionResponse::fields);
 }
 
 EMSCRIPTEN_BINDINGS(Summary)
 {
   value_object<Summary>("Summary")
-      .field("filename", &Summary::filename)
-      .field("file_type", &Summary::file_type)
-      .field("file_length", &Summary::file_length)
-      .field("file_encap_type", &Summary::file_encap_type)
-      .field("packet_count", &Summary::packet_count)
-      .field("start_time", &Summary::start_time)
-      .field("stop_time", &Summary::stop_time)
-      .field("elapsed_time", &Summary::elapsed_time);
+    .field("filename", &Summary::filename)
+    .field("file_type", &Summary::file_type)
+    .field("file_length", &Summary::file_length)
+    .field("file_encap_type", &Summary::file_encap_type)
+    .field("packet_count", &Summary::packet_count)
+    .field("start_time", &Summary::start_time)
+    .field("stop_time", &Summary::stop_time)
+    .field("elapsed_time", &Summary::elapsed_time);
 }
 
 EMSCRIPTEN_BINDINGS(FollowPayload)
 {
   value_object<FollowPayload>("FollowPayload")
-      .field("number", &FollowPayload::number)
-      .field("data", &FollowPayload::data)
-      .field("server", &FollowPayload::server);
+    .field("number", &FollowPayload::number)
+    .field("data", &FollowPayload::data)
+    .field("server", &FollowPayload::server);
 }
 
 EMSCRIPTEN_BINDINGS(Follow)
 {
   value_object<Follow>("Follow")
-      .field("shost", &Follow::shost)
-      .field("sport", &Follow::sport)
-      .field("sbytes", &Follow::sbytes)
-      .field("chost", &Follow::chost)
-      .field("cport", &Follow::cport)
-      .field("cbytes", &Follow::cbytes)
-      .field("payloads", &Follow::payloads);
+    .field("shost", &Follow::shost)
+    .field("sport", &Follow::sport)
+    .field("sbytes", &Follow::sbytes)
+    .field("chost", &Follow::chost)
+    .field("cport", &Follow::cport)
+    .field("cbytes", &Follow::cbytes)
+    .field("payloads", &Follow::payloads);
 }
 
 EMSCRIPTEN_BINDINGS(CompleteField)
 {
   value_object<CompleteField>("CompleteField")
-      .field("field", &CompleteField::field)
-      .field("type", &CompleteField::type)
-      .field("name", &CompleteField::name);
+    .field("field", &CompleteField::field)
+    .field("type", &CompleteField::type)
+    .field("name", &CompleteField::name);
 }
 
 EMSCRIPTEN_BINDINGS(stl_wrappers)

@@ -66,7 +66,7 @@ wg_epan_new(capture_file *cf)
       wg_get_frame_ts,
       cap_file_provider_get_interface_name,
       cap_file_provider_get_interface_description,
-      cap_file_provider_get_modified_block};
+      cap_file_provider_get_modified_block };
 
   return epan_new(&cf->provider, &funcs);
 }
@@ -249,7 +249,7 @@ load_cap_file(capture_file *cf, int max_packet_count, gint64 max_byte_count, sum
        *    on the first pass.
        */
       create_proto_tree =
-          (cf->rfcode != NULL || cf->dfcode != NULL || postdissectors_want_hfids());
+        (cf->rfcode != NULL || cf->dfcode != NULL || postdissectors_want_hfids());
 
       /* We're not going to display the protocol tree on this pass,
          so it's not going to be "visible". */
@@ -318,63 +318,63 @@ int wg_load_cap_file(capture_file *cfile, summary_tally *summary)
 int
 wg_retap(capture_file *cfile)
 {
-    guint32          framenum;
-    frame_data      *fdata;
-    Buffer           buf;
-    wtap_rec         rec;
-    int err;
-    char *err_info = NULL;
+  guint32          framenum;
+  frame_data *fdata;
+  Buffer           buf;
+  wtap_rec         rec;
+  int err;
+  char *err_info = NULL;
 
-    guint         tap_flags;
-    gboolean      create_proto_tree;
-    epan_dissect_t edt;
-    column_info   *cinfo;
+  guint         tap_flags;
+  gboolean      create_proto_tree;
+  epan_dissect_t edt;
+  column_info *cinfo;
 
-    /* Get the union of the flags for all tap listeners. */
-    tap_flags = union_of_tap_listener_flags();
+  /* Get the union of the flags for all tap listeners. */
+  tap_flags = union_of_tap_listener_flags();
 
-    /* If any tap listeners require the columns, construct them. */
-    cinfo = (tap_flags & TL_REQUIRES_COLUMNS) ? &cfile->cinfo : NULL;
+  /* If any tap listeners require the columns, construct them. */
+  cinfo = (tap_flags & TL_REQUIRES_COLUMNS) ? &cfile->cinfo : NULL;
 
-    /*
-     * Determine whether we need to create a protocol tree.
-     * We do if:
-     *
-     *    one of the tap listeners is going to apply a filter;
-     *
-     *    one of the tap listeners requires a protocol tree.
-     */
-    create_proto_tree =
-        (have_filtering_tap_listeners() || (tap_flags & TL_REQUIRES_PROTO_TREE));
+  /*
+   * Determine whether we need to create a protocol tree.
+   * We do if:
+   *
+   *    one of the tap listeners is going to apply a filter;
+   *
+   *    one of the tap listeners requires a protocol tree.
+   */
+  create_proto_tree =
+    (have_filtering_tap_listeners() || (tap_flags & TL_REQUIRES_PROTO_TREE));
 
-    wtap_rec_init(&rec);
-    ws_buffer_init(&buf, 1514);
-    epan_dissect_init(&edt, cfile->epan, create_proto_tree, false);
+  wtap_rec_init(&rec);
+  ws_buffer_init(&buf, 1514);
+  epan_dissect_init(&edt, cfile->epan, create_proto_tree, false);
 
-    reset_tap_listeners();
+  reset_tap_listeners();
 
-    for (framenum = 1; framenum <= cfile->count; framenum++) {
-        fdata = wg_get_frame(cfile, framenum);
+  for (framenum = 1; framenum <= cfile->count; framenum++) {
+    fdata = wg_get_frame(cfile, framenum);
 
-        if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, &rec, &buf, &err, &err_info))
-            break;
+    if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, &rec, &buf, &err, &err_info))
+      break;
 
-        fdata->ref_time = FALSE;
-        fdata->frame_ref_num = (framenum != 1) ? 1 : 0;
-        fdata->prev_dis_num = framenum - 1;
-        epan_dissect_run_with_taps(&edt, cfile->cd_t, &rec,
-                frame_tvbuff_new_buffer(&cfile->provider, fdata, &buf),
-                fdata, cinfo);
-        wtap_rec_reset(&rec);
-        epan_dissect_reset(&edt);
-    }
+    fdata->ref_time = FALSE;
+    fdata->frame_ref_num = (framenum != 1) ? 1 : 0;
+    fdata->prev_dis_num = framenum - 1;
+    epan_dissect_run_with_taps(&edt, cfile->cd_t, &rec,
+            frame_tvbuff_new_buffer(&cfile->provider, fdata, &buf),
+            fdata, cinfo);
+    wtap_rec_reset(&rec);
+    epan_dissect_reset(&edt);
+  }
 
-    wtap_rec_cleanup(&rec);
-    ws_buffer_free(&buf);
-    epan_dissect_cleanup(&edt);
-    draw_tap_listeners(true);
+  wtap_rec_cleanup(&rec);
+  ws_buffer_free(&buf);
+  epan_dissect_cleanup(&edt);
+  draw_tap_listeners(true);
 
-    return 0;
+  return 0;
 }
 
 
@@ -395,7 +395,7 @@ int wg_session_process_load(capture_file *cfile, const char *path, summary_tally
   {
     ret = wg_load_cap_file(cfile, summary);
   }
-  CATCH(OutOfMemoryError)
+    CATCH(OutOfMemoryError)
   {
     *err_ret = g_strdup_printf("Load failed, out of memory");
     ret = ENOMEM;
@@ -477,7 +477,7 @@ wg_session_process_frame_cb_tree(epan_dissect_t *edt, proto_tree *tree, tvbuff_t
 
       if (finfo->hfinfo->type == FT_PROTOCOL)
       {
-          t.type = "proto";
+        t.type = "proto";
       }
       else if (finfo->hfinfo->type == FT_FRAMENUM)
       {
@@ -521,8 +521,8 @@ struct VisitData {
 
 static gboolean
 wg_session_follower_visit_cb(const void *key _U_, void *value, void *user_data) {
-  register_follow_t *follower = (register_follow_t *) value;
-  VisitData *visitData = (VisitData *) user_data;
+  register_follow_t *follower = (register_follow_t *)value;
+  VisitData *visitData = (VisitData *)user_data;
   packet_info *pi = visitData->pi;
   vector<vector<string>> *followArray = visitData->followArray;
 
@@ -531,18 +531,18 @@ wg_session_follower_visit_cb(const void *key _U_, void *value, void *user_data) 
   guint32 ignore_sub_stream;
 
   if (proto_is_frame_protocol(pi->layers, proto_get_protocol_filter_name(proto_id)))
-    {
-        const char *layer_proto = proto_get_protocol_short_name(find_protocol_by_id(proto_id));
-        char *follow_filter;
+  {
+    const char *layer_proto = proto_get_protocol_short_name(find_protocol_by_id(proto_id));
+    char *follow_filter;
 
-        follow_filter = get_follow_conv_func(follower)(NULL, pi, &ignore_stream, &ignore_sub_stream);
-        // [['HTTP', 'tcp.stream eq 0'],['TCP', 'tcp.stream eq 0']]
-        vector<string> follow;
-        follow.push_back(static_cast<string>(layer_proto));
-        follow.push_back(static_cast<string>(follow_filter));
-        followArray->push_back(follow);
-        g_free(follow_filter);
-    }
+    follow_filter = get_follow_conv_func(follower)(NULL, pi, &ignore_stream, &ignore_sub_stream);
+    // [['HTTP', 'tcp.stream eq 0'],['TCP', 'tcp.stream eq 0']]
+    vector<string> follow;
+    follow.push_back(static_cast<string>(layer_proto));
+    follow.push_back(static_cast<string>(follow_filter));
+    followArray->push_back(follow);
+    g_free(follow_filter);
+  }
   return false;
 }
 
@@ -606,7 +606,7 @@ void wg_session_process_frame_cb(capture_file *cfile, epan_dissect_t *edt, proto
     const guchar *cp = tvb_get_ptr(tvb, 0, length);
     char *encoded = g_base64_encode(cp, length);
 
-    f->data_sources.push_back(DataSource{string(src_name), string(encoded)});
+    f->data_sources.push_back(DataSource{ string(src_name), string(encoded) });
 
     g_free(encoded);
     wmem_free(NULL, src_name);
@@ -620,76 +620,76 @@ void wg_session_process_frame_cb(capture_file *cfile, epan_dissect_t *edt, proto
   visitData.followArray = &followArray; // Assign the address of followArray to visitData.followArray
   follow_iterate_followers(wg_session_follower_visit_cb, &visitData);
   // Assign followArray to f->follow
-  for (const auto& follow : *visitData.followArray) {
+  for (const auto &follow : *visitData.followArray) {
     f->follow.push_back(follow);
   }
 }
 
-Follow wg_session_process_follow(capture_file *cfile, const char* tok_follow, const char* tok_filter, char **err_ret)
+Follow wg_session_process_follow(capture_file *cfile, const char *tok_follow, const char *tok_filter, char **err_ret)
 {
-    register_follow_t *follower;
-    GString *tap_error;
+  register_follow_t *follower;
+  GString *tap_error;
 
-    follow_info_t *follow_info;
+  follow_info_t *follow_info;
 
-    const char *host;
-    char *port;
-    Follow f;
+  const char *host;
+  char *port;
+  Follow f;
 
-    follower = get_follow_by_name(tok_follow);
-    if (!follower)
-    {
-      *err_ret = g_strdup_printf("follower=%s not found", tok_follow);
-      return f;
-    }
-
-    /* follow_reset_stream ? */
-    follow_info = g_new0(follow_info_t, 1);
-    /* gui_data, filter_out_filter not set, but not used by dissector */
-
-    tap_error = register_tap_listener(get_follow_tap_string(follower), follow_info, tok_filter, 0, NULL, get_follow_tap_handler(follower), NULL, NULL);
-    if (tap_error)
-    {
-      *err_ret = g_strdup_printf("name=%s error=%s", tok_follow, tap_error->str);
-      g_string_free(tap_error, TRUE);
-      g_free(follow_info);
-      return f;
-    }
-
-    wg_retap(cfile);
-    /* Server information: hostname, port, bytes sent */
-    host = address_to_name(&follow_info->server_ip);
-    f.shost = host;
-
-    port = get_follow_port_to_display(follower)(NULL, follow_info->server_port);
-    f.sport = port;
-    wmem_free(NULL, port);
-    f.sbytes = follow_info->bytes_written[0];
-
-    /* Client information: hostname, port, bytes sent */
-    host = address_to_name(&follow_info->client_ip);
-    f.chost = host;
-
-    port = get_follow_port_to_display(follower)(NULL, follow_info->client_port);
-    f.cport = port;
-    wmem_free(NULL, port);
-    f.cbytes = follow_info->bytes_written[1];
-
-    if (follow_info->payload)
-    {
-        follow_record_t *follow_record;
-        GList *cur;
-        for (cur = g_list_last(follow_info->payload); cur; cur = g_list_previous(cur))
-        {
-            follow_record = (follow_record_t *) cur->data;
-            char *encoded = g_base64_encode(follow_record->data->data, follow_record->data->len);
-            f.payloads.push_back(FollowPayload{int(follow_record->packet_num), string(encoded), static_cast<unsigned int>(follow_record->is_server ? 1 : 0)});
-        }
-    }
-
-    remove_tap_listener(follow_info);
-    follow_info_free(follow_info);
+  follower = get_follow_by_name(tok_follow);
+  if (!follower)
+  {
+    *err_ret = g_strdup_printf("follower=%s not found", tok_follow);
     return f;
+  }
+
+  /* follow_reset_stream ? */
+  follow_info = g_new0(follow_info_t, 1);
+  /* gui_data, filter_out_filter not set, but not used by dissector */
+
+  tap_error = register_tap_listener(get_follow_tap_string(follower), follow_info, tok_filter, 0, NULL, get_follow_tap_handler(follower), NULL, NULL);
+  if (tap_error)
+  {
+    *err_ret = g_strdup_printf("name=%s error=%s", tok_follow, tap_error->str);
+    g_string_free(tap_error, TRUE);
+    g_free(follow_info);
+    return f;
+  }
+
+  wg_retap(cfile);
+  /* Server information: hostname, port, bytes sent */
+  host = address_to_name(&follow_info->server_ip);
+  f.shost = host;
+
+  port = get_follow_port_to_display(follower)(NULL, follow_info->server_port);
+  f.sport = port;
+  wmem_free(NULL, port);
+  f.sbytes = follow_info->bytes_written[0];
+
+  /* Client information: hostname, port, bytes sent */
+  host = address_to_name(&follow_info->client_ip);
+  f.chost = host;
+
+  port = get_follow_port_to_display(follower)(NULL, follow_info->client_port);
+  f.cport = port;
+  wmem_free(NULL, port);
+  f.cbytes = follow_info->bytes_written[1];
+
+  if (follow_info->payload)
+  {
+    follow_record_t *follow_record;
+    GList *cur;
+    for (cur = g_list_last(follow_info->payload); cur; cur = g_list_previous(cur))
+    {
+      follow_record = (follow_record_t *)cur->data;
+      char *encoded = g_base64_encode(follow_record->data->data, follow_record->data->len);
+      f.payloads.push_back(FollowPayload{ int(follow_record->packet_num), string(encoded), static_cast<unsigned int>(follow_record->is_server ? 1 : 0) });
+    }
+  }
+
+  remove_tap_listener(follow_info);
+  follow_info_free(follow_info);
+  return f;
 }
 
 
@@ -748,11 +748,11 @@ void wg_session_process_frames_cb(capture_file *cfile, epan_dissect_t *edt, prot
 }
 
 enum dissect_request_status
-wg_dissect_request(capture_file *cfile, guint32 framenum, guint32 frame_ref_num,
-                   guint32 prev_dis_num, wtap_rec *rec, Buffer *buf,
-                   column_info *cinfo, guint32 dissect_flags,
-                   wg_dissect_func_t cb, void *data,
-                   int *err, gchar **err_info)
+  wg_dissect_request(capture_file *cfile, guint32 framenum, guint32 frame_ref_num,
+                     guint32 prev_dis_num, wtap_rec *rec, Buffer *buf,
+                     column_info *cinfo, guint32 dissect_flags,
+                     wg_dissect_func_t cb, void *data,
+                     int *err, gchar **err_info)
 {
   frame_data *fdata;
   epan_dissect_t edt;
@@ -960,18 +960,18 @@ Frame wg_process_frame(capture_file *cfile, guint32 framenum, char **err_ret)
   switch (status)
   {
 
-  case DISSECT_REQUEST_SUCCESS:
-    /* success */
-    break;
+    case DISSECT_REQUEST_SUCCESS:
+      /* success */
+      break;
 
-  case DISSECT_REQUEST_NO_SUCH_FRAME:
-    *err_ret = g_strdup_printf("Invalid frame - The frame number requested is out of range");
-    break;
+    case DISSECT_REQUEST_NO_SUCH_FRAME:
+      *err_ret = g_strdup_printf("Invalid frame - The frame number requested is out of range");
+      break;
 
-  case DISSECT_REQUEST_READ_ERROR:
-    *err_ret = g_strdup_printf("Read error - The frame could not be read from the file");
-    g_free(err_info);
-    break;
+    case DISSECT_REQUEST_READ_ERROR:
+      *err_ret = g_strdup_printf("Read error - The frame could not be read from the file");
+      g_free(err_info);
+      break;
   }
 
   wtap_rec_cleanup(&rec);
@@ -1033,20 +1033,20 @@ FramesResponse wg_process_frames(capture_file *cfile, GHashTable *filter_table, 
     switch (status)
     {
 
-    case DISSECT_REQUEST_SUCCESS:
-      break;
+      case DISSECT_REQUEST_SUCCESS:
+        break;
 
-    case DISSECT_REQUEST_NO_SUCH_FRAME:
-      /* XXX - report the error. */
-      break;
+      case DISSECT_REQUEST_NO_SUCH_FRAME:
+        /* XXX - report the error. */
+        break;
 
-    case DISSECT_REQUEST_READ_ERROR:
-      /*
-       * Free up the error string.
-       * XXX - report the error.
-       */
-      g_free(err_info);
-      break;
+      case DISSECT_REQUEST_READ_ERROR:
+        /*
+         * Free up the error string.
+         * XXX - report the error.
+         */
+        g_free(err_info);
+        break;
     }
 
     if (limit && --limit == 0)
@@ -1065,7 +1065,7 @@ FramesResponse wg_process_frames(capture_file *cfile, GHashTable *filter_table, 
   return result;
 }
 
-Follow wg_process_follow(capture_file *cfile, const char* follow, const char* filter, char **err_ret)
+Follow wg_process_follow(capture_file *cfile, const char *follow, const char *filter, char **err_ret)
 {
   Follow fdata = wg_session_process_follow(cfile, follow, filter, err_ret);
   return fdata;
@@ -1087,58 +1087,58 @@ Follow wg_process_follow(capture_file *cfile, const char* follow, const char* fi
 vector<CompleteField>
 wg_session_process_complete(const char *tok_field)
 {
-    vector<CompleteField> res;
-    if (tok_field != NULL && tok_field[0])
+  vector<CompleteField> res;
+  if (tok_field != NULL && tok_field[0])
+  {
+    const size_t filter_length = strlen(tok_field);
+    const int filter_with_dot = !!strchr(tok_field, '.');
+
+    void *proto_cookie;
+    void *field_cookie;
+    int proto_id;
+
+    for (proto_id = proto_get_first_protocol(&proto_cookie); proto_id != -1; proto_id = proto_get_next_protocol(&proto_cookie))
     {
-        const size_t filter_length = strlen(tok_field);
-        const int filter_with_dot = !!strchr(tok_field, '.');
+      protocol_t *protocol = find_protocol_by_id(proto_id);
+      const char *protocol_filter;
+      const char *protocol_name;
+      header_field_info *hfinfo;
 
-        void *proto_cookie;
-        void *field_cookie;
-        int proto_id;
+      if (!proto_is_protocol_enabled(protocol))
+        continue;
 
-        for (proto_id = proto_get_first_protocol(&proto_cookie); proto_id != -1; proto_id = proto_get_next_protocol(&proto_cookie))
+      protocol_name = proto_get_protocol_long_name(protocol);
+      protocol_filter = proto_get_protocol_filter_name(proto_id);
+
+      if (strlen(protocol_filter) >= filter_length && !g_ascii_strncasecmp(tok_field, protocol_filter, filter_length))
+      {
+        res.push_back(CompleteField{ string(protocol_filter), static_cast<int>(FT_PROTOCOL), string(protocol_name) });
+      }
+
+      if (!filter_with_dot)
+        continue;
+
+      for (hfinfo = proto_get_first_protocol_field(proto_id, &field_cookie); hfinfo != NULL; hfinfo = proto_get_next_protocol_field(proto_id, &field_cookie))
+      {
+        if (hfinfo->same_name_prev_id != -1) /* ignore duplicate names */
+          continue;
+
+        if (strlen(hfinfo->abbrev) >= filter_length && !g_ascii_strncasecmp(tok_field, hfinfo->abbrev, filter_length))
         {
-            protocol_t *protocol = find_protocol_by_id(proto_id);
-            const char *protocol_filter;
-            const char *protocol_name;
-            header_field_info *hfinfo;
-
-            if (!proto_is_protocol_enabled(protocol))
-                continue;
-
-            protocol_name   = proto_get_protocol_long_name(protocol);
-            protocol_filter = proto_get_protocol_filter_name(proto_id);
-
-            if (strlen(protocol_filter) >= filter_length && !g_ascii_strncasecmp(tok_field, protocol_filter, filter_length))
+          CompleteField f;
+          {
+            f.field = string(hfinfo->abbrev);
+            /* XXX, skip displaying name, if there are multiple (to not confuse user) */
+            if (hfinfo->same_name_next == NULL)
             {
-              res.push_back(CompleteField{string(protocol_filter), static_cast<int>(FT_PROTOCOL), string(protocol_name)});
+              f.type = static_cast<int>(hfinfo->type);
+              f.name = string(hfinfo->name);
             }
-
-            if (!filter_with_dot)
-                continue;
-
-            for (hfinfo = proto_get_first_protocol_field(proto_id, &field_cookie); hfinfo != NULL; hfinfo = proto_get_next_protocol_field(proto_id, &field_cookie))
-            {
-                if (hfinfo->same_name_prev_id != -1) /* ignore duplicate names */
-                    continue;
-
-                if (strlen(hfinfo->abbrev) >= filter_length && !g_ascii_strncasecmp(tok_field, hfinfo->abbrev, filter_length))
-                {
-                    CompleteField f;
-                    {
-                        f.field = string(hfinfo->abbrev);
-                        /* XXX, skip displaying name, if there are multiple (to not confuse user) */
-                        if (hfinfo->same_name_next == NULL)
-                        {
-                            f.type = static_cast<int>(hfinfo->type);
-                            f.name = string(hfinfo->name);
-                        }
-                    }
-                    res.push_back(f);
-                }
-            }
+          }
+          res.push_back(f);
         }
+      }
     }
-    return res;
+  }
+  return res;
 }
