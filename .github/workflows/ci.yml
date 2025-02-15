@@ -61,12 +61,11 @@ jobs:
       run: npm run build:emscripten-local
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: lib
         path: |
           built/bin/wiregasm.*
-        retention-days: 3
 
     # hack to not use node 14 bundled with emsdk
     - name: Restore Path
