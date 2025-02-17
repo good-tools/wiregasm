@@ -482,9 +482,7 @@ Frame DissectSession::getFrame(int number)
 
 TapResponse DissectSession::tap(string data)
 {
-  TapInput taps;
-  taps = json::parse(data);
-
+  TapInput taps = json::parse(data);
   return wg_session_process_tap(&this->capture_file, taps);
 }
 
