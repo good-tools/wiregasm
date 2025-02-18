@@ -4,6 +4,7 @@
 #include <glib.h>
 #include <epan/timestamp.h>
 #include <wiretap/wtap.h>
+#include <epan/epan_dissect.h>
 #include <epan/epan.h>
 #include <wireshark/cfile.h>
 #include <epan/addr_resolv.h>
@@ -15,13 +16,16 @@
 #include <epan/color_filters.h>
 #include <wsutil/filesystem.h>
 #include <epan/tap.h>
+#include <epan/conversation_table.h>
+#include <epan/maxmind_db.h>
+#include <common/io_graph_item.h>
 #include <common/frame_tvbuff.h>
-#include <epan/epan_dissect.h>
 #include <epan/tvbuff.h>
 #include <common/summary.h>
 #include <epan/exceptions.h>
 #include <epan/follow.h>
 #include <epan/expert.h>
+#include <wsutil/strtoi.h>
 #include "wiregasm.h"
 
 // callbacks, defined in lib.js (added through --js-library)
@@ -72,7 +76,8 @@ Frame wg_process_frame(capture_file *cfile, guint32 framenum, char **err_ret);
 Follow wg_process_follow(capture_file *cfile, const char *follow, const char *filter, char **err_ret);
 bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char **err_ret);
 DownloadResponse wg_session_process_download(capture_file *cfile, const char *token);
-TapResponse wg_session_process_tap(capture_file *cfile, TapInput taps);
+TapResponse wg_session_process_tap(capture_file *cfile, MapInput taps);
+IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input);
 vector<CompleteField> wg_session_process_complete(const char *field);
 void cf_close(capture_file *cf);
 

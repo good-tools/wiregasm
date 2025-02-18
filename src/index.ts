@@ -8,23 +8,31 @@ import {
   Frame,
   FramesResponse,
   LoadResponse,
+  MapInput,
   Pref,
   PrefModule,
   PrefSetResult,
   TapConvResponse,
   TapExportObjectResponse,
-  TapInput,
   TapResponse,
   Vector,
   WiregasmLib,
   WiregasmLibOverrides,
-  WiregasmLoader
+  WiregasmLoader,
 } from "./types";
-
 import { preferenceSetCodeToError, vectorToArray } from "./utils";
 
+const ALLOWED_TAP_KEYS = new Set(
+  Array.from({ length: 15 }, (_, i) => `tap${i}`)
+);
 
-const ALLOWED_TAP_KEYS = new Set(Array.from({ length: 15 }, (_, i) => `tap${i}`));
+const ALLOWED_GRAPH_KEYS = new Set(
+  [
+    "filter", "interval",
+    ...Array.from({ length: 9 }, (_, i) => `graph${i}`),
+    ...Array.from({ length: 9 }, (_, i) => `filter${i}`),
+  ]
+);
 
 /**
  * Wraps the WiregasmLib lib functionality and manages a single DissectSession
@@ -116,16 +124,16 @@ export class Wiregasm {
     };
   }
 
-  tap(taps: TapInput) {
+  tap(taps: MapInput) {
     // Validate keys.
     if (!("tap0" in taps)) {
-      throw new Error("tap0 is mandatory.")
+      throw new Error("tap0 is mandatory.");
     }
     if (!Object.keys(taps).every((k) => ALLOWED_TAP_KEYS.has(k))) {
       throw new Error(`Invalid arguments. Only tap0..tap15 keys are allowed.`);
     }
 
-    const args = new this.lib.TapInput();
+    const args = new this.lib.MapInput();
     Object.entries(taps).forEach(([k, v]) => args.set(k, v));
 
     const response = this.session.tap(args);
@@ -148,7 +156,7 @@ export class Wiregasm {
             tap: tap.tap,
             type: tap.type,
             objects: vectorToArray(tap.objects),
-          }
+          };
         } else {
           (tap as { delete: () => void }).delete();
           throw new Error("Unknown tap result");
@@ -161,6 +169,27 @@ export class Wiregasm {
 
   download(token: string): DownloadResponse {
     return this.session.download(token);
+  }
+
+  iograph(input: MapInput) {
+    // Validate keys.
+    if (!("graph0" in input)) {
+      throw new Error("graph0 is mandatory.");
+    }
+    if (!Object.keys(input).every((k) => ALLOWED_GRAPH_KEYS.has(k))) {
+      throw new Error(`Invalid arguments. Allowed keys are: ${Array.from(ALLOWED_GRAPH_KEYS).join(", ")}.`);
+    }
+
+    const args = new this.lib.MapInput();
+    Object.entries(input).forEach(([k, v]) => args.set(k, v));
+
+    const out = this.session.iograph(args);
+    return {
+      ...out,
+      iograph: vectorToArray(out.iograph).map((t) => ({
+        items: vectorToArray(t.items),
+      })),
+    };
   }
 
   reload_lua_plugins() {
@@ -239,7 +268,6 @@ export class Wiregasm {
     // convert it from a vector to array
     return vectorToArray(vec);
   }
-
 
   is_eo_tap(tap: any): tap is TapExportObjectResponse {
     return tap instanceof this.lib.TapExportObject;

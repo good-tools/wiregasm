@@ -32,6 +32,7 @@ EMSCRIPTEN_BINDINGS(DissectSession)
     .function("getFrame", &DissectSession::getFrame)
     .function("tap", &DissectSession::tap)
     .function("download", &DissectSession::download)
+    .function("iograph", &DissectSession::iograph)
     .function("follow", &DissectSession::follow);
 }
 
@@ -198,9 +199,25 @@ EMSCRIPTEN_BINDINGS(CompleteField)
     .field("name", &CompleteField::name);
 }
 
+EMSCRIPTEN_BINDINGS(IoGraph)
+{
+  value_object<IoGraph>("IoGraph")
+    .field("items", &IoGraph::items);
+}
+
+EMSCRIPTEN_BINDINGS(IoGraphResult)
+{
+  value_object<IoGraphResult>("IoGraphResult")
+    .field("error", &IoGraphResult::error)
+    .field("iograph", &IoGraphResult::iograph);
+
+  register_vector<IoGraph>("VectorIoGraph");
+}
+
 EMSCRIPTEN_BINDINGS(stl_wrappers)
 {
   register_vector<string>("VectorString");
+  register_vector<float>("VectorFloat");
   register_vector<FrameMeta>("VectorFrameMeta");
   register_vector<DataSource>("VectorDataSource");
   register_vector<ProtoTree>("VectorProtoTree");
@@ -303,6 +320,6 @@ EMSCRIPTEN_BINDINGS(ExportObject) {
 }
 
 
-EMSCRIPTEN_BINDINGS(TapInput) {
-  register_map<string, string>("TapInput");
+EMSCRIPTEN_BINDINGS(MapInput) {
+  register_map<string, string>("MapInput");
 }

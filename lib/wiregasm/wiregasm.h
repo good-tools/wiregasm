@@ -104,6 +104,17 @@ struct CheckFilterResponse
   string error;
 };
 
+struct IoGraph
+{
+  vector<float> items;
+};
+
+struct IoGraphResult
+{
+  string error;
+  vector<IoGraph> iograph;
+};
+
 // base struct
 struct TapValue {
   string tap;
@@ -174,8 +185,7 @@ struct TapResponse {
 };
 
 
-using TapInput = std::map<string, string>;
-
+using MapInput = std::map<string, string>;
 
 struct PrefEnum
 {
@@ -271,7 +281,8 @@ public:
   FramesResponse getFrames(string filter, int skip, int limit);
   Frame getFrame(int number);
   Follow follow(string follow, string filter);
-  TapResponse tap(TapInput taps);
+  TapResponse tap(MapInput taps);
+  IoGraphResult iograph(MapInput args);
   DownloadResponse download(string token);
   ~DissectSession();
 };

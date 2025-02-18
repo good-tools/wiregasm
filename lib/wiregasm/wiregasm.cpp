@@ -480,7 +480,7 @@ Frame DissectSession::getFrame(int number)
   return f;
 }
 
-TapResponse DissectSession::tap(TapInput taps)
+TapResponse DissectSession::tap(MapInput taps)
 {
   return wg_session_process_tap(&this->capture_file, taps);
 }
@@ -509,4 +509,14 @@ FilterCompletionResponse wg_complete_filter(string field)
   FilterCompletionResponse res;
   res.fields = wg_session_process_complete(field.c_str());
   return res;
+}
+
+// {"graph0":"packets","filter0":"frame.number<=100"}
+IoGraphResult DissectSession::iograph(MapInput args)
+{
+  if (args["interval"].empty())
+  {
+    args["interval"] = "1000";
+  }
+  return wg_session_process_iograph(&this->capture_file, args);
 }
