@@ -210,7 +210,6 @@ EMSCRIPTEN_BINDINGS(stl_wrappers)
   register_vector<PrefEnum>("VectorPrefEnum");
   // Frame::follow is a vector of vectors of strings
   register_vector<vector<string>>("VectorVectorString");
-  // register_map<string, string>("map<string, string>");
 }
 
 EMSCRIPTEN_BINDINGS(Download)

@@ -133,7 +133,7 @@ export class Wiregasm {
       error: response.error,
       taps: vectorToArray(response.taps).map((tap) => {
         let res;
-        if (this.is_cov_tap(tap)) {
+        if (this.is_conv_tap(tap)) {
           res = {
             proto: tap.proto,
             tap: tap.tap,
@@ -245,7 +245,7 @@ export class Wiregasm {
     return tap instanceof this.lib.TapExportObject;
   }
 
-  is_cov_tap(tap: any): tap is TapConvResponse {
+  is_conv_tap(tap: any): tap is TapConvResponse {
     return tap instanceof this.lib.TapConvResponse;
   }
 }
