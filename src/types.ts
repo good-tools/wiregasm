@@ -181,12 +181,48 @@ interface ExportObject {
   len: number;
 }
 
-export interface TapResponse {
+
+export interface Conversation {
+  saddr: string;
+  daddr: string;
+  sport: string;
+  dport: string;
+  txf: number;
+  txb: number;
+  rxf: number;
+  rxb: number;
+  start: number;
+  stop: number;
+  filter: string;
+}
+
+export interface Host {
+  host: string;
+  port: string;
+  txf: number;
+  txb: number;
+  rxf: number;
+  rxb: number;
+  filter: string;
+}
+
+export interface TapResponseBase {
   type: string;
   tap: string;
   proto: string;
-  objects: ExportObject[];
 }
+
+export interface TapExportObjectResponse extends TapResponseBase {
+  objects: Vector<ExportObject>;
+}
+
+export interface TapConvResponse extends TapResponseBase {
+  geoip: boolean;
+  convs: Vector<Conversation>;
+  hosts: Vector<Host>;
+}
+
+export type TapResponse = TapExportObjectResponse | TapConvResponse;
 
 export interface DissectSession {
   /**
@@ -219,8 +255,8 @@ export interface DissectSession {
 
   follow(follow: string, filter: string): Follow;
 
-  tap(taps: string): {
-    taps: Vector<string>;
+  tap(taps: Map<string, string>): {
+    taps: Vector<TapResponse>;
     error: string;
   };
 
@@ -293,6 +329,10 @@ export interface WiregasmLibOverrides {
 
 export interface WiregasmLib extends EmscriptenModule {
   DissectSession: DissectSessionConstructable;
+
+  TapInput: MapConstructor;
+  TapExportObject: () => TapExportObjectResponse;
+  TapConvResponse: () => TapConvResponse;
 
   /**
    * Returns the directory where files are uploaded

@@ -2,8 +2,8 @@ import * as fs from "fs/promises";
 
 import { PrefType, Wiregasm, WiregasmLib, WiregasmLibOverrides } from ".";
 
-import loadWiregasm from "../built/bin/wiregasm.js";
 import pako from "pako";
+import loadWiregasm from "../built/bin/wiregasm.js";
 
 // overrides need to be copied over to every instance
 const buildTestOverrides = (): WiregasmLibOverrides => {
@@ -364,17 +364,6 @@ describe("Wiregasm Library - Export Objects", () => {
   });
 
   describe("Taps: negative cases", () => {
-    test("Wrong tap index returns nothing", async () => {
-      const data = await fs.readFile("samples/http.cap");
-      const ret = wg.load("http.cap", data);
-      expect(ret.code).toEqual(0);
-      const res = wg.tap({ "tap1": "eo:http" });
-      expect(res).toStrictEqual({
-        "error": "",
-        "taps": [],
-      },);
-    });
-
     test("Unsupported tap values are handled properly", async () => {
       const data = await fs.readFile("samples/http.cap");
       const ret = wg.load("http.cap", data);
@@ -404,11 +393,9 @@ describe("Wiregasm Library - Export Objects", () => {
       const data = await fs.readFile("samples/http.cap");
       const ret = wg.load("http.cap", data);
       expect(ret.code).toEqual(0);
-      const res = wg.tap({});
-      expect(res).toStrictEqual({
-        "error": "",
-        "taps": [],
-      },);
+      expect(() => {
+        wg.tap({})
+      }).toThrowError("tap0 is mandatory");
     });
   });
 });
@@ -521,7 +508,7 @@ describe("Wiregasm Library - Set Preferences", () => {
   });
 
   test("set preferences works for diameter", async () => {
-    
+
     const pref = wg.get_pref("diameter", "tcp.port");
     expect(pref.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
     expect(pref.range_value).toBe(

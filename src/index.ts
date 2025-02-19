@@ -3,23 +3,28 @@ import {
   CheckFilterResponse,
   CompleteField,
   DissectSession,
-  Download,
+  DownloadResponse,
   Follow,
   Frame,
   FramesResponse,
   LoadResponse,
-  TapInput,
   Pref,
   PrefModule,
   PrefSetResult,
+  TapConvResponse,
+  TapExportObjectResponse,
+  TapInput,
+  TapResponse,
   Vector,
   WiregasmLib,
   WiregasmLibOverrides,
-  WiregasmLoader,
-  DownloadResponse,
+  WiregasmLoader
 } from "./types";
 
 import { preferenceSetCodeToError, vectorToArray } from "./utils";
+
+
+const ALLOWED_TAP_KEYS = new Set(Array.from({ length: 15 }, (_, i) => `tap${i}`));
 
 /**
  * Wraps the WiregasmLib lib functionality and manages a single DissectSession
@@ -112,11 +117,46 @@ export class Wiregasm {
   }
 
   tap(taps: TapInput) {
-    const out = this.session.tap(JSON.stringify(taps));
-    return {
-      ...out,
-      taps: vectorToArray(out.taps).map((t) => JSON.parse(t)),
+    // Validate keys.
+    if (!("tap0" in taps)) {
+      throw new Error("tap0 is mandatory.")
     }
+    if (!Object.keys(taps).every((k) => ALLOWED_TAP_KEYS.has(k))) {
+      throw new Error(`Invalid arguments. Only tap0..tap15 keys are allowed.`);
+    }
+
+    const args = new this.lib.TapInput();
+    Object.entries(taps).forEach(([k, v]) => args.set(k, v));
+
+    const response = this.session.tap(args);
+    return {
+      error: response.error,
+      taps: vectorToArray(response.taps).map((tap) => {
+        let res;
+        if (this.is_cov_tap(tap)) {
+          res = {
+            proto: tap.proto,
+            tap: tap.tap,
+            type: tap.type,
+            geoip: tap.geoip,
+            convs: vectorToArray(tap.convs),
+            hosts: vectorToArray(tap.hosts),
+          };
+        } else if (this.is_eo_tap(tap)) {
+          res = {
+            proto: tap.proto,
+            tap: tap.tap,
+            type: tap.type,
+            objects: vectorToArray(tap.objects),
+          }
+        } else {
+          (tap as { delete: () => void }).delete();
+          throw new Error("Unknown tap result");
+        }
+        (tap as TapResponse & { delete: () => void }).delete();
+        return res;
+      }),
+    };
   }
 
   download(token: string): DownloadResponse {
@@ -198,6 +238,15 @@ export class Wiregasm {
 
     // convert it from a vector to array
     return vectorToArray(vec);
+  }
+
+
+  is_eo_tap(tap: any): tap is TapExportObjectResponse {
+    return tap instanceof this.lib.TapExportObject;
+  }
+
+  is_cov_tap(tap: any): tap is TapConvResponse {
+    return tap instanceof this.lib.TapConvResponse;
   }
 }
 

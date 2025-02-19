@@ -1363,13 +1363,13 @@ DownloadResponse wg_session_process_download(capture_file *cfile, const char *to
  *                  (o) filename - filename
  *                  (m) len - object length
  */
-static eo::ExportObjectTap
+static TapExportObject
 wg_session_process_tap_eo_cb(void *tapdata)
 {
   export_object_list_t *tap_object = (export_object_list_t *)tapdata;
   struct wg_export_object_list *object_list = (struct wg_export_object_list *)tap_object->gui_data;
   GSList *slist;
-  eo::ExportObjectTap res;
+  TapExportObject res;
   res.tap = object_list->type;
   res.type = "eo";
   res.proto = object_list->proto;
@@ -1378,7 +1378,7 @@ wg_session_process_tap_eo_cb(void *tapdata)
   for (slist = object_list->entries; slist; slist = slist->next)
   {
     const export_object_entry_t *eo_entry = (export_object_entry_t *)slist->data;
-    eo::ExportObject obj;
+    ExportObject obj;
     obj.pkt = eo_entry->pkt_num;
     if (eo_entry->hostname)
       obj.hostname = eo_entry->hostname;
@@ -1419,7 +1419,7 @@ static bool
 wg_session_geoip_addr(address *addr)
 {
   const mmdb_lookup_t *lookup = NULL;
-  eo::GeoIp geoip;
+  GeoIp geoip;
 
   if (addr->type == AT_IPv4)
   {
@@ -1512,7 +1512,7 @@ wg_session_geoip_addr(address *addr)
  *                  (m) rxf  - RX frame count
  *                  (m) rxb  - RX bytes
  */
-static eo::TapConvResponse
+static TapConvResponse
 wg_session_process_tap_conv_cb(void *tapdata)
 {
   conv_hash_t *hash = (conv_hash_t *)tapdata;
@@ -1521,7 +1521,7 @@ wg_session_process_tap_conv_cb(void *tapdata)
   int proto_with_port;
   int i;
   int with_geoip = 0;
-  eo::TapConvResponse buf;
+  TapConvResponse buf;
   buf.tap = iu->type;
 
   if (!strncmp(iu->type, "conv:", 5))
@@ -1548,7 +1548,7 @@ wg_session_process_tap_conv_cb(void *tapdata)
       conv_item_t *iui = &g_array_index(iu->hash.conv_array, conv_item_t, i);
       char *filter_str;
 
-      eo::Conversation con;
+      Conversation con;
       con.saddr = get_conversation_address(NULL, &iui->src_address, iu->resolve_name);
       con.daddr = get_conversation_address(NULL, &iui->dst_address, iu->resolve_name);
 
@@ -1585,7 +1585,7 @@ wg_session_process_tap_conv_cb(void *tapdata)
   {
     for (i = 0; i < iu->hash.conv_array->len; i++)
     {
-      eo::Host h;
+      Host h;
       endpoint_item_t *endpoint = &g_array_index(iu->hash.conv_array, endpoint_item_t, i);
       char *filter_str;
 
@@ -1762,18 +1762,20 @@ TapResponse wg_session_process_tap(capture_file *cfile, TapInput taps)
   {
     if (taps_data[i])
     {
-      json j;
       if (taps_type[i] && strncmp(taps_type[i], "eo:", 3) == 0)
       {
-        j = wg_session_process_tap_eo_cb(taps_data[i]);
+        buf.taps.push_back(
+          make_shared<TapExportObject>(wg_session_process_tap_eo_cb(taps_data[i]))
+        );
       }
       else if (taps_type[i] &&
            (strncmp(taps_type[i], "conv:", 5) == 0 ||
         strncmp(taps_type[i], "endpt:", 6) == 0))
       {
-        j = wg_session_process_tap_conv_cb(taps_data[i]);
+        buf.taps.push_back(
+          make_shared<TapConvResponse>(wg_session_process_tap_conv_cb(taps_data[i]))
+        );
       }
-      buf.taps.push_back(j.dump());
       remove_tap_listener(taps_data[i]);
     }
     if (taps_free[i])
