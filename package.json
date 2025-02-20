@@ -1,6 +1,6 @@
 {
   "name": "@goodtools/wiregasm",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "Packet Analyzer powered by Wireshark compiled for WebAssembly",
   "source": "src/index.ts",
   "main": "dist/main.js",
