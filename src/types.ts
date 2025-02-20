@@ -112,7 +112,6 @@ export interface CompleteField {
   name: string;
 }
 
-
 export interface FramesResponse {
   frames: Vector<FrameMeta>;
   matched: number;
@@ -143,7 +142,6 @@ export interface FrameMeta {
   fg: number;
   columns: Vector<string>;
 }
-
 export interface LoadSummary {
   filename: string;
   file_type: string;
@@ -160,6 +158,71 @@ export interface LoadResponse {
   error: string;
   summary: LoadSummary;
 }
+
+export interface Download {
+  file: string;
+  mime: string;
+  data: string;
+}
+
+export interface DownloadResponse {
+  error: string;
+  download: Download;
+}
+
+export type TapInput = Record<string, string>;
+
+interface ExportObject {
+  hostname: string;
+  pkt: number;
+  type: string;
+  filename: string;
+  _download: string;
+  len: number;
+}
+
+
+export interface Conversation {
+  saddr: string;
+  daddr: string;
+  sport: string;
+  dport: string;
+  txf: number;
+  txb: number;
+  rxf: number;
+  rxb: number;
+  start: number;
+  stop: number;
+  filter: string;
+}
+
+export interface Host {
+  host: string;
+  port: string;
+  txf: number;
+  txb: number;
+  rxf: number;
+  rxb: number;
+  filter: string;
+}
+
+export interface TapResponseBase {
+  type: string;
+  tap: string;
+  proto: string;
+}
+
+export interface TapExportObjectResponse extends TapResponseBase {
+  objects: Vector<ExportObject>;
+}
+
+export interface TapConvResponse extends TapResponseBase {
+  geoip: boolean;
+  convs: Vector<Conversation>;
+  hosts: Vector<Host>;
+}
+
+export type TapResponse = TapExportObjectResponse | TapConvResponse;
 
 export interface DissectSession {
   /**
@@ -191,6 +254,13 @@ export interface DissectSession {
   getFrame(number: number): Frame;
 
   follow(follow: string, filter: string): Follow;
+
+  tap(taps: Map<string, string>): {
+    taps: Vector<TapResponse>;
+    error: string;
+  };
+
+  download(token: string): DownloadResponse;
 }
 
 export interface DissectSessionConstructable {
@@ -260,6 +330,10 @@ export interface WiregasmLibOverrides {
 export interface WiregasmLib extends EmscriptenModule {
   DissectSession: DissectSessionConstructable;
 
+  TapInput: MapConstructor;
+  TapExportObject: () => TapExportObjectResponse;
+  TapConvResponse: () => TapConvResponse;
+
   /**
    * Returns the directory where files are uploaded
    *
@@ -281,7 +355,6 @@ export interface WiregasmLib extends EmscriptenModule {
 
   /**
    * List all the preference modules
- 
    * @returns List of preference modules
    */
   listModules(): Vector<PrefModule>;
@@ -332,7 +405,9 @@ export interface WiregasmLib extends EmscriptenModule {
    */
   checkFilter(filter: string): CheckFilterResponse;
 
-  completeFilter(filter: string): { err: string; fields: Vector<CompleteField> };
+  completeFilter(filter: string): { fields: Vector<CompleteField> };
+
+  download(token: string): Download;
   /**
    * Returns the column headers
    */

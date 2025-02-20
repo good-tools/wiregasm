@@ -10,6 +10,7 @@
 #include <epan/secrets.h>
 #include <epan/print.h>
 #include <epan/column.h>
+#include <epan/export_object.h>
 #include <wsutil/str_util.h>
 #include <epan/color_filters.h>
 #include <wsutil/filesystem.h>
@@ -69,6 +70,9 @@ int wg_session_process_load(capture_file *cfile, const char *path, summary_tally
 FramesResponse wg_process_frames(capture_file *cfile, GHashTable *filter_table, const char *filter, guint32 skip, guint32 limit, char **err_ret);
 Frame wg_process_frame(capture_file *cfile, guint32 framenum, char **err_ret);
 Follow wg_process_follow(capture_file *cfile, const char *follow, const char *filter, char **err_ret);
+bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char **err_ret);
+DownloadResponse wg_session_process_download(capture_file *cfile, const char *token);
+TapResponse wg_session_process_tap(capture_file *cfile, TapInput taps);
 vector<CompleteField> wg_session_process_complete(const char *field);
 void cf_close(capture_file *cf);
 

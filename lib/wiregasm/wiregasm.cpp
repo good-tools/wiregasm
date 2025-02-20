@@ -6,7 +6,6 @@
 #include <epan/prefs.h>
 
 using namespace std;
-
 // XXX: g_io_channel_unix_new isn't exported in glib after
 // the emscrpten patch, but is referenced in gtester.c
 //
@@ -18,6 +17,7 @@ using namespace std;
 static const char *UPLOAD_DIR = "/uploads";
 static gboolean wg_initialized = FALSE;
 static e_prefs *prefs_p;
+
 
 string wg_get_upload_dir()
 {
@@ -65,7 +65,8 @@ string wg_upload_file(string name, int buffer_ptr, size_t size)
 
 bool wg_reload_lua_plugins()
 {
-  if (!wg_initialized) {
+  if (!wg_initialized)
+  {
     return false;
   }
 
@@ -216,7 +217,8 @@ PrefResponse wg_get_pref(string module_name, string pref_name)
   res.code = -1;
 
   pref_t *pref = prefs_find_preference(prefs_find_module(module_name.c_str()), pref_name.c_str());
-  if (pref == NULL) {
+  if (pref == NULL)
+  {
     return res;
   }
 
@@ -249,15 +251,18 @@ guint wg_list_modules_cb(module_t *module, gpointer user_data)
 
   m.use_gui = module->use_gui;
 
-  if (module->name) {
+  if (module->name)
+  {
     m.name = string(module->name);
   }
 
-  if (module->title) {
+  if (module->title)
+  {
     m.title = string(module->title);
   }
 
-  if (module->description) {
+  if (module->description)
+  {
     m.description = string(module->description);
   }
 
@@ -271,7 +276,6 @@ guint wg_list_modules_cb(module_t *module, gpointer user_data)
 
   return 0;
 }
-
 
 vector<PrefModule> wg_list_modules()
 {
@@ -322,17 +326,20 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
   int type = prefs_get_type(p);
 
   // handle decode as range ourselves
-  if (type == PREF_DECODE_AS_RANGE) {
+  if (type == PREF_DECODE_AS_RANGE)
+  {
     range_t *new_range = NULL;
     convert_ret_t ret = range_convert_str(NULL, &new_range, value.c_str(), prefs_get_max_value(p));
 
-    if (ret != CVT_NO_ERROR) {
+    if (ret != CVT_NO_ERROR)
+    {
       res.code = -1;
       res.error = "Invalid range";
       return res;
     }
 
-    if (prefs_set_range_value(p, new_range, pref_stashed)) {
+    if (prefs_set_range_value(p, new_range, pref_stashed))
+    {
       pref_unstash_data_t unstashed_data;
 
       unstashed_data.module = mod;
@@ -471,6 +478,16 @@ Frame DissectSession::getFrame(int number)
   }
 
   return f;
+}
+
+TapResponse DissectSession::tap(TapInput taps)
+{
+  return wg_session_process_tap(&this->capture_file, taps);
+}
+
+DownloadResponse DissectSession::download(string token)
+{
+  return wg_session_process_download(&this->capture_file, token.c_str());
 }
 
 DissectSession::~DissectSession()

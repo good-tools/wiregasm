@@ -5,6 +5,7 @@
 #include <vector>
 #include <glib.h>
 #include <wireshark/cfile.h>
+#include <map>
 
 using namespace std;
 
@@ -103,6 +104,79 @@ struct CheckFilterResponse
   string error;
 };
 
+// base struct
+struct TapValue {
+  string tap;
+  string type;
+  string proto;
+  virtual ~TapValue() = default;
+};
+
+struct GeoIp {
+  string country;
+  string country_iso;
+  string city;
+  string as_org;
+  uint32_t as;
+  double lat;
+  double lon;
+};
+
+struct Conversation {
+  string saddr;
+  string daddr;
+  string sport;
+  string dport;
+  unsigned txf;
+  unsigned txb;
+  unsigned rxf;
+  unsigned rxb;
+  double start;
+  double stop;
+  string filter;
+};
+
+struct Host {
+  string host;
+  string port;
+  unsigned txf;
+  unsigned txb;
+  unsigned rxf;
+  unsigned rxb;
+  string filter;
+};
+
+struct ExportObject
+{
+  unsigned pkt;
+  string hostname;
+  string type;
+  string filename;
+  string _download;
+  size_t len;
+};
+
+// derived structs
+struct TapConvResponse : TapValue {
+  bool geoip;
+  vector<Conversation> convs;
+  vector<Host> hosts;
+};
+
+struct TapExportObject : TapValue {
+  vector<ExportObject> objects;
+};
+
+// response struct
+struct TapResponse {
+  vector<shared_ptr<TapValue>> taps;
+  string error;
+};
+
+
+using TapInput = std::map<string, string>;
+
+
 struct PrefEnum
 {
   string name;
@@ -154,6 +228,19 @@ struct FilterCompletionResponse
   vector<CompleteField> fields;
 };
 
+struct Download
+{
+  string file;
+  string mime;
+  string data;
+};
+
+struct DownloadResponse
+{
+  string error;
+  Download download;
+};
+
 // globals
 
 bool wg_init();
@@ -184,6 +271,8 @@ public:
   FramesResponse getFrames(string filter, int skip, int limit);
   Frame getFrame(int number);
   Follow follow(string follow, string filter);
+  TapResponse tap(TapInput taps);
+  DownloadResponse download(string token);
   ~DissectSession();
 };
 
