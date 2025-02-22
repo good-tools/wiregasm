@@ -103,7 +103,7 @@ export interface Frame {
   comments: Vector<string>;
   data_sources: Vector<DataSource>;
   tree: Vector<ProtoTree>;
-  follow: Vector<Vector<string>>
+  follow: Vector<Vector<string>>;
 }
 
 export interface CompleteField {
@@ -170,7 +170,7 @@ export interface DownloadResponse {
   download: Download;
 }
 
-export type TapInput = Record<string, string>;
+export type MapInput = Record<string, string>;
 
 interface ExportObject {
   hostname: string;
@@ -180,7 +180,6 @@ interface ExportObject {
   _download: string;
   len: number;
 }
-
 
 export interface Conversation {
   saddr: string;
@@ -224,6 +223,16 @@ export interface TapConvResponse extends TapResponseBase {
 
 export type TapResponse = TapExportObjectResponse | TapConvResponse;
 
+
+export interface IoGraphResult {
+  error: string;
+  iograph: Vector<IoGraph>;
+}
+
+export interface IoGraph {
+  items: Vector<number>;
+}
+
 export interface DissectSession {
   /**
    * Free up any memory used by the session
@@ -260,11 +269,13 @@ export interface DissectSession {
     error: string;
   };
 
+  iograph(input: Map<string, string>): IoGraphResult;
+
   download(token: string): DownloadResponse;
 }
 
 export interface DissectSessionConstructable {
-  new(path: string): DissectSession;
+  new (path: string): DissectSession;
 }
 
 export interface CheckFilterResponse {
@@ -330,7 +341,7 @@ export interface WiregasmLibOverrides {
 export interface WiregasmLib extends EmscriptenModule {
   DissectSession: DissectSessionConstructable;
 
-  TapInput: MapConstructor;
+  MapInput: MapConstructor;
   TapExportObject: () => TapExportObjectResponse;
   TapConvResponse: () => TapConvResponse;
 

@@ -11,12 +11,13 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 index a248e2ca0f..f9e7d47b03 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -2442,6 +2442,32 @@ set_target_properties(shark_common cli_main capture_opts
+@@ -2442,6 +2442,34 @@ set_target_properties(shark_common cli_main capture_opts
  	COMPILE_FLAGS "${WERROR_COMMON_FLAGS}"
  )
- 
+
 +set(COMMON_PUBLIC_HEADERS
 +	ui/summary.h
++	ui/io_graph_item.h
 +	frame_tvbuff.h
 +)
 +
@@ -27,6 +28,7 @@ index a248e2ca0f..f9e7d47b03 100644
 +
 +add_library(wireshark_common
 +	ui/summary.c
++	ui/io_graph_item.c
 +	$<TARGET_OBJECTS:shark_common>
 +)
 +
@@ -41,9 +43,8 @@ index a248e2ca0f..f9e7d47b03 100644
 +	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +)
- 
+
  if(BUILD_wireshark AND QT_FOUND)
  	set(WIRESHARK_SRC
--- 
+--
 2.34.1
-
