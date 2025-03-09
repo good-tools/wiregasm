@@ -1,0 +1,386 @@
+From 08f7e0e82dcf3ef42ca7145fe26b4851887100e3 Mon Sep 17 00:00:00 2001
+From: Osama Khalid <osama@codinghazard.com>
+Date: Sun, 9 Mar 2025 15:08:34 -0400
+Subject: [PATCH] wiregasm patches
+
+---
+ CMakeLists.txt                    |  30 +++++++-
+ cmake/modules/FindLEMON.cmake     |  58 +++++++++++++++
+ epan/dissectors/packet-snort.c    |   6 ++
+ epan/register.c                   | 116 ++++++------------------------
+ epan/wslua/CMakeLists.txt         |   8 +++
+ epan/wslua/lrexlib/CMakeLists.txt |  14 ++++
+ wsutil/path_config.h.in           |  12 ++--
+ 7 files changed, 143 insertions(+), 101 deletions(-)
+ create mode 100644 cmake/modules/FindLEMON.cmake
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index e84dd37890..c7ff3356aa 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -420,7 +420,6 @@ set(LOG_RC_VERSION ${LOG_PROJECT_MAJOR_VERSION},${LOG_PROJECT_MINOR_VERSION},${P
+ 
+ message(STATUS "V: ${PROJECT_VERSION}, MaV: ${PROJECT_MAJOR_VERSION}, MiV: ${PROJECT_MINOR_VERSION}, PL: ${PROJECT_PATCH_VERSION}, EV: ${PROJECT_VERSION_EXTENSION}.")
+ 
+-include(UseLemon)
+ include(UseMakePluginReg)
+ include(UseMakeTaps)
+ include(UseExecutableResources)
+@@ -1276,6 +1275,7 @@ endif ()
+ find_package(LEX REQUIRED)
+ reset_find_package(PCRE2 PCRE2_DEBUG_LIBRARY)
+ find_package(PCRE2 REQUIRED)
++find_package(LEMON REQUIRED)
+ 
+ if (NOT WIN32)
+ 	find_package(Gettext)
+@@ -1716,6 +1716,8 @@ set(PLUGIN_INSTALL_FULL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${PLUGIN_INSTALL_LIBDIR}
+ set(PLUGIN_INSTALL_VERSION_LIBDIR "${PLUGIN_INSTALL_LIBDIR}/${PLUGIN_PATH_ID}")
+ set(PLUGIN_VERSION_DIR "plugins/${PLUGIN_PATH_ID}")
+ 
++# hack to allow lemon to become a dependency
++add_custom_target( lemon )
+ add_subdirectory( capture )
+ add_subdirectory( epan )
+ add_subdirectory( extcap )
+@@ -2695,6 +2697,32 @@ set_target_properties(shark_common cli_main capture_opts
+ 	COMPILE_FLAGS "${WERROR_COMMON_FLAGS}"
+ )
+ 
++set(COMMON_PUBLIC_HEADERS
++	ui/summary.h
++	frame_tvbuff.h
++)
++
++install(FILES ${COMMON_PUBLIC_HEADERS}
++	DESTINATION "${PROJECT_INSTALL_INCLUDEDIR}/common"
++	COMPONENT "Development"
++)
++
++add_library(wireshark_common
++	ui/summary.c
++	$<TARGET_OBJECTS:shark_common>
++)
++
++target_include_directories(wireshark_common
++	SYSTEM PRIVATE
++		${GCRYPT_INCLUDE_DIRS}
++)
++
++install(TARGETS wireshark_common
++	EXPORT WiresharkTargets
++	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
++	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
++	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
++)
+ 
+ if(BUILD_wireshark AND QT_FOUND)
+ 	set(WIRESHARK_SRC
+diff --git a/cmake/modules/FindLEMON.cmake b/cmake/modules/FindLEMON.cmake
+new file mode 100644
+index 0000000000..ed2e9b4033
+--- /dev/null
++++ b/cmake/modules/FindLEMON.cmake
+@@ -0,0 +1,58 @@
++#
++# - Find lemon executable
++#
++
++include(FindChocolatey)
++
++find_program(LEMON_EXECUTABLE
++  NAMES
++    lemon
++  PATHS
++    ${CHOCOLATEY_BIN_PATH}
++    /bin
++    /usr/bin
++    /usr/local/bin
++    /sbin
++)
++
++INCLUDE(FindPackageHandleStandardArgs)
++FIND_PACKAGE_HANDLE_STANDARD_ARGS(LEMON DEFAULT_MSG LEMON_EXECUTABLE)
++
++MARK_AS_ADVANCED(LEMON_EXECUTABLE)
++
++# lemon a file
++
++MACRO(ADD_LEMON_FILES _source _generated)
++    set(_lemonpardir ${CMAKE_SOURCE_DIR}/tools/lemon)
++    FOREACH (_current_FILE ${ARGN})
++      GET_FILENAME_COMPONENT(_in ${_current_FILE} ABSOLUTE)
++      GET_FILENAME_COMPONENT(_basename ${_current_FILE} NAME_WE)
++
++      SET(_out ${CMAKE_CURRENT_BINARY_DIR}/${_basename})
++
++      ADD_CUSTOM_COMMAND(
++         OUTPUT
++          ${_out}.c
++          # These files are generated as side-effect
++          ${_out}.h
++          ${_out}.out
++         COMMAND ${LEMON_EXECUTABLE}
++           -T${_lemonpardir}/lempar.c
++           -d.
++           ${_in}
++         DEPENDS
++           ${_in}
++           ${_lemonpardir}/lempar.c
++      )
++
++      LIST(APPEND ${_source} ${_in})
++      LIST(APPEND ${_generated} ${_out}.c)
++      if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
++        set_source_files_properties(${_out}.c PROPERTIES COMPILE_OPTIONS "/w")
++      elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
++        set_source_files_properties(${_out}.c PROPERTIES COMPILE_OPTIONS "-Wno-unused-parameter")
++      else()
++        # Build with some warnings for lemon generated code
++      endif()
++    ENDFOREACH (_current_FILE)
++ENDMACRO(ADD_LEMON_FILES)
+\ No newline at end of file
+diff --git a/epan/dissectors/packet-snort.c b/epan/dissectors/packet-snort.c
+index 33556957bd..679dceeab1 100644
+--- a/epan/dissectors/packet-snort.c
++++ b/epan/dissectors/packet-snort.c
+@@ -1323,6 +1323,12 @@ static void snort_start(void)
+     return;
+ #endif
+ 
++#ifdef __EMSCRIPTEN__
++    report_failure("Snort dissector: not yet able to launch Snort process under WebAssembly");
++    current_session.working = FALSE;
++    return;
++#endif
++
+     /* Create snort process and set up pipes */
+     snort_debug_printf("\nRunning %s with config file %s\n", pref_snort_binary_filename, pref_snort_config_filename);
+     if (!g_spawn_async_with_pipes(NULL,          /* working_directory */
+diff --git a/epan/register.c b/epan/register.c
+index 97d3e62692..c42b70d378 100644
+--- a/epan/register.c
++++ b/epan/register.c
+@@ -17,70 +17,27 @@
+ 
+ #include "epan/dissectors/dissectors.h"
+ 
+-static const char *cur_cb_name;
+-// We could use g_atomic_pointer_set/get instead of a mutex, but that causes
+-// a false positive with Clang and TSAN for GLib < 2.64.0 (Issue #17753):
+-// https://gitlab.gnome.org/GNOME/glib/-/issues/1843
+-static GMutex cur_cb_name_mtx;
+-static GAsyncQueue *register_cb_done_q;
+-
+-#define CB_WAIT_TIME (150 * 1000) // microseconds
+-
+-static void set_cb_name(const char *proto) {
+-    g_mutex_lock(&cur_cb_name_mtx);
+-    cur_cb_name = proto;
+-    g_mutex_unlock(&cur_cb_name_mtx);
+-}
+-
+-static void *
+-register_all_protocols_worker(void *arg _U_)
++void
++register_all_protocols(register_cb cb, void *cb_data)
+ {
+-    void *volatile error_message = NULL;
++    const char *cb_name;
++    bool called_back = false;
++    const char *error_message = NULL;
+ 
+     TRY {
+-        for (unsigned long i = 0; i < dissector_reg_proto_count; i++) {
+-            set_cb_name(dissector_reg_proto[i].cb_name);
++        for (gulong i = 0; i < dissector_reg_proto_count; i++) {
++            cb_name = dissector_reg_proto[i].cb_name;
+             dissector_reg_proto[i].cb_func();
++            if (cb && cb_name) {
++                cb(RA_REGISTER, cb_name, cb_data);
++                called_back = true;
++            }
+         }
+     }
+     CATCH(DissectorError) {
+-        /*
+-         * This is probably a dissector, or something it calls,
+-         * calling REPORT_DISSECTOR_ERROR() in a registration
+-         * routine or something else outside the normal dissection
+-         * code path.
+-         *
+-         * The message gets freed by ENDTRY, so we must make a copy
+-         * of it.
+-         */
+         error_message = g_strdup(GET_MESSAGE);
+     }
+     ENDTRY;
+-
+-    g_async_queue_push(register_cb_done_q, GINT_TO_POINTER(true));
+-    return (void *) error_message;
+-}
+-
+-void
+-register_all_protocols(register_cb cb, void *cb_data)
+-{
+-    const char *cb_name;
+-    register_cb_done_q = g_async_queue_new();
+-    bool called_back = false;
+-    GThread *rapw_thread;
+-    const char *error_message;
+-
+-    rapw_thread = g_thread_new("register_all_protocols_worker", &register_all_protocols_worker, NULL);
+-    while (!g_async_queue_timeout_pop(register_cb_done_q, CB_WAIT_TIME)) {
+-        g_mutex_lock(&cur_cb_name_mtx);
+-        cb_name = cur_cb_name;
+-        g_mutex_unlock(&cur_cb_name_mtx);
+-        if (cb && cb_name) {
+-            cb(RA_REGISTER, cb_name, cb_data);
+-            called_back = true;
+-        }
+-    }
+-    error_message = (const char *) g_thread_join(rapw_thread);
+     if (error_message != NULL)
+         THROW_MESSAGE(DissectorError, error_message);
+     if (cb && !called_back) {
+@@ -88,61 +45,32 @@ register_all_protocols(register_cb cb, void *cb_data)
+     }
+ }
+ 
+-static void *
+-register_all_protocol_handoffs_worker(void *arg _U_)
++void
++register_all_protocol_handoffs(register_cb cb, void *cb_data)
+ {
+-    void *volatile error_message = NULL;
++    const char *cb_name;
++    bool called_back = false;
++    const char *error_message = NULL;
+ 
+     TRY {
+-        for (unsigned long i = 0; i < dissector_reg_handoff_count; i++) {
+-            set_cb_name(dissector_reg_handoff[i].cb_name);
++        for (gulong i = 0; i < dissector_reg_handoff_count; i++) {
++            cb_name = dissector_reg_handoff[i].cb_name;
+             dissector_reg_handoff[i].cb_func();
++            if (cb && cb_name) {
++                cb(RA_HANDOFF, cb_name, cb_data);
++                called_back = true;
++            }
+         }
+     }
+     CATCH(DissectorError) {
+-        /*
+-         * This is probably a dissector, or something it calls,
+-         * calling REPORT_DISSECTOR_ERROR() in a registration
+-         * routine or something else outside the normal dissection
+-         * code path.
+-         *
+-         * The message gets freed by ENDTRY, so we must make a copy
+-         * of it.
+-         */
+         error_message = g_strdup(GET_MESSAGE);
+     }
+     ENDTRY;
+-
+-    g_async_queue_push(register_cb_done_q, GINT_TO_POINTER(true));
+-    return (void *) error_message;
+-}
+-
+-void
+-register_all_protocol_handoffs(register_cb cb, void *cb_data)
+-{
+-    const char *cb_name;
+-    bool called_back = false;
+-    GThread *raphw_thread;
+-    const char *error_message;
+-
+-    set_cb_name(NULL);
+-    raphw_thread = g_thread_new("register_all_protocol_handoffs_worker", &register_all_protocol_handoffs_worker, NULL);
+-    while (!g_async_queue_timeout_pop(register_cb_done_q, CB_WAIT_TIME)) {
+-        g_mutex_lock(&cur_cb_name_mtx);
+-        cb_name = cur_cb_name;
+-        g_mutex_unlock(&cur_cb_name_mtx);
+-        if (cb && cb_name) {
+-            cb(RA_HANDOFF, cb_name, cb_data);
+-            called_back = true;
+-        }
+-    }
+-    error_message = (const char *) g_thread_join(raphw_thread);
+     if (error_message != NULL)
+         THROW_MESSAGE(DissectorError, error_message);
+     if (cb && !called_back) {
+         cb(RA_HANDOFF, "finished", cb_data);
+     }
+-    g_async_queue_unref(register_cb_done_q);
+ }
+ 
+ unsigned long register_count(void)
+diff --git a/epan/wslua/CMakeLists.txt b/epan/wslua/CMakeLists.txt
+index 9f35e1486a..85180cdf48 100644
+--- a/epan/wslua/CMakeLists.txt
++++ b/epan/wslua/CMakeLists.txt
+@@ -9,6 +9,14 @@
+ 
+ add_subdirectory(lrexlib)
+ 
++set(WSLUA_PUBLIC_HEADERS
++	init_wslua.h
++)
++
++install(FILES ${WSLUA_PUBLIC_HEADERS}
++	DESTINATION "${PROJECT_INSTALL_INCLUDEDIR}/epan/wslua"
++)
++
+ set(WSLUA_MODULES
+ 	${CMAKE_CURRENT_SOURCE_DIR}/lua_bitop.c
+ 	${CMAKE_CURRENT_SOURCE_DIR}/wslua_address.c
+diff --git a/epan/wslua/lrexlib/CMakeLists.txt b/epan/wslua/lrexlib/CMakeLists.txt
+index e87988bd7c..bc2bdecda9 100644
+--- a/epan/wslua/lrexlib/CMakeLists.txt
++++ b/epan/wslua/lrexlib/CMakeLists.txt
+@@ -28,3 +28,17 @@ add_compile_definitions(
+ 	VERSION=\"2.9.2\"
+ 	PCRE2_CODE_UNIT_WIDTH=8
+ )
++
++set_target_properties(lrexlib PROPERTIES
++	PREFIX "lib"
++	LINK_FLAGS "${WS_LINK_FLAGS}"
++	FOLDER "DLLs"
++	INSTALL_RPATH "${LIBRARY_INSTALL_RPATH}"
++)
++
++install(TARGETS lrexlib
++	EXPORT WiresharkTargets
++	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
++	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
++	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
++)
+\ No newline at end of file
+diff --git a/wsutil/path_config.h.in b/wsutil/path_config.h.in
+index 59d1f5040e..c13d8b97e2 100644
+--- a/wsutil/path_config.h.in
++++ b/wsutil/path_config.h.in
+@@ -1,11 +1,11 @@
+ #ifndef __PATH_CONFIG_H__
+ #define __PATH_CONFIG_H__
+ 
+-#define INSTALL_PREFIX  "@PATH_INSTALL_PREFIX@"
+-#define DATA_DIR        "@PATH_DATA_DIR@"
+-#define DOC_DIR         "@PATH_DOC_DIR@"
+-#define PLUGIN_DIR      "@PATH_PLUGIN_DIR@"
+-#define EXTCAP_DIR      "@PATH_EXTCAP_DIR@"
+-#define LOG_EXTCAP_DIR  "@PATH_LOG_EXTCAP_DIR@"
++#define INSTALL_PREFIX  "/"
++#define DATA_DIR        "/wireshark"
++#define DOC_DIR         "/docs"
++#define PLUGIN_DIR      "/plugins"
++#define EXTCAP_DIR      "/extcap"
++#define LOG_EXTCAP_DIR  "/logextcap"
+ 
+ #endif
+-- 
+2.43.0
+

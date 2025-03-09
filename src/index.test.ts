@@ -34,7 +34,7 @@ describe("Wiregasm Library", () => {
   });
 
   test("version string returned correctly", async () => {
-    expect(lib.wiresharkVersion()).toEqual("4.2.5");
+    expect(lib.wiresharkVersion()).toEqual("4.4.5");
   });
 
   test("columns vector returned correctly", async () => {

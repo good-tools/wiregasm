@@ -283,9 +283,9 @@ nghttp2: nghttp2-$(NGHTTP2_VERSION).tar.xz .sum-nghttp2
 #
 # Wireshark (epan)
 #
-WIRESHARK_VERSION := 4.2.5
+WIRESHARK_VERSION := 4.4.5
 WIRESHARK_URL := https://www.wireshark.org/download/src/all-versions/wireshark-$(WIRESHARK_VERSION).tar.xz
-WIRESHARK_CHECKSUM := 92a8fb08af5a1da30ca469fa45bd982638069907d289fa716068ac71141b7d9726ca0b01adc2910da4c928db23760da75a1c6a7c2eb795ac66ba003a90abb87b
+WIRESHARK_CHECKSUM := 09956fadb2ab80df136c6b35a1be2aa72eec20e1f11c94aaaabecff72d450239d09173ef3cc2bcd8c85c194816afb750e1d476538038ff612366a255ae4fece5
 # do not build any tools, we're only interested in libwireshark (epan)
 WIRESHARK_CONF = \
 	-DBUILD_wireshark=OFF \
@@ -325,14 +325,7 @@ $(TARBALLS)/wireshark-$(WIRESHARK_VERSION).tar.xz:
 wireshark: wireshark-$(WIRESHARK_VERSION).tar.xz .sum-wireshark
 	$(CLEANUP)
 	tar xJfo $<
-	$(APPLY) $(PATCHES)/wireshark/0001-dont-build-radiotap-lemon.patch
-	$(APPLY) $(PATCHES)/wireshark/0002-fix-dfilter-export.patch
-	$(APPLY) $(PATCHES)/wireshark/0003-disable-snort-emscripten.patch
-	$(APPLY) $(PATCHES)/wireshark/0004-export-wireshark-common.patch
-	$(APPLY) $(PATCHES)/wireshark/0005-force-data-dir.patch
-	$(APPLY) $(PATCHES)/wireshark/0006-threadless-registration.patch
-	$(APPLY) $(PATCHES)/wireshark/0007-export-lrexlib.patch
-	$(APPLY) $(PATCHES)/wireshark/0008-export-wslua-headers.patch
+	$(APPLY) $(PATCHES)/wireshark/wiregasm-patches.patch
 	$(MOVE)
 
 .wireshark: wireshark .c-ares .gcrypt .glib .nghttp2
