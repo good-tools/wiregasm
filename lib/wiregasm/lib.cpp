@@ -1855,7 +1855,7 @@ wg_iograph_packet(void *g, packet_info *pinfo, epan_dissect_t *edt, const void *
  * Output object with attributes:
  *       error   - graph cannot be constructed
  *   (m) iograph - array of graph results with attributes:
- *                  items  - graph values, zeros are skipped, if value is not a number it's next index encoded as hex string
+ *                  items  - graph values.
  */
 IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input)
 {
@@ -1871,6 +1871,12 @@ IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input)
 
   if (tok_interval)
     ws_strtou32(tok_interval, NULL, &interval_ms);
+
+  if (interval_ms <= 0)
+  {
+    buf.error = "The value for interval must be a positive integer";
+    return buf;
+  }
 
   for (i = graph_count = 0; i < (int)G_N_ELEMENTS(graphs); i++)
   {
@@ -1967,7 +1973,6 @@ IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input)
     else
     {
       int idx;
-      int next_idx = 0;
 
       for (idx = 0; idx < graph->num_items; idx++)
       {
@@ -1983,16 +1988,7 @@ IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input)
           graph->num_items
         );
 
-        /* if it's zero, don't display */
-        if (val == 0.0)
-          continue;
-
-        /* cause zeros are not printed, need to output index */
-        if (next_idx != idx) {
-          g.items.push_back(idx);
-        }
         g.items.push_back(val);
-        next_idx = idx + 1;
       }
     }
     buf.iograph.push_back(g);
