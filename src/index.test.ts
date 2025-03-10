@@ -676,7 +676,10 @@ describe("Wiregasm Library - IoGraph", () => {
       error: "",
       iograph: [
         {
-          items: [4, 4, 10, 10, 10, 1, 17, 2, 30, 2],
+          items: [
+            4, 4, 10, 10, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 2,
+          ],
         },
       ],
     });
@@ -706,33 +709,98 @@ describe("Wiregasm Library - IoGraph", () => {
       error: "",
       iograph: [
         {
-          items: [479, 2, 721, 160, 424],
+          items: [479, 0, 721, 160, 424],
         },
         {
-          items: [533, 2, 775, 214, 478],
+          items: [533, 0, 775, 214, 478],
         },
         {
-          items: [711, 2976, 6950, 6270, 7914, 54, 17, 108, 30, 108],
+          items: [
+            711, 2976, 6950, 6270, 7914, 54, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            108, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 108,
+          ],
         },
         {
-          items: [5688, 23808, 55600, 50160, 63312, 432, 17, 864, 30, 864],
+          items: [
+            5688, 23808, 55600, 50160, 63312, 432, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 864, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 864,
+          ],
         },
         {
-          items: [4, 4, 8, 10, 10, 1, 17, 2, 30, 2],
+          items: [
+            4, 4, 8, 10, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 2,
+          ],
         },
         {
-          items: [479, 1380, 1380, 1430, 1430],
+          items: [
+            479, 1380, 1380, 1430, 1430, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          ],
         },
         {
-          items: [],
+          items: [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+          ],
         },
         {
-          items: [119.75, 690, 780.125, 573, 737.4000244140625],
+          items: [
+            119.75, 690, 780.125, 573, 737.4000244140625, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          ],
         },
         {
-          items: [],
+          items: [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+          ],
         },
       ],
+    });
+  });
+  describe("IoGraph: negative cases", () => {
+    test("Missing required parameters", async () => {
+      const data = await fs.readFile("samples/http.cap");
+      const ret = wg.load("http.cap", data);
+      expect(ret.code).toEqual(0);
+      expect(() => {
+        wg.iograph({});
+      }).toThrowError("graph0 is mandatory");
+    });
+
+    test("Invalid request", async () => {
+      const data = await fs.readFile("samples/http.cap");
+      const ret = wg.load("http.cap", data);
+      expect(ret.code).toEqual(0);
+      const res = wg.iograph({ graph0: "garbage graph name" });
+      expect(res).toStrictEqual({
+        error: "",
+        iograph: [],
+      });
+    });
+
+    test("Invalid filter", async () => {
+      const data = await fs.readFile("samples/http.cap");
+      const ret = wg.load("http.cap", data);
+      expect(ret.code).toEqual(0);
+      const res = wg.iograph({ graph0: "packets", filter0: "garbage filter" });
+      expect(res).toStrictEqual({
+        error:
+          'Filter "garbage filter" is invalid - "filter" was unexpected in this context.',
+        iograph: [],
+      });
+    });
+
+    test("Invalid interval", async () => {
+      const data = await fs.readFile("samples/http.cap");
+      const ret = wg.load("http.cap", data);
+      expect(ret.code).toEqual(0);
+      const res = wg.iograph({ graph0: "packets", interval: "0" });
+      expect(res).toStrictEqual({
+        error: "The value for interval must be a positive integer",
+        iograph: [],
+      });
     });
   });
 });

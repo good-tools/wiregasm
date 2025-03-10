@@ -26,13 +26,12 @@ const ALLOWED_TAP_KEYS = new Set(
   Array.from({ length: 15 }, (_, i) => `tap${i}`)
 );
 
-const ALLOWED_GRAPH_KEYS = new Set(
-  [
-    "filter", "interval",
-    ...Array.from({ length: 9 }, (_, i) => `graph${i}`),
-    ...Array.from({ length: 9 }, (_, i) => `filter${i}`),
-  ]
-);
+const ALLOWED_GRAPH_KEYS = new Set([
+  "filter",
+  "interval",
+  ...Array.from({ length: 9 }, (_, i) => `graph${i}`),
+  ...Array.from({ length: 9 }, (_, i) => `filter${i}`),
+]);
 
 /**
  * Wraps the WiregasmLib lib functionality and manages a single DissectSession
@@ -177,7 +176,11 @@ export class Wiregasm {
       throw new Error("graph0 is mandatory.");
     }
     if (!Object.keys(input).every((k) => ALLOWED_GRAPH_KEYS.has(k))) {
-      throw new Error(`Invalid arguments. Allowed keys are: ${Array.from(ALLOWED_GRAPH_KEYS).join(", ")}.`);
+      throw new Error(
+        `Invalid arguments. Allowed keys are: ${Array.from(
+          ALLOWED_GRAPH_KEYS
+        ).join(", ")}.`
+      );
     }
 
     const args = new this.lib.MapInput();
