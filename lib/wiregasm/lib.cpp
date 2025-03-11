@@ -1514,6 +1514,12 @@ wg_session_geoip_addr(address *addr)
  *                  (m) txb   - TX bytes
  *                  (m) rxf   - RX frame count
  *                  (m) rxb   - RX bytes
+ *                  (m) rx_frames_total - RX frames total
+ *                  (m) tx_frames_total - TX frames total
+ *                  (m) rx_bytes_total - RX bytes total
+ *                  (m) tx_bytes_total - TX bytes total
+ *                  (m) conv_id - conversation id
+ *                  (m) start_abs_time - (absolute) first packet time
  *                  (m) start - (relative) first packet time
  *                  (m) stop  - (relative) last packet time
  *                  (o) filter - conversation filter
@@ -1525,6 +1531,10 @@ wg_session_geoip_addr(address *addr)
  *                  (m) txb  - TX bytes
  *                  (m) rxf  - RX frame count
  *                  (m) rxb  - RX bytes
+ *                  (m) rx_frames_total - RX frames total
+ *                  (m) tx_frames_total - TX frames total
+ *                  (m) rx_bytes_total - RX bytes total
+ *                  (m) tx_bytes_total - TX bytes total
  */
 static TapConvResponse
 wg_session_process_tap_conv_cb(void *tapdata)
@@ -1576,9 +1586,15 @@ wg_session_process_tap_conv_cb(void *tapdata)
       con.txb = iui->tx_bytes;
       con.rxf = iui->rx_frames;
       con.rxb = iui->rx_bytes;
-
+      con.conv_id = iui->conv_id;
+      con.tx_frames_total = iui->tx_frames_total;
+      con.rx_frames_total = iui->rx_frames_total;
+      con.tx_bytes_total = iui->tx_bytes_total;
+      con.rx_bytes_total = iui->rx_bytes_total;
+      con.filtered = iui->filtered;
       con.start = nstime_to_sec(&iui->start_time);
       con.stop = nstime_to_sec(&iui->stop_time);
+      con.start_abs_time = nstime_to_sec(&iui->start_abs_time);
 
       filter_str = get_conversation_filter(iui, CONV_DIR_A_TO_FROM_B);
       if (filter_str)
@@ -1614,6 +1630,11 @@ wg_session_process_tap_conv_cb(void *tapdata)
       h.txb = endpoint->tx_bytes;
       h.rxf = endpoint->rx_frames;
       h.rxb = endpoint->rx_bytes;
+      h.tx_frames_total = endpoint->tx_frames_total;
+      h.rx_frames_total = endpoint->rx_frames_total;
+      h.tx_bytes_total = endpoint->tx_bytes_total;
+      h.rx_bytes_total = endpoint->rx_bytes_total;
+      h.filtered = endpoint->filtered;
 
       filter_str = get_endpoint_filter(endpoint);
       if (filter_str)
@@ -1641,8 +1662,9 @@ wg_session_process_tap_conv_cb(void *tapdata)
  * Process tap request
  *
  * Input:
- *   (m) tap0         - First tap request
- *   (o) tap1...tap15 - Other tap requests
+ *   (m) tap0               - First tap request
+ *   (o) tap1...tap15       - Other tap requests
+ *   (o) filter0...filter15 - Filter for each tap
  *
  * Output object with attributes:
  *   (m) taps  - array of object with attributes:
@@ -1653,7 +1675,7 @@ wg_session_process_tap_conv_cb(void *tapdata)
  *
  *   (m) err   - error code
  */
-TapResponse wg_session_process_tap(capture_file *cfile, MapInput taps)
+TapResponse wg_session_process_tap(capture_file *cfile, MapInput input)
 {
   TapResponse buf;
   void *taps_data[16];
@@ -1665,16 +1687,21 @@ TapResponse wg_session_process_tap(capture_file *cfile, MapInput taps)
   for (i = 0; i < 16; i++)
   {
     char tapbuf[32];
-    const char *tap_filter = "";
+    const char *tap_filter;
+    const char *tok_tap;
     void *tap_data = NULL;
     GFreeFunc tap_free = NULL;
     GString *tap_error = NULL;
+    guint32 flags = 0;
 
     snprintf(tapbuf, sizeof(tapbuf), "tap%d", i);
-    if (taps.find(tapbuf) == taps.end())
+    if (input.find(tapbuf) == input.end())
       break;
 
-    const char *tok_tap = taps[tapbuf].c_str();
+    tok_tap = input[tapbuf].c_str();
+    snprintf(tapbuf, sizeof(tapbuf), "filter%d", i);
+    tap_filter = input[tapbuf].c_str();
+
     if (!strncmp(tok_tap, "conv:", 5) || !strncmp(tok_tap, "endpt:", 6))
     {
       struct register_ct *ct = nullptr;
@@ -1711,14 +1738,14 @@ TapResponse wg_session_process_tap(capture_file *cfile, MapInput taps)
       ct_data = g_new0(struct wg_conv_tap_data, 1);
       ct_data->type = tok_tap;
       ct_data->hash.user_data = ct_data;
-      ct_data->resolve_name = true;
-      ct_data->resolve_port = true;
+      ct_data->resolve_name = false;
+      ct_data->resolve_port = false;
 
       tap_error = register_tap_listener(
         ct_tapname,
         &ct_data->hash,
         tap_filter,
-        0,
+        flags,
         NULL,
         tap_func,
         NULL,

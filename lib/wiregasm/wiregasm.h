@@ -6,6 +6,7 @@
 #include <glib.h>
 #include <wireshark/cfile.h>
 #include <map>
+#include <epan/conversation_table.h>
 
 using namespace std;
 
@@ -134,27 +135,39 @@ struct GeoIp {
 };
 
 struct Conversation {
-  string saddr;
-  string daddr;
-  string sport;
-  string dport;
-  unsigned txf;
-  unsigned txb;
-  unsigned rxf;
-  unsigned rxb;
-  double start;
-  double stop;
-  string filter;
+  string saddr;  // source address
+  string daddr;  // destination address
+  string sport;  // source port
+  string dport;  // destination port
+  int conv_id;  // conversation id
+  unsigned txf;  // number of transmitted frames
+  unsigned txb;  // number of transmitted bytes
+  unsigned rxf;  // number of received frames
+  unsigned rxb;  // number of received bytes
+  unsigned tx_frames_total;  // number of transmitted frames total
+  unsigned rx_frames_total;  // number of received frames total
+  unsigned tx_bytes_total;  // number of transmitted bytes total
+  unsigned rx_bytes_total; // number of received bytes total
+  double start;  // relative start time for the conversation
+  double stop;  // relative stop time for the conversation
+  double start_abs_time;  // absolute start time for the conversation
+  bool filtered;  // whether the entry contains only filtered data
+  string filter;  // filter string
 };
 
 struct Host {
-  string host;
-  string port;
-  unsigned txf;
-  unsigned txb;
-  unsigned rxf;
-  unsigned rxb;
-  string filter;
+  string host;  // host address
+  string port;  // host port
+  unsigned txf;  // number of transmitted frames
+  unsigned txb;  // number of transmitted bytes
+  unsigned rxf;  // number of received frames
+  unsigned rxb;  // number of received bytes
+  unsigned tx_frames_total;  // number of transmitted frames total
+  unsigned rx_frames_total;  // number of received frames total
+  unsigned tx_bytes_total;  // number of transmitted bytes total
+  unsigned rx_bytes_total;  // number of received bytes total
+  bool filtered;  // whether the entry contains only filtered data
+  string filter;  // filter string
 };
 
 struct ExportObject
