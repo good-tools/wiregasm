@@ -6,7 +6,6 @@
 #include <glib.h>
 #include <wireshark/cfile.h>
 #include <map>
-#include <epan/conversation_table.h>
 
 using namespace std;
 
