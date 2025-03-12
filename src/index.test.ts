@@ -558,6 +558,73 @@ describe("Wiregasm Library - Tap", () => {
     });
   });
 
+  test("tap0 conv:TCP with filter and ignore_filter flag", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({
+      tap0: "conv:TCP",
+      filter0: "ip.addr==145.254.160.237 && tcp.port==3372",
+      ignore_filter: "1",
+    });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          convs: [
+            {
+              conv_id: 0,
+              daddr: "65.208.228.223",
+              dport: "80",
+              filter:
+                "ip.addr==145.254.160.237 && tcp.port==3372 && ip.addr==65.208.228.223 && tcp.port==80",
+              filtered: false,
+              rx_bytes_total: 19344,
+              rx_frames_total: 18,
+              rxb: 19344,
+              rxf: 18,
+              saddr: "145.254.160.237",
+              sport: "3372",
+              start: 0,
+              start_abs_time: 1084443427.311224,
+              stop: 30.393704,
+              tx_bytes_total: 1351,
+              tx_frames_total: 16,
+              txb: 1351,
+              txf: 16,
+            },
+            {
+              conv_id: 1,
+              daddr: "216.239.59.99",
+              dport: "80",
+              filter:
+                "ip.addr==145.254.160.237 && tcp.port==3371 && ip.addr==216.239.59.99 && tcp.port==80",
+              filtered: true,
+              rx_bytes_total: 3236,
+              rx_frames_total: 4,
+              rxb: 0,
+              rxf: 0,
+              saddr: "145.254.160.237",
+              sport: "3371",
+              start: 2.984291,
+              start_abs_time: 1084443430.295515,
+              stop: 4.776868,
+              tx_bytes_total: 883,
+              tx_frames_total: 3,
+              txb: 0,
+              txf: 0,
+            },
+          ],
+          hosts: [],
+          geoip: false,
+          proto: "TCP",
+          tap: "conv:TCP",
+          type: "conv",
+        },
+      ],
+    });
+  });
+
   test("tap0 conv:TCP with filter", async () => {
     const data = await fs.readFile("samples/http.cap");
     const ret = wg.load("http.cap", data);

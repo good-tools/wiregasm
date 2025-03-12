@@ -1665,6 +1665,10 @@ wg_session_process_tap_conv_cb(void *tapdata)
  *   (m) tap0               - First tap request
  *   (o) tap1...tap15       - Other tap requests
  *   (o) filter0...filter15 - Filter for each tap
+ *   (o) ignore_filter      - set to "1" if you want to be returned all
+ *                            packets, even ones that do not pass the filter.
+ *                            The packets will be marked as "filtered" in the
+ *                            output.
  *
  * Output object with attributes:
  *   (m) taps  - array of object with attributes:
@@ -1689,10 +1693,11 @@ TapResponse wg_session_process_tap(capture_file *cfile, MapInput input)
     char tapbuf[32];
     const char *tap_filter;
     const char *tok_tap;
+    const char *ignore_filter;
     void *tap_data = NULL;
     GFreeFunc tap_free = NULL;
     GString *tap_error = NULL;
-    guint32 flags = 0;
+    guint32 flags = TL_REQUIRES_NOTHING;
 
     snprintf(tapbuf, sizeof(tapbuf), "tap%d", i);
     if (input.find(tapbuf) == input.end())
@@ -1701,6 +1706,10 @@ TapResponse wg_session_process_tap(capture_file *cfile, MapInput input)
     tok_tap = input[tapbuf].c_str();
     snprintf(tapbuf, sizeof(tapbuf), "filter%d", i);
     tap_filter = input[tapbuf].c_str();
+
+    ignore_filter = input["ignore_filter"].c_str();
+    if (ignore_filter && !strcmp(ignore_filter, "1"))
+      flags |= TL_IGNORE_DISPLAY_FILTER;
 
     if (!strncmp(tok_tap, "conv:", 5) || !strncmp(tok_tap, "endpt:", 6))
     {

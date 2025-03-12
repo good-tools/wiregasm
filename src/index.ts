@@ -25,6 +25,7 @@ import { preferenceSetCodeToError, vectorToArray } from "./utils";
 const ALLOWED_TAP_KEYS = new Set([
   ...Array.from({ length: 15 }, (_, i) => `tap${i}`),
   ...Array.from({ length: 15 }, (_, i) => `filter${i}`),
+  "ignore_filter",
 ]);
 
 const ALLOWED_GRAPH_KEYS = new Set([
