@@ -291,8 +291,15 @@ EMSCRIPTEN_BINDINGS(Conversation) {
     .field("txb", &Conversation::txb)
     .field("rxf", &Conversation::rxf)
     .field("rxb", &Conversation::rxb)
+    .field("tx_frames_total", &Conversation::tx_frames_total)
+    .field("rx_frames_total", &Conversation::rx_frames_total)
+    .field("tx_bytes_total", &Conversation::tx_bytes_total)
+    .field("rx_bytes_total", &Conversation::rx_bytes_total)
     .field("start", &Conversation::start)
     .field("stop", &Conversation::stop)
+    .field("start_abs_time", &Conversation::start_abs_time)
+    .field("filtered", &Conversation::filtered)
+    .field("conv_id", &Conversation::conv_id)
     .field("filter", &Conversation::filter);
 }
 
@@ -305,6 +312,11 @@ EMSCRIPTEN_BINDINGS(Host) {
     .field("txb", &Host::txb)
     .field("rxf", &Host::rxf)
     .field("rxb", &Host::rxb)
+    .field("tx_frames_total", &Host::tx_frames_total)
+    .field("rx_frames_total", &Host::rx_frames_total)
+    .field("tx_bytes_total", &Host::tx_bytes_total)
+    .field("rx_bytes_total", &Host::rx_bytes_total)
+    .field("filtered", &Host::filtered)
     .field("filter", &Host::filter);
 }
 
