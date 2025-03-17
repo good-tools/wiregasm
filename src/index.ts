@@ -22,9 +22,10 @@ import {
 } from "./types";
 import { preferenceSetCodeToError, vectorToArray } from "./utils";
 
-const ALLOWED_TAP_KEYS = new Set(
-  Array.from({ length: 15 }, (_, i) => `tap${i}`)
-);
+const ALLOWED_TAP_KEYS = new Set([
+  ...Array.from({ length: 15 }, (_, i) => `tap${i}`),
+  ...Array.from({ length: 15 }, (_, i) => `filter${i}`),
+]);
 
 const ALLOWED_GRAPH_KEYS = new Set([
   "filter",
@@ -129,7 +130,11 @@ export class Wiregasm {
       throw new Error("tap0 is mandatory.");
     }
     if (!Object.keys(taps).every((k) => ALLOWED_TAP_KEYS.has(k))) {
-      throw new Error(`Invalid arguments. Only tap0..tap15 keys are allowed.`);
+      throw new Error(
+        `Invalid arguments. Allowed keys are: ${Array.from(
+          ALLOWED_GRAPH_KEYS
+        ).join(", ")}.`
+      );
     }
 
     const args = new this.lib.MapInput();

@@ -193,6 +193,13 @@ export interface Conversation {
   start: number;
   stop: number;
   filter: string;
+  tx_bytes_total: number;
+  tx_frames_total: number;
+  rx_bytes_total: number;
+  rx_frames_total: number;
+  filtered: boolean;
+  conv_id: number;
+  start_abs_time: number;
 }
 
 export interface Host {
@@ -203,6 +210,11 @@ export interface Host {
   rxf: number;
   rxb: number;
   filter: string;
+  tx_bytes_total: number;
+  tx_frames_total: number;
+  rx_bytes_total: number;
+  rx_frames_total: number;
+  filtered: boolean;
 }
 
 export interface TapResponseBase {
@@ -222,7 +234,6 @@ export interface TapConvResponse extends TapResponseBase {
 }
 
 export type TapResponse = TapExportObjectResponse | TapConvResponse;
-
 
 export interface IoGraphResult {
   error: string;

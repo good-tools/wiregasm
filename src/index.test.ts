@@ -261,41 +261,154 @@ describe("Wiregasm Library - Export Objects", () => {
     expect(second_file.download.file).toBe("download.html");
     expect(second_file.error).toBe("");
   });
+});
 
-  test("tap0 endpt:Ethernet works", async () => {
+describe("Wiregasm Library - Tap", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(() => {
+    return wg.init(loadWiregasm, buildTestOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("tap0 endpt:UDP works", async () => {
     const data = await fs.readFile("samples/http.cap");
     const ret = wg.load("http.cap", data);
     expect(ret.code).toEqual(0);
-    const res = wg.tap({ tap0: "endpt:Ethernet" });
+    const res = wg.tap({ tap0: "endpt:UDP" });
     expect(res).toStrictEqual({
       error: "",
       taps: [
         {
-          convs: [],
           geoip: false,
+          convs: [],
           hosts: [
             {
-              filter: "eth.addr==00:00:01:00:00:00",
-              host: "Xerox_00:00:00",
-              port: "",
+              filter: "ip.addr==145.254.160.237 && udp.port==3009",
+              filtered: false,
+              host: "145.254.160.237",
+              port: "3009",
+              rx_bytes_total: 188,
+              rx_frames_total: 1,
+              rxb: 188,
+              rxf: 1,
+              tx_bytes_total: 89,
+              tx_frames_total: 1,
+              txb: 89,
+              txf: 1,
+            },
+            {
+              filter: "ip.addr==145.253.2.203 && udp.port==53",
+              filtered: false,
+              host: "145.253.2.203",
+              port: "53",
+              rx_bytes_total: 89,
+              rx_frames_total: 1,
+              rxb: 89,
+              rxf: 1,
+              tx_bytes_total: 188,
+              tx_frames_total: 1,
+              txb: 188,
+              txf: 1,
+            },
+          ],
+          proto: "UDP",
+          tap: "endpt:UDP",
+          type: "host",
+        },
+      ],
+    });
+  });
+
+  test("tap0 endpt:UDP with filter works", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({ tap0: "endpt:UDP", filter0: "udp.port==53" });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          geoip: false,
+          convs: [],
+          hosts: [
+            {
+              filter: "ip.addr==145.254.160.237 && udp.port==3009",
+              filtered: false,
+              host: "145.254.160.237",
+              port: "3009",
+              rx_bytes_total: 188,
+              rx_frames_total: 1,
+              rxb: 188,
+              rxf: 1,
+              tx_bytes_total: 89,
+              tx_frames_total: 1,
+              txb: 89,
+              txf: 1,
+            },
+            {
+              filter: "ip.addr==145.253.2.203 && udp.port==53",
+              filtered: false,
+              host: "145.253.2.203",
+              port: "53",
+              rx_bytes_total: 89,
+              rx_frames_total: 1,
+              rxb: 89,
+              rxf: 1,
+              tx_bytes_total: 188,
+              tx_frames_total: 1,
+              txb: 188,
+              txf: 1,
+            },
+          ],
+          proto: "UDP",
+          tap: "endpt:UDP",
+          type: "host",
+        },
+      ],
+    });
+  });
+
+  test("tap0 conv:Ethernet works", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({ tap0: "conv:Ethernet" });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          convs: [
+            {
+              conv_id: -1,
+              daddr: "fe:ff:20:00:01:00",
+              dport: "",
+              filter:
+                "eth.addr==00:00:01:00:00:00 && eth.addr==fe:ff:20:00:01:00",
+              filtered: false,
+              rx_bytes_total: 22768,
+              rx_frames_total: 23,
               rxb: 22768,
               rxf: 23,
+              saddr: "00:00:01:00:00:00",
+              sport: "",
+              start: 0,
+              start_abs_time: 1084443427.311224,
+              stop: 30.393704,
+              tx_bytes_total: 2323,
+              tx_frames_total: 20,
               txb: 2323,
               txf: 20,
             },
-            {
-              filter: "eth.addr==fe:ff:20:00:01:00",
-              host: "fe:ff:20:00:01:00",
-              port: "",
-              rxb: 2323,
-              rxf: 20,
-              txb: 22768,
-              txf: 23,
-            },
           ],
+          hosts: [],
+          geoip: false,
           proto: "Ethernet",
-          tap: "endpt:Ethernet",
-          type: "host",
+          tap: "conv:Ethernet",
+          type: "conv",
         },
       ],
     });
@@ -312,6 +425,7 @@ describe("Wiregasm Library - Export Objects", () => {
         {
           convs: [
             {
+              conv_id: -1,
               daddr: "65.208.228.223",
               dport: "",
               filter: "ip.addr==145.254.160.237 && ip.addr==65.208.228.223",
@@ -323,8 +437,15 @@ describe("Wiregasm Library - Export Objects", () => {
               stop: 30.393704,
               txb: 1351,
               txf: 16,
+              filtered: false,
+              rx_bytes_total: 19344,
+              rx_frames_total: 18,
+              start_abs_time: 1084443427.311224,
+              tx_bytes_total: 1351,
+              tx_frames_total: 16,
             },
             {
+              conv_id: -1,
               daddr: "145.253.2.203",
               dport: "",
               filter: "ip.addr==145.254.160.237 && ip.addr==145.253.2.203",
@@ -336,8 +457,15 @@ describe("Wiregasm Library - Export Objects", () => {
               stop: 2.91419,
               txb: 89,
               txf: 1,
+              filtered: false,
+              rx_bytes_total: 188,
+              rx_frames_total: 1,
+              start_abs_time: 1084443429.864896,
+              tx_bytes_total: 89,
+              tx_frames_total: 1,
             },
             {
+              conv_id: -1,
               daddr: "216.239.59.99",
               dport: "",
               filter: "ip.addr==145.254.160.237 && ip.addr==216.239.59.99",
@@ -349,12 +477,170 @@ describe("Wiregasm Library - Export Objects", () => {
               stop: 4.776868,
               txb: 883,
               txf: 3,
+              filtered: false,
+              rx_bytes_total: 3236,
+              rx_frames_total: 4,
+              start_abs_time: 1084443430.295515,
+              tx_bytes_total: 883,
+              tx_frames_total: 3,
             },
           ],
           geoip: false,
           hosts: [],
           proto: "IPv4",
           tap: "conv:IPv4",
+          type: "conv",
+        },
+      ],
+    });
+  });
+
+  test("tap0 conv:TCP has proper stream id", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({ tap0: "conv:TCP" });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          convs: [
+            {
+              conv_id: 0,
+              daddr: "65.208.228.223",
+              dport: "80",
+              filter:
+                "ip.addr==145.254.160.237 && tcp.port==3372 && ip.addr==65.208.228.223 && tcp.port==80",
+              filtered: false,
+              rx_bytes_total: 19344,
+              rx_frames_total: 18,
+              rxb: 19344,
+              rxf: 18,
+              saddr: "145.254.160.237",
+              sport: "3372",
+              start: 0,
+              start_abs_time: 1084443427.311224,
+              stop: 30.393704,
+              tx_bytes_total: 1351,
+              tx_frames_total: 16,
+              txb: 1351,
+              txf: 16,
+            },
+            {
+              conv_id: 1,
+              daddr: "216.239.59.99",
+              dport: "80",
+              filter:
+                "ip.addr==145.254.160.237 && tcp.port==3371 && ip.addr==216.239.59.99 && tcp.port==80",
+              filtered: false,
+              rx_bytes_total: 3236,
+              rx_frames_total: 4,
+              rxb: 3236,
+              rxf: 4,
+              saddr: "145.254.160.237",
+              sport: "3371",
+              start: 2.984291,
+              start_abs_time: 1084443430.295515,
+              stop: 4.776868,
+              tx_bytes_total: 883,
+              tx_frames_total: 3,
+              txb: 883,
+              txf: 3,
+            },
+          ],
+          hosts: [],
+          geoip: false,
+          proto: "TCP",
+          tap: "conv:TCP",
+          type: "conv",
+        },
+      ],
+    });
+  });
+
+  test("tap0 conv:Ethernet with filter", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({
+      tap0: "conv:Ethernet",
+      filter0: "ip.addr==145.254.160.237 && tcp.port==3372",
+    });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          convs: [
+            {
+              conv_id: -1,
+              daddr: "fe:ff:20:00:01:00",
+              dport: "",
+              filter:
+                "eth.addr==00:00:01:00:00:00 && eth.addr==fe:ff:20:00:01:00",
+              filtered: false,
+              rx_bytes_total: 22768,
+              rx_frames_total: 23,
+              rxb: 19344,
+              rxf: 18,
+              saddr: "00:00:01:00:00:00",
+              sport: "",
+              start: 0,
+              start_abs_time: 1084443427.311224,
+              stop: 30.393704,
+              tx_bytes_total: 2323,
+              tx_frames_total: 20,
+              txb: 1351,
+              txf: 16,
+            },
+          ],
+          hosts: [],
+          geoip: false,
+          proto: "Ethernet",
+          tap: "conv:Ethernet",
+          type: "conv",
+        },
+      ],
+    });
+  });
+
+  test("tap0 conv:Ethernet without filter", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({
+      tap0: "conv:Ethernet",
+    });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          convs: [
+            {
+              conv_id: -1,
+              daddr: "fe:ff:20:00:01:00",
+              dport: "",
+              filter:
+                "eth.addr==00:00:01:00:00:00 && eth.addr==fe:ff:20:00:01:00",
+              filtered: false,
+              rx_bytes_total: 22768,
+              rx_frames_total: 23,
+              rxb: 22768,
+              rxf: 23,
+              saddr: "00:00:01:00:00:00",
+              sport: "",
+              start: 0,
+              start_abs_time: 1084443427.311224,
+              stop: 30.393704,
+              tx_bytes_total: 2323,
+              tx_frames_total: 20,
+              txb: 2323,
+              txf: 20,
+            },
+          ],
+          hosts: [],
+          geoip: false,
+          proto: "Ethernet",
+          tap: "conv:Ethernet",
           type: "conv",
         },
       ],
