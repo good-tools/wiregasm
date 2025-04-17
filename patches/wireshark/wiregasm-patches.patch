@@ -10,8 +10,9 @@ Subject: [PATCH] wiregasm patches
  epan/register.c                   | 116 ++++++------------------------
  epan/wslua/CMakeLists.txt         |   8 +++
  epan/wslua/lrexlib/CMakeLists.txt |  14 ++++
+ wsutil/filesystem.c               |   6 +-
  wsutil/path_config.h.in           |  12 ++--
- 7 files changed, 143 insertions(+), 101 deletions(-)
+ 8 files changed, 147 insertions(+), 103 deletions(-)
  create mode 100644 cmake/modules/FindLEMON.cmake
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
@@ -359,6 +360,23 @@ index e87988bd7c..bc2bdecda9 100644
 +	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +)
 \ No newline at end of file
+diff --git a/wsutil/filesystem.c b/wsutil/filesystem.c
+index e5341994fe..708f5d108d 100644
+--- a/wsutil/filesystem.c
++++ b/wsutil/filesystem.c
+@@ -1056,8 +1056,10 @@ get_current_working_dir(void)
+ const char *
+ get_datafile_dir(void)
+ {
+-    if (datafile_dir != NULL)
+-        return datafile_dir;
++    if (datafile_dir == NULL)
++        datafile_dir = g_strdup(DATA_DIR);
++    
++    return datafile_dir;
+ 
+     const char *data_dir_envar = CONFIGURATION_ENVIRONMENT_VARIABLE("DATA_DIR");
+     if (g_getenv(data_dir_envar) && !started_with_special_privs()) {
 diff --git a/wsutil/path_config.h.in b/wsutil/path_config.h.in
 index 59d1f5040e..c13d8b97e2 100644
 --- a/wsutil/path_config.h.in
