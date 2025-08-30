@@ -1,10 +1,10 @@
-From 08f7e0e82dcf3ef42ca7145fe26b4851887100e3 Mon Sep 17 00:00:00 2001
+From 1ab598899c23d5434b7e9573e9f7a166274b6c86 Mon Sep 17 00:00:00 2001
 From: Osama Khalid <osama@codinghazard.com>
-Date: Sun, 9 Mar 2025 15:08:34 -0400
+Date: Sat, 30 Aug 2025 13:35:08 -0400
 Subject: [PATCH] wiregasm patches
 
 ---
- CMakeLists.txt                    |  30 +++++++-
+ CMakeLists.txt                    |  32 ++++++++-
  cmake/modules/FindLEMON.cmake     |  58 +++++++++++++++
  epan/dissectors/packet-snort.c    |   6 ++
  epan/register.c                   | 116 ++++++------------------------
@@ -12,11 +12,11 @@ Subject: [PATCH] wiregasm patches
  epan/wslua/lrexlib/CMakeLists.txt |  14 ++++
  wsutil/filesystem.c               |   6 +-
  wsutil/path_config.h.in           |  12 ++--
- 8 files changed, 147 insertions(+), 103 deletions(-)
+ 8 files changed, 149 insertions(+), 103 deletions(-)
  create mode 100644 cmake/modules/FindLEMON.cmake
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index e84dd37890..c7ff3356aa 100644
+index e84dd37890..bddede4e4c 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -420,7 +420,6 @@ set(LOG_RC_VERSION ${LOG_PROJECT_MAJOR_VERSION},${LOG_PROJECT_MINOR_VERSION},${P
@@ -44,12 +44,13 @@ index e84dd37890..c7ff3356aa 100644
  add_subdirectory( capture )
  add_subdirectory( epan )
  add_subdirectory( extcap )
-@@ -2695,6 +2697,32 @@ set_target_properties(shark_common cli_main capture_opts
+@@ -2695,6 +2697,34 @@ set_target_properties(shark_common cli_main capture_opts
  	COMPILE_FLAGS "${WERROR_COMMON_FLAGS}"
  )
  
 +set(COMMON_PUBLIC_HEADERS
 +	ui/summary.h
++	ui/io_graph_item.h
 +	frame_tvbuff.h
 +)
 +
@@ -60,6 +61,7 @@ index e84dd37890..c7ff3356aa 100644
 +
 +add_library(wireshark_common
 +	ui/summary.c
++	ui/io_graph_item.c
 +	$<TARGET_OBJECTS:shark_common>
 +)
 +
@@ -401,4 +403,3 @@ index 59d1f5040e..c13d8b97e2 100644
  #endif
 -- 
 2.43.0
-
