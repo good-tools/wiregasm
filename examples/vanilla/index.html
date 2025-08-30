@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wiregasm (Vanilla JS)</title>
+  </head>
+  <body>
+    <h1>Wiregasm (Vanilla JS)</h1>
+    <p id="output">Loading...</p>
+    <div id="fileSelector">
+      <input type="file" id="fileInput" />
+    </div>
+    <div id="captureDetails" style="margin-top: 10px; border: 1px solid" hidden>
+      <p>File: <span id="fileName"></span></p>
+      <p>Size: <span id="fileSize"></span> bytes</p>
+      <p>Encap Type: <span id="fileEncapType"></span></p>
+      <p>Type: <span id="fileType"></span></p>
+      <p>Packets: <span id="filePackets"></span></p>
+    </div>
+    <script src="main.js"></script>
+  </body>
+</html>

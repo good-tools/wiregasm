@@ -8,7 +8,6 @@
 #include <wireshark/ws_version.h>
 
 using namespace std;
-
 // XXX: g_io_channel_unix_new isn't exported in glib after
 // the emscrpten patch, but is referenced in gtester.c
 //
@@ -156,7 +155,8 @@ string wg_upload_file(string name, int buffer_ptr, size_t size)
 
 bool wg_reload_lua_plugins()
 {
-  if (!wg_initialized) {
+  if (!wg_initialized)
+  {
     return false;
   }
 
@@ -283,41 +283,41 @@ void wg_set_pref_values(pref_t *pref, PrefData *res)
 
     case PREF_RANGE:
     case PREF_DECODE_AS_RANGE:
-      {
-        char *range_str = range_convert_range(NULL, prefs_get_range_value_real(pref, pref_current));
-        res->range_value = string(range_str);
-        wmem_free(NULL, range_str);
-        break;
-      }
+    {
+      char *range_str = range_convert_range(NULL, prefs_get_range_value_real(pref, pref_current));
+      res->range_value = string(range_str);
+      wmem_free(NULL, range_str);
+      break;
+    }
     case PREF_ENUM:
+    {
+      const enum_val_t *enums;
+
+      for (enums = prefs_get_enumvals(pref); enums->name; enums++)
       {
-        const enum_val_t *enums;
+        PrefEnum e;
+        e.name = string(enums->name);
+        e.description = string(enums->description);
+        e.value = enums->value;
+        e.selected = false;
 
-        for (enums = prefs_get_enumvals(pref); enums->name; enums++)
+        if (enums->value == prefs_get_enum_value(pref, pref_current))
         {
-          PrefEnum e;
-          e.name = string(enums->name);
-          e.description = string(enums->description);
-          e.value = enums->value;
-          e.selected = false;
-          
-          if (enums->value == prefs_get_enum_value(pref, pref_current))
-          {
-            e.selected = true;
-          }
-
-          res->enum_value.push_back(e);
+          e.selected = true;
         }
-        break;
+
+        res->enum_value.push_back(e);
       }
+      break;
+    }
 
     case PREF_UAT:
     case PREF_COLOR:
     case PREF_CUSTOM:
     case PREF_STATIC_TEXT:
     case PREF_OBSOLETE:
-        /* TODO */
-        break;
+      /* TODO */
+      break;
   }
 }
 
@@ -327,8 +327,9 @@ PrefResponse wg_get_pref(string module_name, string pref_name)
   res.code = -1;
 
   pref_t *pref = prefs_find_preference(prefs_find_module(module_name.c_str()), pref_name.c_str());
-  if (pref == NULL) {
-      return res;
+  if (pref == NULL)
+  {
+    return res;
   }
 
   res.code = 0;
@@ -360,15 +361,18 @@ guint wg_list_modules_cb(module_t *module, gpointer user_data)
 
   m.use_gui = module->use_gui;
 
-  if (module->name) {
+  if (module->name)
+  {
     m.name = string(module->name);
   }
 
-  if (module->title) {
+  if (module->title)
+  {
     m.title = string(module->title);
   }
 
-  if (module->description) {
+  if (module->description)
+  {
     m.description = string(module->description);
   }
 
@@ -382,7 +386,6 @@ guint wg_list_modules_cb(module_t *module, gpointer user_data)
 
   return 0;
 }
-
 
 vector<PrefModule> wg_list_modules()
 {
@@ -406,7 +409,7 @@ guint wg_list_preferences_cb(pref_t *pref, gpointer user_data)
 vector<PrefData> wg_list_preferences(string module_name)
 {
   vector<PrefData> prefs;
-  module_t * mod = prefs_find_module(module_name.c_str());
+  module_t *mod = prefs_find_module(module_name.c_str());
 
   if (mod != NULL)
   {
@@ -419,6 +422,48 @@ vector<PrefData> wg_list_preferences(string module_name)
 SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
 {
   SetPrefResponse res;
+
+  module_t *mod = prefs_find_module(module_name.c_str());
+  pref_t *p = prefs_find_preference(mod, pref_name.c_str());
+
+  if (p == NULL)
+  {
+    res.code = -1;
+    res.error = "Preference not found";
+    return res;
+  }
+
+  int type = prefs_get_type(p);
+
+  // handle decode as range ourselves
+  if (type == PREF_DECODE_AS_RANGE)
+  {
+    range_t *new_range = NULL;
+    convert_ret_t ret = range_convert_str(NULL, &new_range, value.c_str(), prefs_get_max_value(p));
+
+    if (ret != CVT_NO_ERROR)
+    {
+      res.code = -1;
+      res.error = "Invalid range";
+      return res;
+    }
+
+    if (prefs_set_range_value(p, new_range, pref_stashed))
+    {
+      pref_unstash_data_t unstashed_data;
+
+      unstashed_data.module = mod;
+      unstashed_data.handle_decode_as = true;
+
+      pref_unstash(p, &unstashed_data);
+      prefs_apply(mod);
+    }
+
+    res.code = 0;
+    return res;
+  }
+
+  // use prefs_set_pref for all other types for now
 
   char pref[4096];
   prefs_set_pref_e ret;
@@ -545,6 +590,16 @@ Frame DissectSession::getFrame(int number)
   return f;
 }
 
+TapResponse DissectSession::tap(MapInput taps)
+{
+  return wg_session_process_tap(&this->capture_file, taps);
+}
+
+DownloadResponse DissectSession::download(string token)
+{
+  return wg_session_process_download(&this->capture_file, token.c_str());
+}
+
 DissectSession::~DissectSession()
 {
   if (this->capture_file.provider.frames != NULL)
@@ -564,4 +619,14 @@ FilterCompletionResponse wg_complete_filter(string field)
   FilterCompletionResponse res;
   res.fields = wg_session_process_complete(field.c_str());
   return res;
+}
+
+// {"graph0":"packets","filter0":"frame.number<=100"}
+IoGraphResult DissectSession::iograph(MapInput args)
+{
+  if (args["interval"].empty())
+  {
+    args["interval"] = "1000";
+  }
+  return wg_session_process_iograph(&this->capture_file, args);
 }

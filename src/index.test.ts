@@ -14,11 +14,11 @@ const buildTestOverrides = (): WiregasmLibOverrides => {
     },
     // supress all unwanted logs in test-suite
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    printErr: () => { },
+    printErr: () => {},
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    print: () => { },
+    print: () => {},
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    handleStatus: () => { },
+    handleStatus: () => {},
   };
 };
 
@@ -159,15 +159,533 @@ describe("Wiregasm Library Wrapper", () => {
 
   test("filter compilation works", async () => {
     expect(wg.complete_filter("tcp").fields.length).toBeGreaterThan(0);
-    expect(wg.complete_filter("tcp").fields.find(
-      (f) => f.field === "tcp"
-    )).toEqual({
+    expect(
+      wg.complete_filter("tcp").fields.find((f) => f.field === "tcp")
+    ).toEqual({
       field: "tcp",
       name: "Transmission Control Protocol",
       type: 1,
     });
     expect(wg.complete_filter("txx").fields.length).toBe(0);
-  })
+  });
+});
+
+describe("Wiregasm Library - Export Objects", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(() => {
+    return wg.init(loadWiregasm, buildTestOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("tap0 eo:http works", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({ tap0: "eo:http" });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          objects: [
+            {
+              _download: "eo:http_0",
+              filename:
+                "ads?client=ca-pub-2309191948673629&random=1084443430285&" +
+                "lmt=1082467020&format=468x60_as&output=html&url=http%3A%2F%2F" +
+                "www.ethereal.com%2Fdownload.html&color_bg=FFFFFF&" +
+                "color_text=333333&color_link=000000&color_url=666633&" +
+                "color_border=666633",
+              hostname: "pagead2.googlesyndication.com",
+              len: 3608,
+              pkt: 27,
+              type: "text/html",
+            },
+            {
+              _download: "eo:http_1",
+              filename: "download.html",
+              hostname: "www.ethereal.com",
+              len: 18070,
+              pkt: 38,
+              type: "text/html",
+            },
+          ],
+          proto: "HTTP",
+          tap: "eo:http",
+          type: "eo",
+        },
+      ],
+    });
+  });
+
+  test("tap0 eo:tftp works", async () => {
+    const data = await fs.readFile("samples/tftp_rrq.pcap");
+    const ret = wg.load("tftp_rrq.pcap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({ tap0: "eo:tftp" });
+
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          objects: [
+            {
+              _download: "eo:tftp_0",
+              filename: "rfc1350.txt",
+              hostname: "",
+              len: 24599,
+              pkt: 98,
+              type: "",
+            },
+          ],
+          proto: "TFTP",
+          tap: "eo:tftp",
+          type: "eo",
+        },
+      ],
+    });
+  });
+
+  test("download works", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("dhcp.pcap", data);
+    expect(ret.code).toEqual(0);
+    const download = wg.download("eo:http_0");
+    expect(download.download.data).not.toBe("");
+    expect(download.download.mime).toBe("text/html");
+    expect(download.download.file).not.toBe("");
+    expect(download.error).toBe("");
+
+    const second_file = wg.download("eo:http_1");
+    expect(second_file.download.data).not.toBe("");
+    expect(second_file.download.mime).toBe("text/html");
+    expect(second_file.download.file).toBe("download.html");
+    expect(second_file.error).toBe("");
+  });
+});
+
+describe("Wiregasm Library - Tap", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(() => {
+    return wg.init(loadWiregasm, buildTestOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("tap0 endpt:UDP works", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({ tap0: "endpt:UDP" });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          geoip: false,
+          convs: [],
+          hosts: [
+            {
+              filter: "ip.addr==145.254.160.237 && udp.port==3009",
+              filtered: false,
+              host: "145.254.160.237",
+              port: "3009",
+              rx_bytes_total: 188,
+              rx_frames_total: 1,
+              rxb: 188,
+              rxf: 1,
+              tx_bytes_total: 89,
+              tx_frames_total: 1,
+              txb: 89,
+              txf: 1,
+            },
+            {
+              filter: "ip.addr==145.253.2.203 && udp.port==53",
+              filtered: false,
+              host: "145.253.2.203",
+              port: "53",
+              rx_bytes_total: 89,
+              rx_frames_total: 1,
+              rxb: 89,
+              rxf: 1,
+              tx_bytes_total: 188,
+              tx_frames_total: 1,
+              txb: 188,
+              txf: 1,
+            },
+          ],
+          proto: "UDP",
+          tap: "endpt:UDP",
+          type: "host",
+        },
+      ],
+    });
+  });
+
+  test("tap0 endpt:UDP with filter works", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({ tap0: "endpt:UDP", filter0: "udp.port==53" });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          geoip: false,
+          convs: [],
+          hosts: [
+            {
+              filter: "ip.addr==145.254.160.237 && udp.port==3009",
+              filtered: false,
+              host: "145.254.160.237",
+              port: "3009",
+              rx_bytes_total: 188,
+              rx_frames_total: 1,
+              rxb: 188,
+              rxf: 1,
+              tx_bytes_total: 89,
+              tx_frames_total: 1,
+              txb: 89,
+              txf: 1,
+            },
+            {
+              filter: "ip.addr==145.253.2.203 && udp.port==53",
+              filtered: false,
+              host: "145.253.2.203",
+              port: "53",
+              rx_bytes_total: 89,
+              rx_frames_total: 1,
+              rxb: 89,
+              rxf: 1,
+              tx_bytes_total: 188,
+              tx_frames_total: 1,
+              txb: 188,
+              txf: 1,
+            },
+          ],
+          proto: "UDP",
+          tap: "endpt:UDP",
+          type: "host",
+        },
+      ],
+    });
+  });
+
+  test("tap0 conv:Ethernet works", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({ tap0: "conv:Ethernet" });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          convs: [
+            {
+              conv_id: -1,
+              daddr: "fe:ff:20:00:01:00",
+              dport: "",
+              filter:
+                "eth.addr==00:00:01:00:00:00 && eth.addr==fe:ff:20:00:01:00",
+              filtered: false,
+              rx_bytes_total: 22768,
+              rx_frames_total: 23,
+              rxb: 22768,
+              rxf: 23,
+              saddr: "00:00:01:00:00:00",
+              sport: "",
+              start: 0,
+              start_abs_time: 1084443427.311224,
+              stop: 30.393704,
+              tx_bytes_total: 2323,
+              tx_frames_total: 20,
+              txb: 2323,
+              txf: 20,
+            },
+          ],
+          hosts: [],
+          geoip: false,
+          proto: "Ethernet",
+          tap: "conv:Ethernet",
+          type: "conv",
+        },
+      ],
+    });
+  });
+
+  test("tap0 conv:IPv4 works", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({ tap0: "conv:IPv4" });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          convs: [
+            {
+              conv_id: -1,
+              daddr: "65.208.228.223",
+              dport: "",
+              filter: "ip.addr==145.254.160.237 && ip.addr==65.208.228.223",
+              rxb: 19344,
+              rxf: 18,
+              saddr: "145.254.160.237",
+              sport: "",
+              start: 0,
+              stop: 30.393704,
+              txb: 1351,
+              txf: 16,
+              filtered: false,
+              rx_bytes_total: 19344,
+              rx_frames_total: 18,
+              start_abs_time: 1084443427.311224,
+              tx_bytes_total: 1351,
+              tx_frames_total: 16,
+            },
+            {
+              conv_id: -1,
+              daddr: "145.253.2.203",
+              dport: "",
+              filter: "ip.addr==145.254.160.237 && ip.addr==145.253.2.203",
+              rxb: 188,
+              rxf: 1,
+              saddr: "145.254.160.237",
+              sport: "",
+              start: 2.553672,
+              stop: 2.91419,
+              txb: 89,
+              txf: 1,
+              filtered: false,
+              rx_bytes_total: 188,
+              rx_frames_total: 1,
+              start_abs_time: 1084443429.864896,
+              tx_bytes_total: 89,
+              tx_frames_total: 1,
+            },
+            {
+              conv_id: -1,
+              daddr: "216.239.59.99",
+              dport: "",
+              filter: "ip.addr==145.254.160.237 && ip.addr==216.239.59.99",
+              rxb: 3236,
+              rxf: 4,
+              saddr: "145.254.160.237",
+              sport: "",
+              start: 2.984291,
+              stop: 4.776868,
+              txb: 883,
+              txf: 3,
+              filtered: false,
+              rx_bytes_total: 3236,
+              rx_frames_total: 4,
+              start_abs_time: 1084443430.295515,
+              tx_bytes_total: 883,
+              tx_frames_total: 3,
+            },
+          ],
+          geoip: false,
+          hosts: [],
+          proto: "IPv4",
+          tap: "conv:IPv4",
+          type: "conv",
+        },
+      ],
+    });
+  });
+
+  test("tap0 conv:TCP has proper stream id", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({ tap0: "conv:TCP" });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          convs: [
+            {
+              conv_id: 0,
+              daddr: "65.208.228.223",
+              dport: "80",
+              filter:
+                "ip.addr==145.254.160.237 && tcp.port==3372 && ip.addr==65.208.228.223 && tcp.port==80",
+              filtered: false,
+              rx_bytes_total: 19344,
+              rx_frames_total: 18,
+              rxb: 19344,
+              rxf: 18,
+              saddr: "145.254.160.237",
+              sport: "3372",
+              start: 0,
+              start_abs_time: 1084443427.311224,
+              stop: 30.393704,
+              tx_bytes_total: 1351,
+              tx_frames_total: 16,
+              txb: 1351,
+              txf: 16,
+            },
+            {
+              conv_id: 1,
+              daddr: "216.239.59.99",
+              dport: "80",
+              filter:
+                "ip.addr==145.254.160.237 && tcp.port==3371 && ip.addr==216.239.59.99 && tcp.port==80",
+              filtered: false,
+              rx_bytes_total: 3236,
+              rx_frames_total: 4,
+              rxb: 3236,
+              rxf: 4,
+              saddr: "145.254.160.237",
+              sport: "3371",
+              start: 2.984291,
+              start_abs_time: 1084443430.295515,
+              stop: 4.776868,
+              tx_bytes_total: 883,
+              tx_frames_total: 3,
+              txb: 883,
+              txf: 3,
+            },
+          ],
+          hosts: [],
+          geoip: false,
+          proto: "TCP",
+          tap: "conv:TCP",
+          type: "conv",
+        },
+      ],
+    });
+  });
+
+  test("tap0 conv:Ethernet with filter", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({
+      tap0: "conv:Ethernet",
+      filter0: "ip.addr==145.254.160.237 && tcp.port==3372",
+    });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          convs: [
+            {
+              conv_id: -1,
+              daddr: "fe:ff:20:00:01:00",
+              dport: "",
+              filter:
+                "eth.addr==00:00:01:00:00:00 && eth.addr==fe:ff:20:00:01:00",
+              filtered: false,
+              rx_bytes_total: 22768,
+              rx_frames_total: 23,
+              rxb: 19344,
+              rxf: 18,
+              saddr: "00:00:01:00:00:00",
+              sport: "",
+              start: 0,
+              start_abs_time: 1084443427.311224,
+              stop: 30.393704,
+              tx_bytes_total: 2323,
+              tx_frames_total: 20,
+              txb: 1351,
+              txf: 16,
+            },
+          ],
+          hosts: [],
+          geoip: false,
+          proto: "Ethernet",
+          tap: "conv:Ethernet",
+          type: "conv",
+        },
+      ],
+    });
+  });
+
+  test("tap0 conv:Ethernet without filter", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.tap({
+      tap0: "conv:Ethernet",
+    });
+    expect(res).toStrictEqual({
+      error: "",
+      taps: [
+        {
+          convs: [
+            {
+              conv_id: -1,
+              daddr: "fe:ff:20:00:01:00",
+              dport: "",
+              filter:
+                "eth.addr==00:00:01:00:00:00 && eth.addr==fe:ff:20:00:01:00",
+              filtered: false,
+              rx_bytes_total: 22768,
+              rx_frames_total: 23,
+              rxb: 22768,
+              rxf: 23,
+              saddr: "00:00:01:00:00:00",
+              sport: "",
+              start: 0,
+              start_abs_time: 1084443427.311224,
+              stop: 30.393704,
+              tx_bytes_total: 2323,
+              tx_frames_total: 20,
+              txb: 2323,
+              txf: 20,
+            },
+          ],
+          hosts: [],
+          geoip: false,
+          proto: "Ethernet",
+          tap: "conv:Ethernet",
+          type: "conv",
+        },
+      ],
+    });
+  });
+
+  describe("Taps: negative cases", () => {
+    test("Unsupported tap values are handled properly", async () => {
+      const data = await fs.readFile("samples/http.cap");
+      const ret = wg.load("http.cap", data);
+      expect(ret.code).toEqual(0);
+      const UNSUPPORTED_VALUE = "stat:http";
+      const res = wg.tap({ tap0: UNSUPPORTED_VALUE });
+      expect(res).toStrictEqual({
+        error: `${UNSUPPORTED_VALUE} not recognized`,
+        taps: [],
+      });
+    });
+
+    ["eo", "conv", "endpt"].map((tap) => {
+      test(`Unsupported tap type ${tap} is handled properly`, async () => {
+        const data = await fs.readFile("samples/http.cap");
+        const ret = wg.load("http.cap", data);
+        expect(ret.code).toEqual(0);
+        const res = wg.tap({ tap0: `${tap}:unsupported` });
+        expect(res).toStrictEqual({
+          error: `${tap} unsupported not found`,
+          taps: [],
+        });
+      });
+    });
+
+    test("Missing input values", async () => {
+      const data = await fs.readFile("samples/http.cap");
+      const ret = wg.load("http.cap", data);
+      expect(ret.code).toEqual(0);
+      expect(() => {
+        wg.tap({});
+      }).toThrowError("tap0 is mandatory");
+    });
+  });
 });
 
 const buildCompressedOverrides = async (): Promise<WiregasmLibOverrides> => {
@@ -183,11 +701,11 @@ const buildCompressedOverrides = async (): Promise<WiregasmLibOverrides> => {
     },
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    printErr: () => { },
+    printErr: () => {},
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    print: () => { },
+    print: () => {},
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    handleStatus: () => { },
+    handleStatus: () => {},
   };
 };
 
@@ -272,6 +790,40 @@ describe("Wiregasm Library - Set Preferences", () => {
     wg.set_pref("http", "tcp.port", "8001");
 
     const pref2 = wg.get_pref("http", "tcp.port");
+    expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
+    expect(pref2.range_value).toBe("8001");
+  });
+
+  test("set preferences works for diameter", async () => {
+    const pref = wg.get_pref("diameter", "tcp.port");
+    expect(pref.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
+    expect(pref.range_value).toBe("3868");
+
+    wg.set_pref("diameter", "tcp.port", "3871");
+
+    const pref2 = wg.get_pref("diameter", "tcp.port");
+    expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
+    expect(pref2.range_value).toBe("3871");
+
+    const data = await fs.readFile("samples/diameter_non_standard.pcap");
+    const ret = wg.load("diameter_non_standard.pcap", data);
+
+    expect(ret.code).toEqual(0);
+
+    const frame = wg.frame(1);
+    const last_tree = frame.tree.get(frame.tree.size() - 1);
+
+    expect(last_tree.label).toBe("Diameter Protocol");
+  });
+
+  test("set preferences works for sip", async () => {
+    const pref = wg.get_pref("sip", "tcp.port");
+    expect(pref.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
+    expect(pref.range_value).toBe("5060");
+
+    wg.set_pref("sip", "tcp.port", "8001");
+
+    const pref2 = wg.get_pref("sip", "tcp.port");
     expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
     expect(pref2.range_value).toBe("8001");
   });
@@ -391,5 +943,154 @@ describe("Wiregasm Library - Reloading Lua Plugins", () => {
     const myDNSProtoTree = f.tree.get(f.tree.size() - 1);
 
     expect(myDNSProtoTree.label).toBe("MyDNS Protocol");
+  });
+});
+
+describe("Wiregasm Library - IoGraph", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(async () => {
+    return wg.init(loadWiregasm, await buildTestOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("iograph a single graph work", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.iograph({ graph0: "packets", filter0: "frame.number<=100" });
+    expect(res).toStrictEqual({
+      error: "",
+      iograph: [
+        {
+          items: [
+            4, 4, 10, 10, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 2,
+          ],
+        },
+      ],
+    });
+  });
+
+  test("iograph multiple graphs work", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+    const res = wg.iograph({
+      interval: "1000",
+      graph0: "sum:tcp.len",
+      filter0: "http && frame.number<=100 && tcp.len",
+      graph1: "sum:frame.len",
+      filter1: "http && frame.number<=100 && frame.len",
+      graph2: "bytes",
+      graph3: "bits",
+      graph4: "frames:tcp.len",
+      graph5: "max:tcp.len",
+      graph6: "min:tcp.len",
+      graph7: "avg:tcp.len",
+      //  "LOAD is only supported for relative-time fields.
+      graph8: "load:frame.time_delta",
+    });
+    expect(res.error).toBe("");
+    expect(res).toStrictEqual({
+      error: "",
+      iograph: [
+        {
+          items: [479, 0, 721, 160, 424],
+        },
+        {
+          items: [533, 0, 775, 214, 478],
+        },
+        {
+          items: [
+            711, 2976, 6950, 6270, 7914, 54, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            108, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 108,
+          ],
+        },
+        {
+          items: [
+            5688, 23808, 55600, 50160, 63312, 432, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 864, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 864,
+          ],
+        },
+        {
+          items: [
+            4, 4, 8, 10, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 2,
+          ],
+        },
+        {
+          items: [
+            479, 1380, 1380, 1430, 1430, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          ],
+        },
+        {
+          items: [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+          ],
+        },
+        {
+          items: [
+            119.75, 690, 780.125, 573, 737.4000244140625, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          ],
+        },
+        {
+          items: [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+          ],
+        },
+      ],
+    });
+  });
+  describe("IoGraph: negative cases", () => {
+    test("Missing required parameters", async () => {
+      const data = await fs.readFile("samples/http.cap");
+      const ret = wg.load("http.cap", data);
+      expect(ret.code).toEqual(0);
+      expect(() => {
+        wg.iograph({});
+      }).toThrowError("graph0 is mandatory");
+    });
+
+    test("Invalid request", async () => {
+      const data = await fs.readFile("samples/http.cap");
+      const ret = wg.load("http.cap", data);
+      expect(ret.code).toEqual(0);
+      const res = wg.iograph({ graph0: "garbage graph name" });
+      expect(res).toStrictEqual({
+        error: "",
+        iograph: [],
+      });
+    });
+
+    test("Invalid filter", async () => {
+      const data = await fs.readFile("samples/http.cap");
+      const ret = wg.load("http.cap", data);
+      expect(ret.code).toEqual(0);
+      const res = wg.iograph({ graph0: "packets", filter0: "garbage filter" });
+      expect(res).toStrictEqual({
+        error:
+          'Filter "garbage filter" is invalid - "filter" was unexpected in this context.',
+        iograph: [],
+      });
+    });
+
+    test("Invalid interval", async () => {
+      const data = await fs.readFile("samples/http.cap");
+      const ret = wg.load("http.cap", data);
+      expect(ret.code).toEqual(0);
+      const res = wg.iograph({ graph0: "packets", interval: "0" });
+      expect(res).toStrictEqual({
+        error: "The value for interval must be a positive integer",
+        iograph: [],
+      });
+    });
   });
 });

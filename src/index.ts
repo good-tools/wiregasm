@@ -3,20 +3,36 @@ import {
   CheckFilterResponse,
   CompleteField,
   DissectSession,
+  DownloadResponse,
   Follow,
   Frame,
   FramesResponse,
   LoadResponse,
+  MapInput,
   Pref,
   PrefModule,
   PrefSetResult,
+  TapConvResponse,
+  TapExportObjectResponse,
+  TapResponse,
   Vector,
   WiregasmLib,
   WiregasmLibOverrides,
   WiregasmLoader,
 } from "./types";
-
 import { preferenceSetCodeToError, vectorToArray } from "./utils";
+
+const ALLOWED_TAP_KEYS = new Set([
+  ...Array.from({ length: 15 }, (_, i) => `tap${i}`),
+  ...Array.from({ length: 15 }, (_, i) => `filter${i}`),
+]);
+
+const ALLOWED_GRAPH_KEYS = new Set([
+  "filter",
+  "interval",
+  ...Array.from({ length: 9 }, (_, i) => `graph${i}`),
+  ...Array.from({ length: 9 }, (_, i) => `filter${i}`),
+]);
 
 /**
  * Wraps the WiregasmLib lib functionality and manages a single DissectSession
@@ -104,11 +120,86 @@ export class Wiregasm {
     return this.lib.checkFilter(filter);
   }
 
-  complete_filter(filter: string): { err: string; fields: CompleteField[] } {
+  complete_filter(filter: string): { fields: CompleteField[] } {
     const out = this.lib.completeFilter(filter);
     return {
-      err: out.err,
       fields: vectorToArray(out.fields),
+    };
+  }
+
+  tap(taps: MapInput) {
+    // Validate keys.
+    if (!("tap0" in taps)) {
+      throw new Error("tap0 is mandatory.");
+    }
+    if (!Object.keys(taps).every((k) => ALLOWED_TAP_KEYS.has(k))) {
+      throw new Error(
+        `Invalid arguments. Allowed keys are: ${Array.from(
+          ALLOWED_GRAPH_KEYS
+        ).join(", ")}.`
+      );
+    }
+
+    const args = new this.lib.MapInput();
+    Object.entries(taps).forEach(([k, v]) => args.set(k, v));
+
+    const response = this.session.tap(args);
+    return {
+      error: response.error,
+      taps: vectorToArray(response.taps).map((tap) => {
+        let res;
+        if (this.is_conv_tap(tap)) {
+          res = {
+            proto: tap.proto,
+            tap: tap.tap,
+            type: tap.type,
+            geoip: tap.geoip,
+            convs: vectorToArray(tap.convs),
+            hosts: vectorToArray(tap.hosts),
+          };
+        } else if (this.is_eo_tap(tap)) {
+          res = {
+            proto: tap.proto,
+            tap: tap.tap,
+            type: tap.type,
+            objects: vectorToArray(tap.objects),
+          };
+        } else {
+          (tap as { delete: () => void }).delete();
+          throw new Error("Unknown tap result");
+        }
+        (tap as TapResponse & { delete: () => void }).delete();
+        return res;
+      }),
+    };
+  }
+
+  download(token: string): DownloadResponse {
+    return this.session.download(token);
+  }
+
+  iograph(input: MapInput) {
+    // Validate keys.
+    if (!("graph0" in input)) {
+      throw new Error("graph0 is mandatory.");
+    }
+    if (!Object.keys(input).every((k) => ALLOWED_GRAPH_KEYS.has(k))) {
+      throw new Error(
+        `Invalid arguments. Allowed keys are: ${Array.from(
+          ALLOWED_GRAPH_KEYS
+        ).join(", ")}.`
+      );
+    }
+
+    const args = new this.lib.MapInput();
+    Object.entries(input).forEach(([k, v]) => args.set(k, v));
+
+    const out = this.session.iograph(args);
+    return {
+      ...out,
+      iograph: vectorToArray(out.iograph).map((t) => ({
+        items: vectorToArray(t.items),
+      })),
     };
   }
 
@@ -187,6 +278,14 @@ export class Wiregasm {
 
     // convert it from a vector to array
     return vectorToArray(vec);
+  }
+
+  is_eo_tap(tap: any): tap is TapExportObjectResponse {
+    return tap instanceof this.lib.TapExportObject;
+  }
+
+  is_conv_tap(tap: any): tap is TapConvResponse {
+    return tap instanceof this.lib.TapConvResponse;
   }
 }
 

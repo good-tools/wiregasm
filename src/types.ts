@@ -103,7 +103,7 @@ export interface Frame {
   comments: Vector<string>;
   data_sources: Vector<DataSource>;
   tree: Vector<ProtoTree>;
-  follow: Vector<Vector<string>>
+  follow: Vector<Vector<string>>;
 }
 
 export interface CompleteField {
@@ -111,7 +111,6 @@ export interface CompleteField {
   type: string;
   name: string;
 }
-
 
 export interface FramesResponse {
   frames: Vector<FrameMeta>;
@@ -143,7 +142,6 @@ export interface FrameMeta {
   fg: number;
   columns: Vector<string>;
 }
-
 export interface LoadSummary {
   filename: string;
   file_type: string;
@@ -159,6 +157,91 @@ export interface LoadResponse {
   code: number;
   error: string;
   summary: LoadSummary;
+}
+
+export interface Download {
+  file: string;
+  mime: string;
+  data: string;
+}
+
+export interface DownloadResponse {
+  error: string;
+  download: Download;
+}
+
+export type MapInput = Record<string, string>;
+
+interface ExportObject {
+  hostname: string;
+  pkt: number;
+  type: string;
+  filename: string;
+  _download: string;
+  len: number;
+}
+
+export interface Conversation {
+  saddr: string;
+  daddr: string;
+  sport: string;
+  dport: string;
+  txf: number;
+  txb: number;
+  rxf: number;
+  rxb: number;
+  start: number;
+  stop: number;
+  filter: string;
+  tx_bytes_total: number;
+  tx_frames_total: number;
+  rx_bytes_total: number;
+  rx_frames_total: number;
+  filtered: boolean;
+  conv_id: number;
+  start_abs_time: number;
+}
+
+export interface Host {
+  host: string;
+  port: string;
+  txf: number;
+  txb: number;
+  rxf: number;
+  rxb: number;
+  filter: string;
+  tx_bytes_total: number;
+  tx_frames_total: number;
+  rx_bytes_total: number;
+  rx_frames_total: number;
+  filtered: boolean;
+}
+
+export interface TapResponseBase {
+  type: string;
+  tap: string;
+  proto: string;
+}
+
+export interface TapExportObjectResponse extends TapResponseBase {
+  objects: Vector<ExportObject>;
+}
+
+export interface TapConvResponse extends TapResponseBase {
+  geoip: boolean;
+  convs: Vector<Conversation>;
+  hosts: Vector<Host>;
+}
+
+export type TapResponse = TapExportObjectResponse | TapConvResponse;
+
+export interface IoGraphResult {
+  error: string;
+  iograph: Vector<IoGraph>;
+}
+
+export interface IoGraph {
+  items: Vector<number>;
 }
 
 export interface DissectSession {
@@ -191,10 +274,19 @@ export interface DissectSession {
   getFrame(number: number): Frame;
 
   follow(follow: string, filter: string): Follow;
+
+  tap(taps: Map<string, string>): {
+    taps: Vector<TapResponse>;
+    error: string;
+  };
+
+  iograph(input: Map<string, string>): IoGraphResult;
+
+  download(token: string): DownloadResponse;
 }
 
 export interface DissectSessionConstructable {
-  new(path: string): DissectSession;
+  new (path: string): DissectSession;
 }
 
 export interface CheckFilterResponse {
@@ -260,6 +352,10 @@ export interface WiregasmLibOverrides {
 export interface WiregasmLib extends EmscriptenModule {
   DissectSession: DissectSessionConstructable;
 
+  MapInput: MapConstructor;
+  TapExportObject: () => TapExportObjectResponse;
+  TapConvResponse: () => TapConvResponse;
+
   /**
    * Returns the version of the library
    *
@@ -288,7 +384,6 @@ export interface WiregasmLib extends EmscriptenModule {
 
   /**
    * List all the preference modules
- 
    * @returns List of preference modules
    */
   listModules(): Vector<PrefModule>;
@@ -339,7 +434,9 @@ export interface WiregasmLib extends EmscriptenModule {
    */
   checkFilter(filter: string): CheckFilterResponse;
 
-  completeFilter(filter: string): { err: string; fields: Vector<CompleteField> };
+  completeFilter(filter: string): { fields: Vector<CompleteField> };
+
+  download(token: string): Download;
   /**
    * Returns the column headers
    */
