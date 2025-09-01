@@ -357,6 +357,13 @@ export interface WiregasmLib extends EmscriptenModule {
   TapConvResponse: () => TapConvResponse;
 
   /**
+   * Returns the version of the library
+   *
+   * @returns Version string
+   */
+  wiresharkVersion(): string;
+
+  /**
    * Returns the directory where files are uploaded
    *
    * @returns Path of the directory

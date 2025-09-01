@@ -1,62 +1,57 @@
 #ifndef WIREGASM_COMMON_H
 #define WIREGASM_COMMON_H
 
-#include <glib.h>
-#include <epan/timestamp.h>
-#include <wiretap/wtap.h>
-#include <epan/epan_dissect.h>
-#include <epan/epan.h>
-#include <wireshark/cfile.h>
-#include <epan/addr_resolv.h>
-#include <epan/secrets.h>
-#include <epan/print.h>
-#include <epan/column.h>
-#include <epan/export_object.h>
-#include <wsutil/str_util.h>
-#include <epan/color_filters.h>
-#include <wsutil/filesystem.h>
-#include <epan/tap.h>
-#include <epan/conversation_table.h>
-#include <epan/maxmind_db.h>
-#include <common/io_graph_item.h>
-#include <common/frame_tvbuff.h>
-#include <epan/tvbuff.h>
-#include <common/summary.h>
-#include <epan/exceptions.h>
-#include <epan/follow.h>
-#include <epan/expert.h>
-#include <wsutil/strtoi.h>
 #include "wiregasm.h"
+#include <common/frame_tvbuff.h>
+#include <common/io_graph_item.h>
+#include <common/summary.h>
+#include <epan/addr_resolv.h>
+#include <epan/color_filters.h>
+#include <epan/column.h>
+#include <epan/conversation_table.h>
+#include <epan/epan.h>
+#include <epan/epan_dissect.h>
+#include <epan/exceptions.h>
+#include <epan/expert.h>
+#include <epan/export_object.h>
+#include <epan/follow.h>
+#include <epan/maxmind_db.h>
+#include <epan/print.h>
+#include <epan/secrets.h>
+#include <epan/tap.h>
+#include <epan/timestamp.h>
+#include <epan/tvbuff.h>
+#include <glib.h>
+#include <wireshark/cfile.h>
+#include <wiretap/wtap.h>
+#include <wsutil/filesystem.h>
+#include <wsutil/str_util.h>
+#include <wsutil/strtoi.h>
 
 // callbacks, defined in lib.js (added through --js-library)
 
-enum StatusType
-{
+enum StatusType {
   WARN = 0,
   INFO = 1,
   ERROR = 2
 };
 
-extern "C"
-{
-  extern void on_status(enum StatusType, const char *);
+extern "C" {
+extern void on_status(enum StatusType, const char *);
 }
 
-struct wg_filter_item
-{
+struct wg_filter_item {
   guint8 *filtered; /* can be NULL if all frames are matching for given filter. */
   guint passed;
 };
 
-enum dissect_request_status
-{
+enum dissect_request_status {
   DISSECT_REQUEST_SUCCESS,
   DISSECT_REQUEST_NO_SUCH_FRAME,
   DISSECT_REQUEST_READ_ERROR
 };
 
-typedef enum
-{
+typedef enum {
   CF_OK,   /**< operation succeeded */
   CF_ERROR /**< operation got an error (function may provide err with details) */
 } cf_status_t;

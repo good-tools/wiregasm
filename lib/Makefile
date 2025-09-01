@@ -62,8 +62,8 @@ MESON_SETUP = meson setup $(BUILD_DIR) $< --default-library static --prefix $(PR
 MESON_BUILD = meson compile -C $(BUILD_DIR) && meson install -C $(BUILD_DIR)
 
 mostlyclean:
-	rm -rf c-ares ffi gcrypt glib gpg-error lua pcre nghttp2 wireshark
-	rm -rf .c-ares .ffi .gcrypt .glib .gpg-error .lua .pcre .nghttp2 .wireshark
+	rm -rf c-ares ffi gcrypt glib gpg-error pcre nghttp2 wireshark
+	rm -rf .c-ares .ffi .gcrypt .glib .gpg-error .pcre .nghttp2 .wireshark
 	rm -rf .sum-*
 
 clean: mostlyclean
@@ -253,33 +253,6 @@ glib: glib-$(GLIB_MINOR_VERSION).tar.xz .sum-glib
 	+$(MESON_BUILD)
 	touch $@
 
-#
-# LUA
-#
-LUA_VERSION := 5.2.4
-LUA_URL := https://www.lua.org/ftp/lua-$(LUA_VERSION).tar.gz
-LUA_CHECKSUM := cd77148aba4b707b6c159758b5e8444e04f968092eb98f6b4c405b2fb647e709370d5a8dcf604176101d3407e196a7433b5dcdce4fe9605c76191d3649d61a8c
-# Borrowed from https://github.com/ysugimoto/webassembly-lua/blob/master/Dockerfile
-LUA_CONF := CC='emcc -s WASM=1'
-
-$(TARBALLS)/lua-$(LUA_VERSION).tar.gz:
-	$(call download,$(LUA_URL))
-
-.sum-lua: lua-$(LUA_VERSION).tar.gz
-	$(call checksum,$(LUA_CHECKSUM),$<)
-	touch $@
-
-lua: lua-$(LUA_VERSION).tar.gz .sum-lua
-	$(CLEANUP)
-	tar xzfo $<
-	$(MOVE)
-
-.lua: lua
-	echo "[+] Building Lua"
-	$(MAKE) -C $< clean
-	emmake make -C $< generic INSTALL_TOP=$(PREFIX) install $(LUA_CONF)
-	touch $@
-
 NGHTTP2_VERSION := 1.61.0
 NGHTTP2_URL := https://github.com/nghttp2/nghttp2/releases/download/v$(NGHTTP2_VERSION)/nghttp2-$(NGHTTP2_VERSION).tar.xz
 NGHTTP2_CHECKSUM := 01e930d7caf464699505f92b76e2bc8192d168612dc564d2546812c42afea2fb81d552d70e8a5fed35e2bf5deadbec8eda095af94a2484bca41542988afce52a
@@ -310,9 +283,9 @@ nghttp2: nghttp2-$(NGHTTP2_VERSION).tar.xz .sum-nghttp2
 #
 # Wireshark (epan)
 #
-WIRESHARK_VERSION := 4.0.3
-WIRESHARK_URL := https://gitlab.com/wireshark/wireshark/-/archive/v$(WIRESHARK_VERSION)/wireshark-v$(WIRESHARK_VERSION).tar.bz2
-WIRESHARK_CHECKSUM := 2f0f166dae43706945d681dd9f07aa4aa8d303967baae7d4065e1437fc0ae14c65648578ad3734e71729f3449ccc1590baadd6b140d246115cf7be8c5af55a83
+WIRESHARK_VERSION := 4.4.5
+WIRESHARK_URL := https://www.wireshark.org/download/src/all-versions/wireshark-$(WIRESHARK_VERSION).tar.xz
+WIRESHARK_CHECKSUM := 09956fadb2ab80df136c6b35a1be2aa72eec20e1f11c94aaaabecff72d450239d09173ef3cc2bcd8c85c194816afb750e1d476538038ff612366a255ae4fece5
 # do not build any tools, we're only interested in libwireshark (epan)
 WIRESHARK_CONF = \
 	-DBUILD_wireshark=OFF \
@@ -339,34 +312,30 @@ WIRESHARK_CONF = \
 	-DBUILD_udpdump=OFF \
 	-DBUILD_sharkd=OFF \
 	-DBUILD_mmdbresolve=OFF \
+	-DFETCH_lua=ON \
 	-DENABLE_CAP=OFF
 
-$(TARBALLS)/wireshark-v$(WIRESHARK_VERSION).tar.bz2:
+$(TARBALLS)/wireshark-$(WIRESHARK_VERSION).tar.xz:
 	$(call download,$(WIRESHARK_URL))
 
-.sum-wireshark: wireshark-v$(WIRESHARK_VERSION).tar.bz2
+.sum-wireshark: wireshark-$(WIRESHARK_VERSION).tar.xz
 	$(call checksum,$(WIRESHARK_CHECKSUM),$<)
 	touch $@
 
-wireshark: wireshark-v$(WIRESHARK_VERSION).tar.bz2 .sum-wireshark
+wireshark: wireshark-$(WIRESHARK_VERSION).tar.xz .sum-wireshark
 	$(CLEANUP)
-	tar xjfo $<
-	$(APPLY) $(PATCHES)/wireshark/0001-dont-build-radiotap-lemon.patch
-	$(APPLY) $(PATCHES)/wireshark/0002-fix-cpu-name-unknown.patch
-	$(APPLY) $(PATCHES)/wireshark/0003-disable-snort-emscripten.patch
-	$(APPLY) $(PATCHES)/wireshark/0004-export-wireshark-common.patch
-	$(APPLY) $(PATCHES)/wireshark/0005-force-data-dir.patch
-	$(APPLY) $(PATCHES)/wireshark/0006-threadless-registration.patch
-	$(APPLY) $(PATCHES)/wireshark/0007-export-lrexlib.patch
-	$(APPLY) $(PATCHES)/wireshark/0008-export-wslua-headers.patch
+	tar xJfo $<
+	$(APPLY) $(PATCHES)/wireshark/wiregasm-patches.patch
 	$(MOVE)
 
-.wireshark: wireshark .c-ares .gcrypt .glib .lua .nghttp2
+.wireshark: wireshark .c-ares .gcrypt .glib .nghttp2
 	echo "[+] Building Wireshark"
 	$(CMAKECLEAN)
 	emcmake cmake -G Ninja -S $< -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:STRING=$(PREFIX) -DCMAKE_FIND_ROOT_PATH:STRING=$(PREFIX) $(WIRESHARK_CONF)
 	env cmake --build $(BUILD_DIR)
 	env cmake --install $(BUILD_DIR) --prefix $(PREFIX)
+	env cmake --install $(BUILD_DIR) --prefix $(PREFIX) --component Development
+	cp -rf $(BUILD_DIR)/staging/* $(PREFIX) # copy artifacts from the staging directory
 	touch $@
 
 #

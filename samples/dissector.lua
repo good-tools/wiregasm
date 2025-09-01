@@ -73,33 +73,34 @@ local default_settings =
 -- line using the '-o' switch (the preferences don't exist until this script is
 -- loaded, so the command line thinks they're invalid preferences being set)
 -- so we pass them in as command arguments insetad, and handle it here:
-local args={...} -- get passed-in args
-if args and #args > 0 then
-    for _, arg in ipairs(args) do
-        local name, value = arg:match("(.+)=(.+)")
-        if name and value then
-            if tonumber(value) then
-                value = tonumber(value)
-            elseif value == "true" or value == "TRUE" then
-                value = true
-            elseif value == "false" or value == "FALSE" then
-                value = false
-            elseif value == "DISABLED" then
-                value = debug_level.DISABLED
-            elseif value == "LEVEL_1" then
-                value = debug_level.LEVEL_1
-            elseif value == "LEVEL_2" then
-                value = debug_level.LEVEL_2
-            else
-                error("invalid commandline argument value")
-            end
-        else
-            error("invalid commandline argument syntax")
-        end
+-- local args={...} -- get passed-in args
+-- if args and #args > 0 then
+--     error("Arguments received: " .. table.concat(args, ", "))
+--     for _, arg in ipairs(args) do
+--         local name, value = arg:match("(.+)=(.+)")
+--         if name and value then
+--             if tonumber(value) then
+--                 value = tonumber(value)
+--             elseif value == "true" or value == "TRUE" then
+--                 value = true
+--             elseif value == "false" or value == "FALSE" then
+--                 value = false
+--             elseif value == "DISABLED" then
+--                 value = debug_level.DISABLED
+--             elseif value == "LEVEL_1" then
+--                 value = debug_level.LEVEL_1
+--             elseif value == "LEVEL_2" then
+--                 value = debug_level.LEVEL_2
+--             else
+--                 error("invalid commandline argument value")
+--             end
+--         else
+--             error("invalid commandline argument syntax: " .. tostring(arg))
+--         end
 
-        default_settings[name] = value
-    end
-end
+--         default_settings[name] = value
+--     end
+-- end
 
 local dprint = function() end
 local dprint2 = function() end

@@ -1,9 +1,11 @@
 #include "wiregasm.h"
 #include "lib.h"
-#include <wsutil/privileges.h>
-#include <epan/wslua/init_wslua.h>
 #include <epan/prefs-int.h>
 #include <epan/prefs.h>
+#include <epan/wslua/init_wslua.h>
+#include <wireshark/ws_version.h>
+#include <wsutil/privileges.h>
+#include <wsutil/report_message.h>
 
 using namespace std;
 // XXX: g_io_channel_unix_new isn't exported in glib after
@@ -15,29 +17,92 @@ using namespace std;
 // }
 
 static const char *UPLOAD_DIR = "/uploads";
+static const char *DEFAULT_PLUGINS_DIR = "/plugins";
 static gboolean wg_initialized = FALSE;
 static e_prefs *prefs_p;
 
+void failure_message(const char *msg_format, va_list ap) {
+  va_list ap_copy;
+  va_copy(ap_copy, ap);
 
-string wg_get_upload_dir()
-{
+  int needed_size = vsnprintf(NULL, 0, msg_format, ap) + 1; // Get required size
+  char *formatted_msg = (char *)malloc(needed_size);
+
+  if (formatted_msg) {
+    vsnprintf(formatted_msg, needed_size, msg_format, ap_copy);
+    on_status(ERROR, formatted_msg);
+    free(formatted_msg);
+  }
+
+  va_end(ap_copy);
+}
+
+void open_failure_message(const char *filename, int err, bool for_writing) {
+}
+
+void read_failure_message(const char *filename, int err) {
+}
+
+void write_failure_message(const char *filename, int err) {
+}
+
+void cfile_open_failure_message(const char *filename, int err, char *err_info) {
+}
+
+void cfile_dump_open_failure_message(const char *filename, int err, char *err_info,
+                                     int file_type_subtype) {
+}
+
+void cfile_read_failure_message(const char *filename, int err, char *err_info) {
+}
+
+void cfile_write_failure_message(const char *in_filename, const char *out_filename,
+                                 int err, char *err_info,
+                                 uint64_t framenum, int file_type_subtype) {
+}
+
+void cfile_close_failure_message(const char *filename, int err, char *err_info) {
+}
+
+static const struct report_message_routines wg_report_routines = {
+    failure_message,
+    failure_message,
+    open_failure_message,
+    read_failure_message,
+    write_failure_message,
+    cfile_open_failure_message,
+    cfile_dump_open_failure_message,
+    cfile_read_failure_message,
+    cfile_write_failure_message,
+    cfile_close_failure_message};
+
+string wg_ws_version() {
+  char version[32];
+  snprintf(version, sizeof(version), "%d.%d.%d", WIRESHARK_VERSION_MAJOR, WIRESHARK_VERSION_MINOR, WIRESHARK_VERSION_MICRO);
+  return string(version);
+}
+
+string wg_get_upload_dir() {
   return string(UPLOAD_DIR);
 }
 
-string wg_get_plugins_dir()
-{
+string wg_get_plugins_dir() {
+  if (!wg_initialized) {
+    return string(DEFAULT_PLUGINS_DIR);
+  }
+
+  // get_plugins_dir relies on configuration_init being called
+  // which only happens in wg_init
   return string(get_plugins_dir());
 }
 
-vector<string> wg_get_columns()
-{
+vector<string> wg_get_columns() {
   vector<string> v;
 
   column_info *cinfo = NULL;
   build_column_format_array(cinfo, prefs_p->num_cols, TRUE);
 
-  for (int i = 0; i < cinfo->num_cols; i++)
-  {
+  for (int i = 0; i < cinfo->num_cols; i++) {
     if (!get_column_visible(i))
       continue;
 
@@ -49,8 +114,7 @@ vector<string> wg_get_columns()
   return v;
 }
 
-string wg_upload_file(string name, int buffer_ptr, size_t size)
-{
+string wg_upload_file(string name, int buffer_ptr, size_t size) {
   char *path = g_build_filename(UPLOAD_DIR, name.c_str(), nullptr);
 
   gchar *buffer = (gchar *)buffer_ptr;
@@ -63,10 +127,8 @@ string wg_upload_file(string name, int buffer_ptr, size_t size)
   return ret;
 }
 
-bool wg_reload_lua_plugins()
-{
-  if (!wg_initialized)
-  {
+bool wg_reload_lua_plugins() {
+  if (!wg_initialized) {
     return false;
   }
 
@@ -77,18 +139,35 @@ bool wg_reload_lua_plugins()
   return true;
 }
 
-bool wg_init()
-{
-  if (wg_initialized)
-  {
+bool wg_init() {
+  if (wg_initialized) {
     on_status(WARN, "Already initialized!");
     return true;
   }
 
   on_status(INFO, "Initializing..");
 
+  init_report_message("wiregasm", &wg_report_routines);
+
+  // cleanup any previous state
+  free_progdirs();
+
   init_process_policies();
   relinquish_special_privs_perm();
+
+  char *cerr_msg = configuration_init("/wiregasm", NULL);
+  if (cerr_msg != NULL) {
+    on_status(ERROR, cerr_msg);
+    g_free(cerr_msg);
+    return false;
+  }
+
+  const char *plugin_dir = get_plugins_dir();
+
+  if (plugin_dir == NULL || strlen(plugin_dir) == 0) {
+    on_status(ERROR, "Failed to get plugins dir");
+    return false;
+  }
 
   ws_log_set_level(LOG_LEVEL_INFO);
 
@@ -100,8 +179,7 @@ bool wg_init()
   on_status(INFO, "Registering all dissectors");
 
   // register all dissectors
-  if (!epan_init(NULL, NULL, TRUE))
-  {
+  if (!epan_init(NULL, NULL, TRUE)) {
     on_status(INFO, "Failure registering dissectors");
     return false;
   }
@@ -115,8 +193,7 @@ bool wg_init()
   on_status(INFO, "Initializing color filters");
 
   gchar *err_msg;
-  if (!color_filters_init(&err_msg, NULL))
-  {
+  if (!color_filters_init(&err_msg, NULL)) {
     on_status(WARN, err_msg);
     g_free(err_msg);
   }
@@ -128,8 +205,7 @@ bool wg_init()
   return wg_initialized;
 }
 
-void wg_destroy()
-{
+void wg_destroy() {
   reset_tap_listeners();
   epan_cleanup();
   wtap_cleanup();
@@ -138,87 +214,78 @@ void wg_destroy()
   wg_initialized = FALSE;
 }
 
-void wg_prefs_apply_all()
-{
+void wg_prefs_apply_all() {
   prefs_apply_all();
 }
 
-void wg_set_pref_values(pref_t *pref, PrefData *res)
-{
+void wg_set_pref_values(pref_t *pref, PrefData *res) {
   res->name = prefs_get_name(pref);
   res->title = prefs_get_title(pref);
   res->description = prefs_get_description(pref);
 
   res->type = prefs_get_type(pref);
 
-  switch (res->type)
-  {
-    case PREF_UINT:
-      res->uint_value = prefs_get_uint_value_real(pref, pref_current);
-      if (prefs_get_uint_base(pref) != 10)
-        res->uint_base_value = prefs_get_uint_base(pref);
-      break;
+  switch (res->type) {
+  case PREF_UINT:
+    res->uint_value = prefs_get_uint_value_real(pref, pref_current);
+    if (prefs_get_uint_base(pref) != 10)
+      res->uint_base_value = prefs_get_uint_base(pref);
+    break;
 
-    case PREF_BOOL:
-      res->bool_value = prefs_get_bool_value(pref, pref_current);
-      break;
+  case PREF_BOOL:
+    res->bool_value = prefs_get_bool_value(pref, pref_current);
+    break;
 
-    case PREF_STRING:
-    case PREF_SAVE_FILENAME:
-    case PREF_OPEN_FILENAME:
-    case PREF_DIRNAME:
-    case PREF_PASSWORD:
-      res->string_value = string(prefs_get_string_value(pref, pref_current));
-      break;
+  case PREF_STRING:
+  case PREF_SAVE_FILENAME:
+  case PREF_OPEN_FILENAME:
+  case PREF_DIRNAME:
+  case PREF_PASSWORD:
+    res->string_value = string(prefs_get_string_value(pref, pref_current));
+    break;
 
-    case PREF_RANGE:
-    case PREF_DECODE_AS_RANGE:
-    {
-      char *range_str = range_convert_range(NULL, prefs_get_range_value_real(pref, pref_current));
-      res->range_value = string(range_str);
-      wmem_free(NULL, range_str);
-      break;
-    }
-    case PREF_ENUM:
-    {
-      const enum_val_t *enums;
+  case PREF_RANGE:
+  case PREF_DECODE_AS_RANGE: {
+    char *range_str = range_convert_range(NULL, prefs_get_range_value_real(pref, pref_current));
+    res->range_value = string(range_str);
+    wmem_free(NULL, range_str);
+    break;
+  }
+  case PREF_ENUM: {
+    const enum_val_t *enums;
 
-      for (enums = prefs_get_enumvals(pref); enums->name; enums++)
-      {
-        PrefEnum e;
-        e.name = string(enums->name);
-        e.description = string(enums->description);
-        e.value = enums->value;
-        e.selected = false;
+    for (enums = prefs_get_enumvals(pref); enums->name; enums++) {
+      PrefEnum e;
+      e.name = string(enums->name);
+      e.description = string(enums->description);
+      e.value = enums->value;
+      e.selected = false;
 
-        if (enums->value == prefs_get_enum_value(pref, pref_current))
-        {
-          e.selected = true;
-        }
-
-        res->enum_value.push_back(e);
+      if (enums->value == prefs_get_enum_value(pref, pref_current)) {
+        e.selected = true;
       }
-      break;
-    }
 
-    case PREF_UAT:
-    case PREF_COLOR:
-    case PREF_CUSTOM:
-    case PREF_STATIC_TEXT:
-    case PREF_OBSOLETE:
-      /* TODO */
-      break;
+      res->enum_value.push_back(e);
+    }
+    break;
+  }
+
+  case PREF_UAT:
+  case PREF_COLOR:
+  case PREF_CUSTOM:
+  case PREF_STATIC_TEXT:
+  case PREF_OBSOLETE:
+    /* TODO */
+    break;
   }
 }
 
-PrefResponse wg_get_pref(string module_name, string pref_name)
-{
+PrefResponse wg_get_pref(string module_name, string pref_name) {
   PrefResponse res;
   res.code = -1;
 
   pref_t *pref = prefs_find_preference(prefs_find_module(module_name.c_str()), pref_name.c_str());
-  if (pref == NULL)
-  {
+  if (pref == NULL) {
     return res;
   }
 
@@ -229,18 +296,15 @@ PrefResponse wg_get_pref(string module_name, string pref_name)
   return res;
 }
 
-struct PrefModuleHolder
-{
+struct PrefModuleHolder {
   vector<PrefModule> modules;
   bool root;
 };
 
-guint wg_list_modules_cb(module_t *module, gpointer user_data)
-{
+guint wg_list_modules_cb(module_t *module, gpointer user_data) {
   PrefModuleHolder *holder = (PrefModuleHolder *)user_data;
 
-  if (holder->root && module->parent != NULL)
-  {
+  if (holder->root && module->parent != NULL) {
     return 0;
   }
 
@@ -251,23 +315,19 @@ guint wg_list_modules_cb(module_t *module, gpointer user_data)
 
   m.use_gui = module->use_gui;
 
-  if (module->name)
-  {
+  if (module->name) {
     m.name = string(module->name);
   }
 
-  if (module->title)
-  {
+  if (module->title) {
     m.title = string(module->title);
   }
 
-  if (module->description)
-  {
+  if (module->description) {
     m.description = string(module->description);
   }
 
-  if (prefs_module_has_submodules(module))
-  {
+  if (prefs_module_has_submodules(module)) {
     prefs_modules_foreach_submodules(module, wg_list_modules_cb, &subholder);
     m.submodules = subholder.modules;
   }
@@ -277,16 +337,14 @@ guint wg_list_modules_cb(module_t *module, gpointer user_data)
   return 0;
 }
 
-vector<PrefModule> wg_list_modules()
-{
+vector<PrefModule> wg_list_modules() {
   PrefModuleHolder holder;
   holder.root = true;
   prefs_modules_foreach(wg_list_modules_cb, &holder);
   return holder.modules;
 }
 
-guint wg_list_preferences_cb(pref_t *pref, gpointer user_data)
-{
+guint wg_list_preferences_cb(pref_t *pref, gpointer user_data) {
   vector<PrefData> *prefs = (vector<PrefData> *)user_data;
 
   PrefData p;
@@ -296,28 +354,24 @@ guint wg_list_preferences_cb(pref_t *pref, gpointer user_data)
   return 0;
 }
 
-vector<PrefData> wg_list_preferences(string module_name)
-{
+vector<PrefData> wg_list_preferences(string module_name) {
   vector<PrefData> prefs;
   module_t *mod = prefs_find_module(module_name.c_str());
 
-  if (mod != NULL)
-  {
+  if (mod != NULL) {
     prefs_pref_foreach(mod, wg_list_preferences_cb, &prefs);
   }
 
   return prefs;
 }
 
-SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
-{
+SetPrefResponse wg_set_pref(string module_name, string pref_name, string value) {
   SetPrefResponse res;
 
   module_t *mod = prefs_find_module(module_name.c_str());
   pref_t *p = prefs_find_preference(mod, pref_name.c_str());
 
-  if (p == NULL)
-  {
+  if (p == NULL) {
     res.code = -1;
     res.error = "Preference not found";
     return res;
@@ -326,20 +380,17 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
   int type = prefs_get_type(p);
 
   // handle decode as range ourselves
-  if (type == PREF_DECODE_AS_RANGE)
-  {
+  if (type == PREF_DECODE_AS_RANGE) {
     range_t *new_range = NULL;
     convert_ret_t ret = range_convert_str(NULL, &new_range, value.c_str(), prefs_get_max_value(p));
 
-    if (ret != CVT_NO_ERROR)
-    {
+    if (ret != CVT_NO_ERROR) {
       res.code = -1;
       res.error = "Invalid range";
       return res;
     }
 
-    if (prefs_set_range_value(p, new_range, pref_stashed))
-    {
+    if (prefs_set_range_value(p, new_range, pref_stashed)) {
       pref_unstash_data_t unstashed_data;
 
       unstashed_data.module = mod;
@@ -365,8 +416,7 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
 
   res.code = ret;
 
-  if (errmsg)
-  {
+  if (errmsg) {
     res.error = string(errmsg);
     g_free(errmsg);
   }
@@ -374,41 +424,34 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value)
   return res;
 }
 
-CheckFilterResponse wg_check_filter(string filter)
-{
+CheckFilterResponse wg_check_filter(string filter) {
   CheckFilterResponse res;
 
-  char *err_msg = NULL;
+  df_error_t *err_info = NULL;
   dfilter_t *dfp;
 
-  if (dfilter_compile(filter.c_str(), &dfp, &err_msg))
-  {
+  if (dfilter_compile(filter.c_str(), &dfp, &err_info)) {
     dfilter_free(dfp);
     res.ok = true;
-  }
-  else
-  {
+  } else {
     res.ok = false;
   }
 
-  if (err_msg)
-  {
-    res.error = string(err_msg);
-    g_free(err_msg);
+  if (err_info) {
+    res.error = string(err_info->msg);
+    g_free(err_info);
   }
 
   return res;
 }
 
-DissectSession::DissectSession(string _path) : path(_path)
-{
+DissectSession::DissectSession(string _path) : path(_path) {
   cap_file_init(&this->capture_file);
   build_column_format_array(&this->capture_file.cinfo, prefs_p->num_cols, TRUE);
   this->filter_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, wg_session_filter_free);
 }
 
-LoadResponse DissectSession::load()
-{
+LoadResponse DissectSession::load() {
   char *err_ret = NULL;
 
   LoadResponse r;
@@ -419,8 +462,7 @@ LoadResponse DissectSession::load()
 
   r.code = ret;
 
-  if (err_ret)
-  {
+  if (err_ret) {
     r.error = string(err_ret);
     g_free(err_ret);
   }
@@ -438,62 +480,52 @@ LoadResponse DissectSession::load()
   return r;
 }
 
-Follow DissectSession::follow(string follow, string filter)
-{
+Follow DissectSession::follow(string follow, string filter) {
   char *err_ret = NULL;
   Follow ret = wg_process_follow(&this->capture_file, follow.c_str(), filter.c_str(), &err_ret);
 
   // XXX: propagate?
-  if (err_ret)
-  {
+  if (err_ret) {
     g_free(err_ret);
   }
 
   return ret;
 }
 
-FramesResponse DissectSession::getFrames(string filter, int skip, int limit)
-{
+FramesResponse DissectSession::getFrames(string filter, int skip, int limit) {
   char *err_ret = NULL;
   FramesResponse ret = wg_process_frames(&this->capture_file, this->filter_table, filter.c_str(), skip, limit, &err_ret);
 
   // XXX: propagate?
-  if (err_ret)
-  {
+  if (err_ret) {
     g_free(err_ret);
   }
 
   return ret;
 }
 
-Frame DissectSession::getFrame(int number)
-{
+Frame DissectSession::getFrame(int number) {
   char *err_ret = NULL;
   Frame f = wg_process_frame(&this->capture_file, number, &err_ret);
 
   // XXX: propagate?
-  if (err_ret)
-  {
+  if (err_ret) {
     g_free(err_ret);
   }
 
   return f;
 }
 
-TapResponse DissectSession::tap(MapInput taps)
-{
+TapResponse DissectSession::tap(MapInput taps) {
   return wg_session_process_tap(&this->capture_file, taps);
 }
 
-DownloadResponse DissectSession::download(string token)
-{
+DownloadResponse DissectSession::download(string token) {
   return wg_session_process_download(&this->capture_file, token.c_str());
 }
 
-DissectSession::~DissectSession()
-{
-  if (this->capture_file.provider.frames != NULL)
-  {
+DissectSession::~DissectSession() {
+  if (this->capture_file.provider.frames != NULL) {
     free_frame_data_sequence(this->capture_file.provider.frames);
     this->capture_file.provider.frames = NULL;
   }
@@ -504,18 +536,15 @@ DissectSession::~DissectSession()
   cf_close(&this->capture_file);
 }
 
-FilterCompletionResponse wg_complete_filter(string field)
-{
+FilterCompletionResponse wg_complete_filter(string field) {
   FilterCompletionResponse res;
   res.fields = wg_session_process_complete(field.c_str());
   return res;
 }
 
 // {"graph0":"packets","filter0":"frame.number<=100"}
-IoGraphResult DissectSession::iograph(MapInput args)
-{
-  if (args["interval"].empty())
-  {
+IoGraphResult DissectSession::iograph(MapInput args) {
+  if (args["interval"].empty()) {
     args["interval"] = "1000";
   }
   return wg_session_process_iograph(&this->capture_file, args);
