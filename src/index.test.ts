@@ -946,6 +946,117 @@ describe("Wiregasm Library - Reloading Lua Plugins", () => {
   });
 });
 
+describe("Wiregasm Library - Heuristic Dissectors", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(async () => {
+    return wg.init(loadWiregasm, await buildCompressedOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("list heuristic dissectors works", async () => {
+    const heuristics = wg.list_heuristic_dissectors();
+    expect(heuristics.length).toBeGreaterThan(0);
+
+    // Find mac_nr_udp heuristic
+    const macNrUdp = heuristics.find((h) => h.short_name === "mac_nr_udp");
+    expect(macNrUdp).toBeDefined();
+    expect(macNrUdp?.display_name).toBe("MAC-NR over UDP");
+    expect(macNrUdp?.list_name).toBe("udp");
+    expect(macNrUdp?.enabled_by_default).toBe(false);
+  });
+
+  test("list protocols works", async () => {
+    const protocols = wg.list_protocols();
+    expect(protocols.length).toBeGreaterThan(0);
+
+    // Find MAC-NR protocol
+    const macNr = protocols.find((p) => p.name === "mac-nr");
+    expect(macNr).toBeDefined();
+    expect(macNr?.long_name).toContain("MAC");
+  });
+
+  test("enable/disable heuristic dissector works", async () => {
+    // Check initial state
+    let heuristics = wg.list_heuristic_dissectors();
+    let macNrUdp = heuristics.find((h) => h.short_name === "mac_nr_udp");
+    expect(macNrUdp?.enabled).toBe(false);
+
+    // Enable the heuristic
+    const result = wg.set_heuristic_enabled("mac_nr_udp", true);
+    expect(result).toBe(true);
+
+    // Verify it's enabled
+    heuristics = wg.list_heuristic_dissectors();
+    macNrUdp = heuristics.find((h) => h.short_name === "mac_nr_udp");
+    expect(macNrUdp?.enabled).toBe(true);
+
+    // Disable it again
+    wg.set_heuristic_enabled("mac_nr_udp", false);
+    heuristics = wg.list_heuristic_dissectors();
+    macNrUdp = heuristics.find((h) => h.short_name === "mac_nr_udp");
+    expect(macNrUdp?.enabled).toBe(false);
+  });
+
+  test("mac_nr_udp heuristic dissector decodes NR pcap correctly", async () => {
+    // Enable the mac_nr_udp heuristic before loading
+    wg.set_heuristic_enabled("mac_nr_udp", true);
+
+    // Load the NR capture file
+    const data = await fs.readFile("samples/nr.pcapng");
+    const ret = wg.load("nr.pcapng", data);
+    expect(ret.code).toEqual(0);
+
+    // Get the first frame and check if MAC-NR is detected
+    const frame = wg.frame(1);
+    expect(frame.number).toEqual(1);
+
+    // Find the MAC-NR protocol in the tree
+    let foundMacNr = false;
+    for (let i = 0; i < frame.tree.size(); i++) {
+      const tree = frame.tree.get(i);
+      if (tree.label.includes("MAC-NR")) {
+        foundMacNr = true;
+        break;
+      }
+    }
+
+    expect(foundMacNr).toBe(true);
+
+    // Disable the heuristic for cleanup
+    wg.set_heuristic_enabled("mac_nr_udp", false);
+  });
+
+  test("without heuristic enabled, MAC-NR is not detected", async () => {
+    // Make sure heuristic is disabled
+    wg.set_heuristic_enabled("mac_nr_udp", false);
+
+    // Load the NR capture file
+    const data = await fs.readFile("samples/nr.pcapng");
+    const ret = wg.load("nr2.pcapng", data);
+    expect(ret.code).toEqual(0);
+
+    // Get the first frame
+    const frame = wg.frame(1);
+    expect(frame.number).toEqual(1);
+
+    // MAC-NR should NOT be in the tree (only UDP)
+    let foundMacNr = false;
+    for (let i = 0; i < frame.tree.size(); i++) {
+      const tree = frame.tree.get(i);
+      if (tree.label.includes("MAC-NR")) {
+        foundMacNr = true;
+        break;
+      }
+    }
+
+    expect(foundMacNr).toBe(false);
+  });
+});
+
 describe("Wiregasm Library - IoGraph", () => {
   const wg = new Wiregasm();
 

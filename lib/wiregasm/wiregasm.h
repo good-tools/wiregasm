@@ -241,6 +241,51 @@ struct DownloadResponse {
   Download download;
 };
 
+// Protocol info struct for listing all protocols
+struct ProtocolInfo {
+  int id;                   // protocol ID
+  string name;              // protocol filter name (e.g., "tcp")
+  string long_name;         // protocol long name (e.g., "Transmission Control Protocol")
+  bool enabled;             // whether protocol is currently enabled
+  bool enabled_by_default;  // whether protocol is enabled by default
+  bool can_toggle;          // whether protocol can be toggled (some can't)
+};
+
+// Heuristic dissector info struct for listing all heuristic dissectors
+struct HeuristicInfo {
+  string short_name;        // unique short name (e.g., "mac_nr_udp")
+  string display_name;      // display name for UI
+  string list_name;         // parent dissector table name (e.g., "udp")
+  string protocol_name;     // associated protocol name
+  int protocol_id;          // protocol ID this heuristic belongs to
+  bool enabled;             // whether heuristic is currently enabled
+  bool enabled_by_default;  // whether heuristic is enabled by default
+};
+
+// Unified enabled item for building a hierarchical UI like Wireshark's Enabled Protocols dialog
+// Can represent either a protocol or a heuristic dissector
+struct EnabledProtocolItem {
+  // Common fields
+  string name;              // display name (short_name for protocols, display_name for heuristics)
+  string description;       // long description
+  bool enabled;             // whether currently enabled
+  bool enabled_by_default;  // whether enabled by default
+  bool can_toggle;          // whether can be toggled
+
+  // Type identification
+  bool is_heuristic;        // true if this is a heuristic, false if protocol
+
+  // Protocol-specific (when is_heuristic = false)
+  int protocol_id;          // protocol ID (only valid for protocols)
+
+  // Heuristic-specific (when is_heuristic = true)
+  string heuristic_short_name;  // unique short name for enabling (only valid for heuristics)
+  string list_name;         // dissector table this heuristic listens on (e.g., "udp")
+
+  // Child heuristics (only valid for protocols)
+  vector<EnabledProtocolItem> heuristics;  // heuristic dissectors belonging to this protocol
+};
+
 // globals
 
 bool wg_init();
@@ -258,6 +303,15 @@ vector<PrefModule> wg_list_modules();
 vector<PrefData> wg_list_preferences(string module_name);
 string wg_get_upload_dir();
 string wg_get_plugins_dir();
+
+// Protocol enable/disable functions
+vector<ProtocolInfo> wg_list_protocols();
+bool wg_set_protocol_enabled(int proto_id, bool enabled);
+bool wg_set_protocol_enabled_by_name(string proto_name, bool enabled);
+
+// Heuristic dissector enable/disable functions
+vector<HeuristicInfo> wg_list_heuristic_dissectors();
+bool wg_set_heuristic_enabled(string short_name, bool enabled);
 
 class DissectSession {
 private:

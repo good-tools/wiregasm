@@ -7,11 +7,13 @@ import {
   Follow,
   Frame,
   FramesResponse,
+  HeuristicInfo,
   LoadResponse,
   MapInput,
   Pref,
   PrefModule,
   PrefSetResult,
+  ProtocolInfo,
   TapConvResponse,
   TapExportObjectResponse,
   TapResponse,
@@ -286,6 +288,63 @@ export class Wiregasm {
 
   is_conv_tap(tap: any): tap is TapConvResponse {
     return tap instanceof this.lib.TapConvResponse;
+  }
+
+  // Protocol enable/disable methods
+
+  /**
+   * List all registered protocols
+   *
+   * @returns Array of all protocols with their enabled state
+   */
+  list_protocols(): ProtocolInfo[] {
+    const vec = this.lib.listProtocols();
+    return vectorToArray(vec);
+  }
+
+  /**
+   * Enable or disable a protocol by its ID
+   *
+   * @param protoId Protocol ID
+   * @param enabled Whether to enable or disable the protocol
+   * @returns true if successful, false otherwise
+   */
+  set_protocol_enabled(protoId: number, enabled: boolean): boolean {
+    return this.lib.setProtocolEnabled(protoId, enabled);
+  }
+
+  /**
+   * Enable or disable a protocol by its filter name
+   *
+   * @param protoName Protocol filter name (e.g., "tcp", "udp")
+   * @param enabled Whether to enable or disable the protocol
+   * @returns true if successful, false otherwise
+   */
+  set_protocol_enabled_by_name(protoName: string, enabled: boolean): boolean {
+    return this.lib.setProtocolEnabledByName(protoName, enabled);
+  }
+
+  // Heuristic dissector enable/disable methods
+
+  /**
+   * List all registered heuristic dissectors
+   *
+   * @returns Array of all heuristic dissectors with their enabled state
+   */
+  list_heuristic_dissectors(): HeuristicInfo[] {
+    const vec = this.lib.listHeuristicDissectors();
+    return vectorToArray(vec);
+  }
+
+  /**
+   * Enable or disable a heuristic dissector by its unique short name
+   *
+   * @param shortName Unique short name of the heuristic dissector (e.g., "mac_nr_udp")
+   * @param enabled Whether to enable or disable the heuristic
+   * @returns true if successful, false otherwise
+   */
+  set_heuristic_enabled(shortName: string, enabled: boolean): boolean {
+    return this.lib.setHeuristicEnabled(shortName, enabled);
   }
 }
 
