@@ -23,9 +23,6 @@ jobs:
         cache: 'npm'
         registry-url: 'https://registry.npmjs.org'
 
-    - name: Update npm for Trusted Publishers
-      run: npm install -g npm@latest
-
     - name: Download artifacts
       uses: dawidd6/action-download-artifact@v2
       with:
@@ -43,5 +40,4 @@ jobs:
       id: release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        NPM_CONFIG_PROVENANCE: true
       run: npx semantic-release
