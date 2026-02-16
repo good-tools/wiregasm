@@ -21,6 +21,40 @@ static const char *DEFAULT_PLUGINS_DIR = "/plugins";
 static gboolean wg_initialized = FALSE;
 static e_prefs *prefs_p;
 
+static guint wg_apply_decode_as_pref_cb(pref_t *pref, gpointer user_data) {
+  if (prefs_get_type(pref) == PREF_DECODE_AS_RANGE) {
+    pref_unstash_data_t unstashed_data;
+    unstashed_data.module = (module_t *)user_data;
+    unstashed_data.handle_decode_as = true;
+    pref_unstash(pref, &unstashed_data);
+  }
+
+  return 0;
+}
+
+static guint wg_apply_decode_as_module_cb(module_t *module, gpointer user_data);
+
+static void wg_apply_decode_as_for_module(module_t *module) {
+  if (module == NULL) {
+    return;
+  }
+
+  prefs_pref_foreach(module, wg_apply_decode_as_pref_cb, module);
+
+  if (prefs_module_has_submodules(module)) {
+    prefs_modules_foreach_submodules(module, wg_apply_decode_as_module_cb, NULL);
+  }
+}
+
+static guint wg_apply_decode_as_module_cb(module_t *module, gpointer user_data _U_) {
+  wg_apply_decode_as_for_module(module);
+  return 0;
+}
+
+static void wg_apply_decode_as_defaults() {
+  prefs_modules_foreach(wg_apply_decode_as_module_cb, NULL);
+}
+
 void failure_message(const char *msg_format, va_list ap) {
   va_list ap_copy;
   va_copy(ap_copy, ap);
@@ -189,6 +223,7 @@ bool wg_init() {
   prefs_p = epan_load_settings();
 
   prefs_apply_all();
+  wg_apply_decode_as_defaults();
 
   on_status(INFO, "Initializing color filters");
 
@@ -216,6 +251,7 @@ void wg_destroy() {
 
 void wg_prefs_apply_all() {
   prefs_apply_all();
+  wg_apply_decode_as_defaults();
 }
 
 void wg_set_pref_values(pref_t *pref, PrefData *res) {
