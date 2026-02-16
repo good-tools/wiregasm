@@ -1,5 +1,6 @@
 #include "wiregasm.h"
 #include "lib.h"
+#include <epan/packet.h>
 #include <epan/prefs-int.h>
 #include <epan/prefs.h>
 #include <epan/wslua/init_wslua.h>
@@ -23,10 +24,20 @@ static e_prefs *prefs_p;
 
 static guint wg_apply_decode_as_pref_cb(pref_t *pref, gpointer user_data) {
   if (prefs_get_type(pref) == PREF_DECODE_AS_RANGE) {
-    pref_unstash_data_t unstashed_data;
-    unstashed_data.module = (module_t *)user_data;
-    unstashed_data.handle_decode_as = true;
-    pref_unstash(pref, &unstashed_data);
+    module_t *module = (module_t *)user_data;
+    const char *table_name = prefs_get_name(pref);
+    range_t *range = prefs_get_range_value_real(pref, pref_current);
+
+    if (table_name != NULL && range != NULL) {
+      dissector_table_t sub_dissectors = find_dissector_table(table_name);
+      if (sub_dissectors != NULL) {
+        dissector_handle_t handle =
+            dissector_table_get_dissector_handle(sub_dissectors, module->title);
+        if (handle != NULL) {
+          dissector_add_uint_range(table_name, range, handle);
+        }
+      }
+    }
   }
 
   return 0;
