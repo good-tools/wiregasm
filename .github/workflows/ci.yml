@@ -16,7 +16,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    
+
+    - name: Configure Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 22
+        cache: 'npm'
+
     - name: Stash old path
       run: echo "OLD_PATH=$PATH" >> "${GITHUB_ENV}"
 
