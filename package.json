@@ -35,6 +35,8 @@
     "@parcel/packager-ts": "^2.8.2",
     "@parcel/transformer-typescript-types": "^2.8.2",
     "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.6",
+    "@semantic-release/npm": "^13.1.4",
     "@types/jest": "^29.2.5",
     "@types/node": "^22.19.11",
     "@types/pako": "^2.0.0",
@@ -47,6 +49,7 @@
     "pako": "^2.1.0",
     "parcel": "^2.8.2",
     "prettier": "^2.8.2",
+    "semantic-release": "^25.0.3",
     "ts-jest": "^29.0.3"
   },
   "jest": {
