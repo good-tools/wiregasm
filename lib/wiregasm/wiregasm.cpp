@@ -1,5 +1,6 @@
 #include "wiregasm.h"
 #include "lib.h"
+#include <epan/packet.h>
 #include <epan/prefs-int.h>
 #include <epan/prefs.h>
 #include <epan/wslua/init_wslua.h>
@@ -20,6 +21,50 @@ static const char *UPLOAD_DIR = "/uploads";
 static const char *DEFAULT_PLUGINS_DIR = "/plugins";
 static gboolean wg_initialized = FALSE;
 static e_prefs *prefs_p;
+
+static guint wg_apply_decode_as_pref_cb(pref_t *pref, gpointer user_data) {
+  if (prefs_get_type(pref) == PREF_DECODE_AS_RANGE) {
+    module_t *module = (module_t *)user_data;
+    const char *table_name = prefs_get_name(pref);
+    range_t *range = prefs_get_range_value_real(pref, pref_current);
+
+    if (table_name != NULL && range != NULL) {
+      dissector_table_t sub_dissectors = find_dissector_table(table_name);
+      if (sub_dissectors != NULL) {
+        dissector_handle_t handle =
+            dissector_table_get_dissector_handle(sub_dissectors, module->title);
+        if (handle != NULL) {
+          dissector_add_uint_range(table_name, range, handle);
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
+static guint wg_apply_decode_as_module_cb(module_t *module, gpointer user_data);
+
+static void wg_apply_decode_as_for_module(module_t *module) {
+  if (module == NULL) {
+    return;
+  }
+
+  prefs_pref_foreach(module, wg_apply_decode_as_pref_cb, module);
+
+  if (prefs_module_has_submodules(module)) {
+    prefs_modules_foreach_submodules(module, wg_apply_decode_as_module_cb, NULL);
+  }
+}
+
+static guint wg_apply_decode_as_module_cb(module_t *module, gpointer user_data _U_) {
+  wg_apply_decode_as_for_module(module);
+  return 0;
+}
+
+static void wg_apply_decode_as_defaults() {
+  prefs_modules_foreach(wg_apply_decode_as_module_cb, NULL);
+}
 
 void failure_message(const char *msg_format, va_list ap) {
   va_list ap_copy;
@@ -189,6 +234,7 @@ bool wg_init() {
   prefs_p = epan_load_settings();
 
   prefs_apply_all();
+  wg_apply_decode_as_defaults();
 
   on_status(INFO, "Initializing color filters");
 
@@ -216,6 +262,7 @@ void wg_destroy() {
 
 void wg_prefs_apply_all() {
   prefs_apply_all();
+  wg_apply_decode_as_defaults();
 }
 
 void wg_set_pref_values(pref_t *pref, PrefData *res) {
@@ -381,8 +428,20 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value) 
 
   // handle decode as range ourselves
   if (type == PREF_DECODE_AS_RANGE) {
-    range_t *new_range = NULL;
-    convert_ret_t ret = range_convert_str(NULL, &new_range, value.c_str(), prefs_get_max_value(p));
+    // get current range and merge with new value so defaults are preserved
+    range_t *current_range = prefs_get_range_value_real(p, pref_current);
+    char *current_range_str = range_convert_range(NULL, current_range);
+
+    string merged_str;
+    if (current_range_str != NULL && strlen(current_range_str) > 0) {
+      merged_str = string(current_range_str) + "," + value;
+    } else {
+      merged_str = value;
+    }
+    wmem_free(NULL, current_range_str);
+
+    range_t *merged_range = NULL;
+    convert_ret_t ret = range_convert_str(NULL, &merged_range, merged_str.c_str(), prefs_get_max_value(p));
 
     if (ret != CVT_NO_ERROR) {
       res.code = -1;
@@ -390,7 +449,7 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value) 
       return res;
     }
 
-    if (prefs_set_range_value(p, new_range, pref_stashed)) {
+    if (prefs_set_range_value(p, merged_range, pref_stashed)) {
       pref_unstash_data_t unstashed_data;
 
       unstashed_data.module = mod;
