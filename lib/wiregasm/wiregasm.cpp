@@ -428,8 +428,20 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value) 
 
   // handle decode as range ourselves
   if (type == PREF_DECODE_AS_RANGE) {
-    range_t *new_range = NULL;
-    convert_ret_t ret = range_convert_str(NULL, &new_range, value.c_str(), prefs_get_max_value(p));
+    // get current range and merge with new value so defaults are preserved
+    range_t *current_range = prefs_get_range_value_real(p, pref_current);
+    char *current_range_str = range_convert_range(NULL, current_range);
+
+    string merged_str;
+    if (current_range_str != NULL && strlen(current_range_str) > 0) {
+      merged_str = string(current_range_str) + "," + value;
+    } else {
+      merged_str = value;
+    }
+    wmem_free(NULL, current_range_str);
+
+    range_t *merged_range = NULL;
+    convert_ret_t ret = range_convert_str(NULL, &merged_range, merged_str.c_str(), prefs_get_max_value(p));
 
     if (ret != CVT_NO_ERROR) {
       res.code = -1;
@@ -437,7 +449,7 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value) 
       return res;
     }
 
-    if (prefs_set_range_value(p, new_range, pref_stashed)) {
+    if (prefs_set_range_value(p, merged_range, pref_stashed)) {
       pref_unstash_data_t unstashed_data;
 
       unstashed_data.module = mod;
