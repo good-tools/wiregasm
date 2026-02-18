@@ -3,6 +3,7 @@
 #include <epan/packet.h>
 #include <epan/prefs-int.h>
 #include <epan/prefs.h>
+#include <epan/proto.h>
 #include <epan/wslua/init_wslua.h>
 #include <wireshark/ws_version.h>
 #include <wsutil/privileges.h>
@@ -607,4 +608,137 @@ IoGraphResult DissectSession::iograph(MapInput args) {
     args["interval"] = "1000";
   }
   return wg_session_process_iograph(&this->capture_file, args);
+}
+
+// ============================================================================
+// Protocol enable/disable functions
+// ============================================================================
+
+vector<ProtocolInfo> wg_list_protocols() {
+  vector<ProtocolInfo> result;
+  void *cookie = NULL;
+  int proto_id;
+
+  for (proto_id = proto_get_first_protocol(&cookie); proto_id != -1;
+       proto_id = proto_get_next_protocol(&cookie)) {
+
+    protocol_t *protocol = find_protocol_by_id(proto_id);
+    if (protocol == NULL)
+      continue;
+
+    ProtocolInfo info;
+    info.id = proto_id;
+
+    const char *filter_name = proto_get_protocol_filter_name(proto_id);
+    if (filter_name) {
+      info.name = string(filter_name);
+    }
+
+    const char *long_name = proto_get_protocol_long_name(protocol);
+    if (long_name) {
+      info.long_name = string(long_name);
+    }
+
+    info.enabled = proto_is_protocol_enabled(protocol);
+    info.enabled_by_default = proto_is_protocol_enabled_by_default(protocol);
+    info.can_toggle = proto_can_toggle_protocol(proto_id);
+
+    result.push_back(info);
+  }
+
+  return result;
+}
+
+bool wg_set_protocol_enabled(int proto_id, bool enabled) {
+  protocol_t *protocol = find_protocol_by_id(proto_id);
+  if (protocol == NULL) {
+    return false;
+  }
+
+  if (!proto_can_toggle_protocol(proto_id)) {
+    return false;
+  }
+
+  proto_set_decoding(proto_id, enabled);
+  return true;
+}
+
+bool wg_set_protocol_enabled_by_name(string proto_name, bool enabled) {
+  int proto_id = proto_get_id_by_filter_name(proto_name.c_str());
+  if (proto_id == -1) {
+    return false;
+  }
+
+  return wg_set_protocol_enabled(proto_id, enabled);
+}
+
+// ============================================================================
+// Heuristic dissector enable/disable functions
+// ============================================================================
+
+// Callback data for collecting heuristic dissectors
+struct HeurCollectorData {
+  vector<HeuristicInfo> *results;
+};
+
+// Callback for each heuristic entry within a table
+static void heur_entry_collector_cb(const char *table_name, struct heur_dtbl_entry *entry, void *user_data) {
+  HeurCollectorData *data = (HeurCollectorData *)user_data;
+
+  HeuristicInfo info;
+
+  if (entry->short_name) {
+    info.short_name = string(entry->short_name);
+  }
+
+  if (entry->display_name) {
+    info.display_name = string(entry->display_name);
+  }
+
+  if (entry->list_name) {
+    info.list_name = string(entry->list_name);
+  }
+
+  if (entry->protocol) {
+    const char *proto_name = proto_get_protocol_short_name(entry->protocol);
+    if (proto_name) {
+      info.protocol_name = string(proto_name);
+    }
+    // Get the protocol ID so we can link heuristics to their parent protocol
+    info.protocol_id = proto_get_id(entry->protocol);
+  } else {
+    info.protocol_id = -1;
+  }
+
+  info.enabled = entry->enabled;
+  info.enabled_by_default = entry->enabled_by_default;
+
+  data->results->push_back(info);
+}
+
+// Callback for each heuristic table
+static void heur_table_collector_cb(const char *table_name, struct heur_dissector_list *table, void *user_data) {
+  // Iterate all entries in this table
+  heur_dissector_table_foreach(table_name, heur_entry_collector_cb, user_data);
+}
+
+vector<HeuristicInfo> wg_list_heuristic_dissectors() {
+  vector<HeuristicInfo> result;
+  HeurCollectorData data;
+  data.results = &result;
+
+  // Iterate all heuristic tables, then entries within each
+  dissector_all_heur_tables_foreach_table(heur_table_collector_cb, &data, NULL);
+
+  return result;
+}
+
+bool wg_set_heuristic_enabled(string short_name, bool enabled) {
+  heur_dtbl_entry_t *entry = find_heur_dissector_by_unique_short_name(short_name.c_str());
+  if (entry == NULL) {
+    return false;
+  }
+
+  entry->enabled = enabled;
+  return true;
 }

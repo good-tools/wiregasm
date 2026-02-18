@@ -244,6 +244,25 @@ export interface IoGraph {
   items: Vector<number>;
 }
 
+export interface ProtocolInfo {
+  id: number;
+  name: string;
+  long_name: string;
+  enabled: boolean;
+  enabled_by_default: boolean;
+  can_toggle: boolean;
+}
+
+export interface HeuristicInfo {
+  short_name: string;
+  display_name: string;
+  list_name: string;
+  protocol_name: string;
+  protocol_id: number; // protocol ID this heuristic belongs to (-1 if none)
+  enabled: boolean;
+  enabled_by_default: boolean;
+}
+
 export interface DissectSession {
   /**
    * Free up any memory used by the session
@@ -450,6 +469,51 @@ export interface WiregasmLib extends EmscriptenModule {
    * @param length Length of the data
    */
   upload(file_name: string, data_ptr: number, length: number): string;
+
+  // Protocol enable/disable functions
+
+  /**
+   * List all registered protocols
+   *
+   * @returns List of all protocols with their enabled state
+   */
+  listProtocols(): Vector<ProtocolInfo>;
+
+  /**
+   * Enable or disable a protocol by its ID
+   *
+   * @param protoId Protocol ID
+   * @param enabled Whether to enable or disable the protocol
+   * @returns true if successful, false otherwise
+   */
+  setProtocolEnabled(protoId: number, enabled: boolean): boolean;
+
+  /**
+   * Enable or disable a protocol by its filter name
+   *
+   * @param protoName Protocol filter name (e.g., "tcp", "udp")
+   * @param enabled Whether to enable or disable the protocol
+   * @returns true if successful, false otherwise
+   */
+  setProtocolEnabledByName(protoName: string, enabled: boolean): boolean;
+
+  // Heuristic dissector enable/disable functions
+
+  /**
+   * List all registered heuristic dissectors
+   *
+   * @returns List of all heuristic dissectors with their enabled state
+   */
+  listHeuristicDissectors(): Vector<HeuristicInfo>;
+
+  /**
+   * Enable or disable a heuristic dissector by its unique short name
+   *
+   * @param shortName Unique short name of the heuristic dissector (e.g., "mac_nr_udp")
+   * @param enabled Whether to enable or disable the heuristic
+   * @returns true if successful, false otherwise
+   */
+  setHeuristicEnabled(shortName: string, enabled: boolean): boolean;
 }
 
 export type WiregasmLoader = (

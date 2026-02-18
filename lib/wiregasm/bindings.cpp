@@ -20,6 +20,13 @@ EMSCRIPTEN_BINDINGS(Wiregasm) {
   emscripten::function("listPreferences", &wg_list_preferences);
   emscripten::function("applyPreferences", &wg_prefs_apply_all);
   emscripten::function("wiresharkVersion", &wg_ws_version);
+  // Protocol enable/disable functions
+  emscripten::function("listProtocols", &wg_list_protocols);
+  emscripten::function("setProtocolEnabled", &wg_set_protocol_enabled);
+  emscripten::function("setProtocolEnabledByName", &wg_set_protocol_enabled_by_name);
+  // Heuristic dissector enable/disable functions
+  emscripten::function("listHeuristicDissectors", &wg_list_heuristic_dissectors);
+  emscripten::function("setHeuristicEnabled", &wg_set_heuristic_enabled);
 }
 
 EMSCRIPTEN_BINDINGS(DissectSession) {
@@ -305,4 +312,29 @@ EMSCRIPTEN_BINDINGS(ExportObject) {
 
 EMSCRIPTEN_BINDINGS(MapInput) {
   register_map<string, string>("MapInput");
+}
+
+EMSCRIPTEN_BINDINGS(ProtocolInfo) {
+  value_object<ProtocolInfo>("ProtocolInfo")
+      .field("id", &ProtocolInfo::id)
+      .field("name", &ProtocolInfo::name)
+      .field("long_name", &ProtocolInfo::long_name)
+      .field("enabled", &ProtocolInfo::enabled)
+      .field("enabled_by_default", &ProtocolInfo::enabled_by_default)
+      .field("can_toggle", &ProtocolInfo::can_toggle);
+
+  register_vector<ProtocolInfo>("VectorProtocolInfo");
+}
+
+EMSCRIPTEN_BINDINGS(HeuristicInfo) {
+  value_object<HeuristicInfo>("HeuristicInfo")
+      .field("short_name", &HeuristicInfo::short_name)
+      .field("display_name", &HeuristicInfo::display_name)
+      .field("list_name", &HeuristicInfo::list_name)
+      .field("protocol_name", &HeuristicInfo::protocol_name)
+      .field("protocol_id", &HeuristicInfo::protocol_id)
+      .field("enabled", &HeuristicInfo::enabled)
+      .field("enabled_by_default", &HeuristicInfo::enabled_by_default);
+
+  register_vector<HeuristicInfo>("VectorHeuristicInfo");
 }
