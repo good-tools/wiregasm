@@ -43,22 +43,8 @@ static guint wg_apply_decode_as_pref_cb(pref_t *pref, gpointer user_data) {
   return 0;
 }
 
-static guint wg_apply_decode_as_module_cb(module_t *module, gpointer user_data);
-
-static void wg_apply_decode_as_for_module(module_t *module) {
-  if (module == NULL) {
-    return;
-  }
-
-  prefs_pref_foreach(module, wg_apply_decode_as_pref_cb, module);
-
-  if (prefs_module_has_submodules(module)) {
-    prefs_modules_foreach_submodules(module, wg_apply_decode_as_module_cb, NULL);
-  }
-}
-
 static guint wg_apply_decode_as_module_cb(module_t *module, gpointer user_data _U_) {
-  wg_apply_decode_as_for_module(module);
+  prefs_pref_foreach(module, wg_apply_decode_as_pref_cb, module);
   return 0;
 }
 
@@ -428,17 +414,18 @@ SetPrefResponse wg_set_pref(string module_name, string pref_name, string value) 
 
   // handle decode as range ourselves
   if (type == PREF_DECODE_AS_RANGE) {
-    // get current range and merge with new value so defaults are preserved
-    range_t *current_range = prefs_get_range_value_real(p, pref_current);
-    char *current_range_str = range_convert_range(NULL, current_range);
+    // merge with default range so builtin ports are preserved, while
+    // avoiding unbounded growth from repeatedly appending current values.
+    range_t *default_range = prefs_get_range_value_real(p, pref_default);
+    char *default_range_str = range_convert_range(NULL, default_range);
 
     string merged_str;
-    if (current_range_str != NULL && strlen(current_range_str) > 0) {
-      merged_str = string(current_range_str) + "," + value;
+    if (default_range_str != NULL && strlen(default_range_str) > 0) {
+      merged_str = string(default_range_str) + "," + value;
     } else {
       merged_str = value;
     }
-    wmem_free(NULL, current_range_str);
+    wmem_free(NULL, default_range_str);
 
     range_t *merged_range = NULL;
     convert_ret_t ret = range_convert_str(NULL, &merged_range, merged_str.c_str(), prefs_get_max_value(p));
