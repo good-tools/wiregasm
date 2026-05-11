@@ -608,3 +608,15 @@ IoGraphResult DissectSession::iograph(MapInput args) {
   }
   return wg_session_process_iograph(&this->capture_file, args);
 }
+
+ExtractFieldsResponse DissectSession::extractFields(vector<string> fields, string filter, int limit) {
+  return wg_session_process_extract_fields(&this->capture_file, fields, filter.c_str(), limit < 0 ? 0 : static_cast<guint32>(limit));
+}
+
+PresentFieldsResponse DissectSession::listPresentFields() {
+  return wg_session_process_present_fields(&this->capture_file);
+}
+
+ProtocolHierarchyResponse DissectSession::protocolHierarchy() {
+  return wg_session_process_protocol_hierarchy(&this->capture_file);
+}

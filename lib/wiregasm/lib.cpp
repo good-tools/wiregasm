@@ -1,5 +1,9 @@
 #include "lib.h"
 
+#include <algorithm>
+#include <map>
+#include <set>
+
 static guint32 cum_bytes;
 static frame_data ref_frame;
 
@@ -1002,6 +1006,346 @@ FramesResponse wg_process_frames(capture_file *cfile, GHashTable *filter_table, 
   result.frames = res;
 
   return result;
+}
+
+static void wg_collect_field_values(proto_tree *tree, const map<int, string> &hfid_to_field, vector<FieldValue> *values) {
+  for (proto_node *node = tree->first_child; node; node = node->next) {
+    field_info *finfo = PNODE_FINFO(node);
+
+    if (!finfo) {
+      if (((proto_tree *)node)->first_child) {
+        wg_collect_field_values((proto_tree *)node, hfid_to_field, values);
+      }
+      continue;
+    }
+
+    if (finfo->hfinfo) {
+      auto field_it = hfid_to_field.find(finfo->hfinfo->id);
+      if (field_it != hfid_to_field.end()) {
+        FieldValue field_value;
+        field_value.field = field_it->second;
+
+        if (finfo->value) {
+          char *display = fvalue_to_string_repr(NULL, finfo->value, FTREPR_DISPLAY, finfo->hfinfo->display);
+          if (display) {
+            field_value.value = display;
+            wmem_free(NULL, display);
+          }
+        }
+
+        if (field_value.value.empty()) {
+          char label_str[ITEM_LABEL_LENGTH];
+          label_str[0] = '\0';
+          proto_item_fill_label(finfo, label_str);
+          field_value.value = string(label_str);
+        }
+
+        values->push_back(field_value);
+      }
+    }
+
+    if (((proto_tree *)node)->first_child) {
+      wg_collect_field_values((proto_tree *)node, hfid_to_field, values);
+    }
+  }
+}
+
+ExtractFieldsResponse wg_session_process_extract_fields(capture_file *cfile, const vector<string> &fields, const char *filter, guint32 limit) {
+  ExtractFieldsResponse response;
+  response.matched = 0;
+  response.total_rows = 0;
+  response.truncated = false;
+
+  map<int, string> hfid_to_field;
+  for (const auto &field : fields) {
+    const int hfid = proto_registrar_get_id_byname(field.c_str());
+    if (hfid < 0) {
+      response.error = string("Field not found: ") + field;
+      return response;
+    }
+    hfid_to_field[hfid] = field;
+  }
+
+  dfilter_t *dfcode = NULL;
+  if (filter && filter[0]) {
+    df_error_t *dferr = NULL;
+    if (!dfilter_compile(filter, &dfcode, &dferr)) {
+      response.error = dferr ? string(dferr->msg) : "Filter expression invalid";
+      if (dferr)
+        g_free(dferr);
+      return response;
+    }
+  }
+
+  wtap_rec rec;
+  Buffer rec_buf;
+  int err = 0;
+  char *err_info = NULL;
+
+  wtap_rec_init(&rec);
+  ws_buffer_init(&rec_buf, 1514);
+
+  epan_dissect_t edt;
+  epan_dissect_init(&edt, cfile->epan, TRUE, FALSE);
+
+  guint32 prev_dis_num = 0;
+  for (guint32 framenum = 1; framenum <= cfile->count; framenum++) {
+    frame_data *fdata = wg_get_frame(cfile, framenum);
+    if (!fdata)
+      continue;
+
+    if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, &rec, &rec_buf, &err, &err_info)) {
+      break;
+    }
+
+    for (const auto &entry : hfid_to_field) {
+      epan_dissect_prime_with_hfid(&edt, entry.first);
+    }
+
+    if (dfcode)
+      epan_dissect_prime_with_dfilter(&edt, dfcode);
+
+    fdata->ref_time = FALSE;
+    fdata->frame_ref_num = (framenum != 1) ? 1 : 0;
+    fdata->prev_dis_num = prev_dis_num;
+
+    epan_dissect_run(&edt, cfile->cd_t, &rec,
+                     frame_tvbuff_new_buffer(&cfile->provider, fdata, &rec_buf),
+                     fdata, NULL);
+
+    const bool passed = (dfcode == NULL || dfilter_apply_edt(dfcode, &edt));
+    if (passed) {
+      response.matched++;
+      prev_dis_num = framenum;
+
+      ExtractedRow row;
+      row.framenum = framenum;
+      if (edt.tree) {
+        wg_collect_field_values(edt.tree, hfid_to_field, &row.values);
+      }
+
+      if (!row.values.empty()) {
+        response.rows.push_back(row);
+        if (limit > 0 && response.rows.size() >= limit) {
+          response.truncated = true;
+          wtap_rec_reset(&rec);
+          epan_dissect_reset(&edt);
+          break;
+        }
+      }
+    }
+
+    wtap_rec_reset(&rec);
+    epan_dissect_reset(&edt);
+  }
+
+  response.total_rows = response.rows.size();
+
+  epan_dissect_cleanup(&edt);
+  wtap_rec_cleanup(&rec);
+  ws_buffer_free(&rec_buf);
+
+  if (dfcode)
+    dfilter_free(dfcode);
+  if (err_info)
+    g_free(err_info);
+
+  return response;
+}
+
+static void wg_collect_present_fields(proto_tree *tree,
+                                      set<string> *frame_fields,
+                                      map<string, PresentField> *present_fields) {
+  for (proto_node *node = tree->first_child; node; node = node->next) {
+    field_info *finfo = PNODE_FINFO(node);
+    if (!finfo || !finfo->hfinfo || !finfo->hfinfo->abbrev) {
+      if (((proto_tree *)node)->first_child) {
+        wg_collect_present_fields((proto_tree *)node, frame_fields, present_fields);
+      }
+      continue;
+    }
+
+    const string field_name = finfo->hfinfo->abbrev;
+    if (field_name.empty())
+      continue;
+
+    if (frame_fields->insert(field_name).second) {
+      auto it = present_fields->find(field_name);
+      if (it == present_fields->end()) {
+        PresentField present;
+        present.field = field_name;
+        present.name = finfo->hfinfo->name ? finfo->hfinfo->name : "";
+        present.type = static_cast<int>(finfo->hfinfo->type);
+        present.occurrences = 1;
+        (*present_fields)[field_name] = present;
+      } else {
+        it->second.occurrences++;
+      }
+    }
+
+    if (((proto_tree *)node)->first_child) {
+      wg_collect_present_fields((proto_tree *)node, frame_fields, present_fields);
+    }
+  }
+}
+
+PresentFieldsResponse wg_session_process_present_fields(capture_file *cfile) {
+  PresentFieldsResponse response;
+  map<string, PresentField> fields_map;
+
+  wtap_rec rec;
+  Buffer rec_buf;
+  int err = 0;
+  char *err_info = NULL;
+
+  wtap_rec_init(&rec);
+  ws_buffer_init(&rec_buf, 1514);
+
+  epan_dissect_t edt;
+  epan_dissect_init(&edt, cfile->epan, TRUE, FALSE);
+
+  guint32 prev_dis_num = 0;
+  for (guint32 framenum = 1; framenum <= cfile->count; framenum++) {
+    frame_data *fdata = wg_get_frame(cfile, framenum);
+    if (!fdata)
+      continue;
+
+    if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, &rec, &rec_buf, &err, &err_info)) {
+      break;
+    }
+
+    fdata->ref_time = FALSE;
+    fdata->frame_ref_num = (framenum != 1) ? 1 : 0;
+    fdata->prev_dis_num = prev_dis_num;
+
+    epan_dissect_run(&edt, cfile->cd_t, &rec,
+                     frame_tvbuff_new_buffer(&cfile->provider, fdata, &rec_buf),
+                     fdata, NULL);
+
+    prev_dis_num = framenum;
+
+    set<string> frame_fields;
+    if (edt.tree) {
+      wg_collect_present_fields(edt.tree, &frame_fields, &fields_map);
+    }
+
+    wtap_rec_reset(&rec);
+    epan_dissect_reset(&edt);
+  }
+
+  for (const auto &entry : fields_map) {
+    response.fields.push_back(entry.second);
+  }
+
+  sort(response.fields.begin(), response.fields.end(), [](const PresentField &a, const PresentField &b) {
+    return a.field < b.field;
+  });
+
+  epan_dissect_cleanup(&edt);
+  wtap_rec_cleanup(&rec);
+  ws_buffer_free(&rec_buf);
+
+  if (err_info)
+    g_free(err_info);
+
+  return response;
+}
+
+static ProtocolNode *wg_find_or_create_protocol_node(vector<ProtocolNode> *nodes, const string &filter, const string &name) {
+  for (auto &node : *nodes) {
+    if (node.filter == filter)
+      return &node;
+  }
+
+  ProtocolNode new_node;
+  new_node.filter = filter;
+  new_node.name = name;
+  new_node.frames = 0;
+  new_node.bytes = 0;
+  nodes->push_back(new_node);
+  return &nodes->back();
+}
+
+static void wg_collect_protocol_hierarchy(proto_tree *tree,
+                                          vector<ProtocolNode> *nodes,
+                                          unsigned int frame_bytes) {
+  for (proto_node *node = tree->first_child; node; node = node->next) {
+    field_info *finfo = PNODE_FINFO(node);
+    if (!finfo || !finfo->hfinfo) {
+      if (((proto_tree *)node)->first_child) {
+        wg_collect_protocol_hierarchy((proto_tree *)node, nodes, frame_bytes);
+      }
+      continue;
+    }
+
+    if (finfo->hfinfo->type == FT_PROTOCOL && finfo->hfinfo->abbrev) {
+      ProtocolNode *protocol = wg_find_or_create_protocol_node(
+          nodes,
+          string(finfo->hfinfo->abbrev),
+          finfo->hfinfo->name ? string(finfo->hfinfo->name) : "");
+
+      protocol->frames++;
+      protocol->bytes += frame_bytes;
+
+      if (((proto_tree *)node)->first_child) {
+        wg_collect_protocol_hierarchy((proto_tree *)node, &protocol->children, frame_bytes);
+      }
+    } else if (((proto_tree *)node)->first_child) {
+      wg_collect_protocol_hierarchy((proto_tree *)node, nodes, frame_bytes);
+    }
+  }
+}
+
+ProtocolHierarchyResponse wg_session_process_protocol_hierarchy(capture_file *cfile) {
+  ProtocolHierarchyResponse response;
+
+  wtap_rec rec;
+  Buffer rec_buf;
+  int err = 0;
+  char *err_info = NULL;
+
+  wtap_rec_init(&rec);
+  ws_buffer_init(&rec_buf, 1514);
+
+  epan_dissect_t edt;
+  epan_dissect_init(&edt, cfile->epan, TRUE, FALSE);
+
+  guint32 prev_dis_num = 0;
+  for (guint32 framenum = 1; framenum <= cfile->count; framenum++) {
+    frame_data *fdata = wg_get_frame(cfile, framenum);
+    if (!fdata)
+      continue;
+
+    if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, &rec, &rec_buf, &err, &err_info)) {
+      break;
+    }
+
+    fdata->ref_time = FALSE;
+    fdata->frame_ref_num = (framenum != 1) ? 1 : 0;
+    fdata->prev_dis_num = prev_dis_num;
+
+    epan_dissect_run(&edt, cfile->cd_t, &rec,
+                     frame_tvbuff_new_buffer(&cfile->provider, fdata, &rec_buf),
+                     fdata, NULL);
+
+    prev_dis_num = framenum;
+
+    if (edt.tree) {
+      wg_collect_protocol_hierarchy(edt.tree, &response.protocols, static_cast<unsigned int>(fdata->pkt_len));
+    }
+
+    wtap_rec_reset(&rec);
+    epan_dissect_reset(&edt);
+  }
+
+  epan_dissect_cleanup(&edt);
+  wtap_rec_cleanup(&rec);
+  ws_buffer_free(&rec_buf);
+
+  if (err_info)
+    g_free(err_info);
+
+  return response;
 }
 
 Follow wg_process_follow(capture_file *cfile, const char *follow, const char *filter, char **err_ret) {
