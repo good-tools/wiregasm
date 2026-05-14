@@ -31,6 +31,9 @@ EMSCRIPTEN_BINDINGS(DissectSession) {
       .function("tap", &DissectSession::tap)
       .function("download", &DissectSession::download)
       .function("iograph", &DissectSession::iograph)
+      .function("extractFields", &DissectSession::extractFields)
+      .function("listPresentFields", &DissectSession::listPresentFields)
+      .function("protocolHierarchy", &DissectSession::protocolHierarchy)
       .function("follow", &DissectSession::follow);
 }
 
@@ -193,6 +196,57 @@ EMSCRIPTEN_BINDINGS(IoGraphResult) {
   register_vector<IoGraph>("VectorIoGraph");
 }
 
+EMSCRIPTEN_BINDINGS(FieldValue) {
+  value_object<FieldValue>("FieldValue")
+      .field("field", &FieldValue::field)
+      .field("value", &FieldValue::value)
+      .field("raw", &FieldValue::raw);
+}
+
+EMSCRIPTEN_BINDINGS(ExtractedRow) {
+  value_object<ExtractedRow>("ExtractedRow")
+      .field("framenum", &ExtractedRow::framenum)
+      .field("values", &ExtractedRow::values);
+}
+
+EMSCRIPTEN_BINDINGS(ExtractFieldsResponse) {
+  value_object<ExtractFieldsResponse>("ExtractFieldsResponse")
+      .field("error", &ExtractFieldsResponse::error)
+      .field("matched", &ExtractFieldsResponse::matched)
+      .field("total_rows", &ExtractFieldsResponse::total_rows)
+      .field("truncated", &ExtractFieldsResponse::truncated)
+      .field("rows", &ExtractFieldsResponse::rows);
+}
+
+EMSCRIPTEN_BINDINGS(PresentField) {
+  value_object<PresentField>("PresentField")
+      .field("field", &PresentField::field)
+      .field("name", &PresentField::name)
+      .field("type", &PresentField::type)
+      .field("occurrences", &PresentField::occurrences);
+}
+
+EMSCRIPTEN_BINDINGS(PresentFieldsResponse) {
+  value_object<PresentFieldsResponse>("PresentFieldsResponse")
+      .field("error", &PresentFieldsResponse::error)
+      .field("fields", &PresentFieldsResponse::fields);
+}
+
+EMSCRIPTEN_BINDINGS(ProtocolNode) {
+  value_object<ProtocolNode>("ProtocolNode")
+      .field("filter", &ProtocolNode::filter)
+      .field("name", &ProtocolNode::name)
+      .field("frames", &ProtocolNode::frames)
+      .field("bytes", &ProtocolNode::bytes)
+      .field("children", &ProtocolNode::children);
+}
+
+EMSCRIPTEN_BINDINGS(ProtocolHierarchyResponse) {
+  value_object<ProtocolHierarchyResponse>("ProtocolHierarchyResponse")
+      .field("error", &ProtocolHierarchyResponse::error)
+      .field("protocols", &ProtocolHierarchyResponse::protocols);
+}
+
 EMSCRIPTEN_BINDINGS(stl_wrappers) {
   register_vector<string>("VectorString");
   register_vector<float>("VectorFloat");
@@ -203,6 +257,10 @@ EMSCRIPTEN_BINDINGS(stl_wrappers) {
   register_vector<PrefModule>("VectorPrefModule");
   register_vector<PrefData>("VectorPrefData");
   register_vector<PrefEnum>("VectorPrefEnum");
+  register_vector<FieldValue>("VectorFieldValue");
+  register_vector<ExtractedRow>("VectorExtractedRow");
+  register_vector<PresentField>("VectorPresentField");
+  register_vector<ProtocolNode>("VectorProtocolNode");
   // Frame::follow is a vector of vectors of strings
   register_vector<vector<string>>("VectorVectorString");
 }

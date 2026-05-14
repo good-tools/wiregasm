@@ -244,6 +244,50 @@ export interface IoGraph {
   items: Vector<number>;
 }
 
+export interface FieldValue {
+  field: string;
+  value: string;
+  raw: string;
+}
+
+export interface ExtractedRow {
+  framenum: number;
+  values: Vector<FieldValue>;
+}
+
+export interface ExtractFieldsResponse {
+  error: string;
+  matched: number;
+  total_rows: number;
+  truncated: boolean;
+  rows: Vector<ExtractedRow>;
+}
+
+export interface PresentField {
+  field: string;
+  name: string;
+  type: number;
+  occurrences: number;
+}
+
+export interface PresentFieldsResponse {
+  error: string;
+  fields: Vector<PresentField>;
+}
+
+export interface ProtocolNode {
+  filter: string;
+  name: string;
+  frames: number;
+  bytes: number;
+  children: Vector<ProtocolNode>;
+}
+
+export interface ProtocolHierarchyResponse {
+  error: string;
+  protocols: Vector<ProtocolNode>;
+}
+
 export interface DissectSession {
   /**
    * Free up any memory used by the session
@@ -281,6 +325,16 @@ export interface DissectSession {
   };
 
   iograph(input: Map<string, string>): IoGraphResult;
+
+  extractFields(
+    fields: Vector<string>,
+    filter: string,
+    limit: number
+  ): ExtractFieldsResponse;
+
+  listPresentFields(): PresentFieldsResponse;
+
+  protocolHierarchy(): ProtocolHierarchyResponse;
 
   download(token: string): DownloadResponse;
 }
@@ -351,6 +405,12 @@ export interface WiregasmLibOverrides {
 
 export interface WiregasmLib extends EmscriptenModule {
   DissectSession: DissectSessionConstructable;
+
+  VectorString: {
+    new (): {
+      push_back(value: string): void;
+    };
+  };
 
   MapInput: MapConstructor;
   TapExportObject: () => TapExportObjectResponse;
