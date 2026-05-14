@@ -268,9 +268,13 @@ export class Wiregasm {
       return fields;
     }
 
-    const regex = new RegExp(query);
+    // Use safe substring matching instead of compiling user input as RegExp.
+    // Accept a leading "(?i)" marker for compatibility with Wireshark-style queries.
+    const normalizedQuery = query.replace(/^\(\?i\)/i, "").toLowerCase();
     return fields.filter(
-      (field) => regex.test(field.field) || regex.test(field.name)
+      (field) =>
+        field.field.toLowerCase().includes(normalizedQuery) ||
+        field.name.toLowerCase().includes(normalizedQuery)
     );
   }
 

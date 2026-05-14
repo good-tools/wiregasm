@@ -1269,6 +1269,8 @@ static ProtocolNode *wg_find_or_create_protocol_node(vector<ProtocolNode> *nodes
 static void wg_collect_protocol_hierarchy(proto_tree *tree,
                                           vector<ProtocolNode> *nodes,
                                           unsigned int frame_bytes) {
+  set<string> counted_protocols;
+
   for (proto_node *node = tree->first_child; node; node = node->next) {
     field_info *finfo = PNODE_FINFO(node);
     if (!finfo || !finfo->hfinfo) {
@@ -1279,13 +1281,17 @@ static void wg_collect_protocol_hierarchy(proto_tree *tree,
     }
 
     if (finfo->hfinfo->type == FT_PROTOCOL && finfo->hfinfo->abbrev) {
+      string protocol_filter(finfo->hfinfo->abbrev);
       ProtocolNode *protocol = wg_find_or_create_protocol_node(
           nodes,
-          string(finfo->hfinfo->abbrev),
+          protocol_filter,
           finfo->hfinfo->name ? string(finfo->hfinfo->name) : "");
 
-      protocol->frames++;
-      protocol->bytes += frame_bytes;
+      // Count a protocol at most once per frame within the current hierarchy level.
+      if (counted_protocols.insert(protocol_filter).second) {
+        protocol->frames++;
+        protocol->bytes += frame_bytes;
+      }
 
       if (((proto_tree *)node)->first_child) {
         wg_collect_protocol_hierarchy((proto_tree *)node, &protocol->children, frame_bytes);
