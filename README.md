@@ -8,10 +8,10 @@ Demo it on [good.tools](https://good.tools/packet-dissector).
 
 ## Build
 The library can be built in two ways:
-1. `npm run build:emscripten` using a docker image with all of the build tools installed
+1. `npm run build:emscripten` using a Docker image with all of the build tools installed
 2. `npm run build:emscripten-local` requires the build environment to be set up. A list of the tools and dependencies can be found in the build [Dockerfile](docker/build.Dockerfile)
 
-After the WASM library is built, the wrapper lib can be built using `npm run build`. The `wiregasm.js` output file produced by the emscripten compiler is not processed by `packer` in the build step and gets added directly to `dist`. This is intentional as it provides consumers to use it for any enviornment they wish, be it nodejs or a browser.
+After the WASM library is built, the wrapper lib can be built using `npm run build`. The `wiregasm.js` output file produced by the emscripten compiler is not processed by `packer` in the build step and gets added directly to `dist`. This is intentional as it provides consumers to use it for any environment they wish, be it nodejs or a browser.
 
 See [lib/Makefile](lib/Makefile) for more information on how dependencies are built.
 
@@ -86,7 +86,7 @@ wg.destroy();
 ```
 
 To add custom Lua dissectors, add your dissectors to the plugins directory
-before initializing wiregasm:
+before initializing Wiregasm:
 
 ```javascript
 // read lua file from local FS
@@ -95,7 +95,7 @@ const dissector_data = await fs.readFile("path/to/dissector.lua");
 // write lua file to the virtual emscripten FS plugin directory
 wg.FS.writeFile("/plugins/dissector.lua", dissector_data)
 
-// initialize and use wiregasm as usual
+// initialize and use Wiregasm as usual
 wg.init();
 ```
 
