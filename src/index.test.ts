@@ -1,6 +1,11 @@
-import * as fs from "fs/promises";
+import * as fs from "node:fs/promises";
 
-import { PrefType, Wiregasm, WiregasmLib, WiregasmLibOverrides } from ".";
+import {
+  PrefType,
+  Wiregasm,
+  type WiregasmLib,
+  type WiregasmLibOverrides,
+} from ".";
 
 import loadWiregasm from "../built/bin/wiregasm.js";
 import pako from "pako";
@@ -9,7 +14,7 @@ import pako from "pako";
 const buildTestOverrides = (): WiregasmLibOverrides => {
   return {
     locateFile: (path, prefix) => {
-      if (path.endsWith(".data")) return "built/bin/" + path;
+      if (path.endsWith(".data")) return `built/bin/${path}`;
       return prefix + path;
     },
     // supress all unwanted logs in test-suite
@@ -56,7 +61,7 @@ describe("Wiregasm Library", () => {
     const fn = "dhcp.pcap";
     const ret = lib.upload(fn, data_on_heap.byteOffset, data.length);
 
-    expect(ret).toEqual(uploadDir + "/" + fn);
+    expect(ret).toEqual(`${uploadDir}/${fn}`);
     expect(lib.FS.readdir(uploadDir)).toContain(fn);
   });
 
@@ -148,12 +153,12 @@ describe("Wiregasm Library Wrapper", () => {
       frame.follow.get(0).get(0),
       frame.follow.get(0).get(1)
     );
-    expect(typeof follow.shost == "string").toBeTruthy();
-    expect(typeof follow.sbytes == "number").toBeTruthy();
-    expect(typeof follow.sport == "string").toBeTruthy();
-    expect(typeof follow.cport == "string").toBeTruthy();
-    expect(typeof follow.chost == "string").toBeTruthy();
-    expect(typeof follow.cbytes == "number").toBeTruthy();
+    expect(typeof follow.shost === "string").toBeTruthy();
+    expect(typeof follow.sbytes === "number").toBeTruthy();
+    expect(typeof follow.sport === "string").toBeTruthy();
+    expect(typeof follow.cport === "string").toBeTruthy();
+    expect(typeof follow.chost === "string").toBeTruthy();
+    expect(typeof follow.cbytes === "number").toBeTruthy();
     expect(follow.payloads.size()).toBeGreaterThan(0);
   });
 
@@ -664,7 +669,7 @@ describe("Wiregasm Library - Tap", () => {
       });
     });
 
-    ["eo", "conv", "endpt"].map((tap) => {
+    for (const tap of ["eo", "conv", "endpt"]) {
       test(`Unsupported tap type ${tap} is handled properly`, async () => {
         const data = await fs.readFile("samples/http.cap");
         const ret = wg.load("http.cap", data);
@@ -675,7 +680,7 @@ describe("Wiregasm Library - Tap", () => {
           taps: [],
         });
       });
-    });
+    }
 
     test("Missing input values", async () => {
       const data = await fs.readFile("samples/http.cap");

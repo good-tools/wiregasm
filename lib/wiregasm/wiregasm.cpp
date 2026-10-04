@@ -608,7 +608,6 @@ vector<ProtocolInfo> wg_list_protocols() {
 
   for (proto_id = proto_get_first_protocol(&cookie); proto_id != -1;
        proto_id = proto_get_next_protocol(&cookie)) {
-
     protocol_t *protocol = find_protocol_by_id(proto_id);
     if (protocol == NULL)
       continue;

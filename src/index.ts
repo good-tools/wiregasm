@@ -1,26 +1,26 @@
 import {
-  BeforeInitCallback,
-  CheckFilterResponse,
-  CompleteField,
-  DissectSession,
-  DownloadResponse,
-  Follow,
-  Frame,
-  FramesResponse,
-  HeuristicInfo,
-  LoadResponse,
-  MapInput,
-  Pref,
-  PrefModule,
+  type BeforeInitCallback,
+  type CheckFilterResponse,
+  type CompleteField,
+  type DissectSession,
+  type DownloadResponse,
+  type Follow,
+  type Frame,
+  type FramesResponse,
+  type HeuristicInfo,
+  type LoadResponse,
+  type MapInput,
+  type Pref,
+  type PrefModule,
   PrefSetResult,
-  ProtocolInfo,
-  TapConvResponse,
-  TapExportObjectResponse,
-  TapResponse,
-  Vector,
-  WiregasmLib,
-  WiregasmLibOverrides,
-  WiregasmLoader,
+  type ProtocolInfo,
+  type TapConvResponse,
+  type TapExportObjectResponse,
+  type TapResponse,
+  type Vector,
+  type WiregasmLib,
+  type WiregasmLibOverrides,
+  type WiregasmLoader,
 } from "./types";
 import { preferenceSetCodeToError, vectorToArray } from "./utils";
 
@@ -96,9 +96,9 @@ export class Wiregasm {
   set_pref(module: string, key: string, value: string) {
     const ret = this.lib.setPref(module, key, value);
 
-    if (ret.code != PrefSetResult.PREFS_SET_OK) {
+    if (ret.code !== PrefSetResult.PREFS_SET_OK) {
       const message =
-        ret.error != "" ? ret.error : preferenceSetCodeToError(ret.code);
+        ret.error !== "" ? ret.error : preferenceSetCodeToError(ret.code);
       throw new Error(
         `Failed to set preference (${module}.${key}): ${message}`
       );
@@ -107,7 +107,7 @@ export class Wiregasm {
 
   get_pref(module: string, key: string): Pref {
     const response = this.lib.getPref(module, key);
-    if (response.code != 0) {
+    if (response.code !== 0) {
       throw new Error(`Failed to get preference (${module}.${key})`);
     }
     return response.data;
@@ -143,13 +143,16 @@ export class Wiregasm {
     }
 
     const args = new this.lib.MapInput();
-    Object.entries(taps).forEach(([k, v]) => args.set(k, v));
+    for (const [k, v] of Object.entries(taps)) {
+      args.set(k, v);
+    }
 
     const response = this.session.tap(args);
     return {
       error: response.error,
       taps: vectorToArray(response.taps).map((tap) => {
-        let res;
+        // biome-ignore lint/suspicious/noExplicitAny: keeps the public return type of tap() unchanged
+        let res: any;
         if (this.is_conv_tap(tap)) {
           res = {
             proto: tap.proto,
@@ -194,7 +197,9 @@ export class Wiregasm {
     }
 
     const args = new this.lib.MapInput();
-    Object.entries(input).forEach(([k, v]) => args.set(k, v));
+    for (const [k, v] of Object.entries(input)) {
+      args.set(k, v);
+    }
 
     const out = this.session.iograph(args);
     return {
@@ -210,7 +215,7 @@ export class Wiregasm {
   }
 
   add_plugin(name: string, data: string | ArrayBufferView, opts: object = {}) {
-    const path = this.pluginsDir + "/" + name;
+    const path = `${this.pluginsDir}/${name}`;
     this.lib.FS.writeFile(path, data, opts);
   }
 
@@ -228,7 +233,7 @@ export class Wiregasm {
       this.session.delete();
     }
 
-    const path = this.uploadDir + "/" + name;
+    const path = `${this.uploadDir}/${name}`;
     this.lib.FS.writeFile(path, data, opts);
 
     this.session = new this.lib.DissectSession(path);
