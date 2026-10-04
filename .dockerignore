@@ -1,1 +1,7 @@
+# Build context for docker/build.Dockerfile: only what the deps stage needs.
 *
+!Makefile
+!mk
+!patches
+!overlay
+!scripts/patches.mjs

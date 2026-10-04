@@ -1,5 +1,6 @@
 ARG EMSDK_VERSION=6.0.11
-FROM emscripten/emsdk:${EMSDK_VERSION}
+# builder: the toolchain. `make docker` builds in it.
+FROM emscripten/emsdk:${EMSDK_VERSION} AS builder
 ARG MESON_VERSION=1.12.1
 
 RUN echo "## Update and install packages" \
@@ -27,3 +28,15 @@ RUN echo "## Update and install packages" \
     && rm -rf /usr/share/man/?? \
     && rm -rf /usr/share/man/??_* \
     && echo "## Done"
+
+# deps: builder + every dependency built and installed into /src/built.
+# CI tags it with a hash of these inputs and publishes it to GHCR, so builds
+# only compile lib/wiregasm (`make -o build/stamp/wireshark.built`).
+FROM builder AS deps
+WORKDIR /src
+COPY Makefile ./
+COPY mk mk
+COPY patches patches
+COPY overlay overlay
+COPY scripts/patches.mjs scripts/patches.mjs
+RUN make -j"$(nproc)" deps && rm -rf build .cache

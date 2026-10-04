@@ -64,8 +64,9 @@ rebase-patches: guard-PKG
 check-patches: $(foreach p,$(PACKAGES),$(STAMP)/$(p).src)
 
 docker:
-	docker build -t wiregasm-builder:$(EMSDK_VERSION) --build-arg EMSDK_VERSION=$(EMSDK_VERSION) --build-arg MESON_VERSION=$(MESON_VERSION) \
-		-f docker/build.Dockerfile docker
+	docker build -t wiregasm-builder:$(EMSDK_VERSION) --target builder \
+		--build-arg EMSDK_VERSION=$(EMSDK_VERSION) --build-arg MESON_VERSION=$(MESON_VERSION) \
+		-f docker/build.Dockerfile .
 	docker run --rm -v "$(CURDIR)":/src -w /src -u "$$(id -u):$$(id -g)" \
 		-e HOME=/tmp -e EM_CACHE=/src/.cache/emscripten wiregasm-builder:$(EMSDK_VERSION) \
 		make -j"$$(nproc)" $(filter-out docker,$(MAKECMDGOALS))
