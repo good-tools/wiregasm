@@ -1,13 +1,13 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gfileicon.c b/gio/gfileicon.c
-index bd727cd7a68e0688e366ada823808d65e6d765cb..2abe576aaf1babe37a99c6af2dcabb483c9e0321 100644
+index d796ed43f4422d799f7ff9538af3b1857259153b..8162f229feed98664b7e732c7bca03e88cca1ce5 100644
 --- a/gio/gfileicon.c
 +++ b/gio/gfileicon.c
-@@ -43,8 +43,10 @@
-  * 
-  **/
+@@ -41,8 +41,10 @@
+  * It implements [iface@Gio.LoadableIcon].
+  */
  
 -static void g_file_icon_icon_iface_init          (GIconIface          *iface);
 -static void g_file_icon_loadable_icon_iface_init (GLoadableIconIface  *iface);
@@ -18,7 +18,7 @@ index bd727cd7a68e0688e366ada823808d65e6d765cb..2abe576aaf1babe37a99c6af2dcabb48
  static void g_file_icon_load_async               (GLoadableIcon       *icon,
  						  int                  size,
  						  GCancellable        *cancellable,
-@@ -280,7 +282,8 @@ g_file_icon_serialize (GIcon *icon)
+@@ -276,7 +278,8 @@ g_file_icon_serialize (GIcon *icon)
  }
  
  static void
@@ -28,7 +28,7 @@ index bd727cd7a68e0688e366ada823808d65e6d765cb..2abe576aaf1babe37a99c6af2dcabb48
  {
    iface->hash = g_file_icon_hash;
    iface->equal = g_file_icon_equal;
-@@ -360,7 +363,8 @@ g_file_icon_load_finish (GLoadableIcon  *icon,
+@@ -356,7 +359,8 @@ g_file_icon_load_finish (GLoadableIcon  *icon,
  }
  
  static void

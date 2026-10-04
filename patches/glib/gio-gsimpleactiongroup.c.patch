@@ -1,8 +1,8 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gsimpleactiongroup.c b/gio/gsimpleactiongroup.c
-index 28ca21ab574a068e5891a0c6d87960217794b913..92ccf016058f0cacd93857065d32ffa0256a1d12 100644
+index cd768a0a1af0d19ea5665e70a5b226f95975e1ed..3ebc01b192dd97a28de5e3a7dc49b5a8d07a88db 100644
 --- a/gio/gsimpleactiongroup.c
 +++ b/gio/gsimpleactiongroup.c
 @@ -42,8 +42,10 @@ struct _GSimpleActionGroupPrivate

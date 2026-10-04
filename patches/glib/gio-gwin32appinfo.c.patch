@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gwin32appinfo.c b/gio/gwin32appinfo.c
-index dec82954f1646c495c099312603f4f494cc92631..760fc72b30ec68b733fc97dd0fbdfe1d3990b824 100644
+index f177878466a866ab2fd42f0277879338f7811eb0..c30e1942d4215094175765c4cf533964ad0f4178 100644
 --- a/gio/gwin32appinfo.c
 +++ b/gio/gwin32appinfo.c
-@@ -4045,7 +4045,8 @@ gio_win32_appinfo_init (gboolean do_wait)
+@@ -4059,7 +4059,8 @@ gio_win32_appinfo_init (gboolean do_wait)
  }
  
  
@@ -15,7 +15,7 @@ index dec82954f1646c495c099312603f4f494cc92631..760fc72b30ec68b733fc97dd0fbdfe1d
  
  struct _GWin32AppInfo
  {
-@@ -5594,7 +5595,8 @@ g_app_info_create_from_commandline (const char           *commandline,
+@@ -5724,7 +5725,8 @@ g_app_info_create_from_commandline (const char           *commandline,
  /* GAppInfo interface init */
  
  static void

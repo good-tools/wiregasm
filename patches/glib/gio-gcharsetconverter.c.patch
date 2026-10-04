@@ -1,12 +1,12 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gcharsetconverter.c b/gio/gcharsetconverter.c
-index 499319999da3df9d79b03d8bba6a4d4c6341ffea..ab22439a74c370d45b85636d8745507493680067 100644
+index c9437e1bd4726f6099b8f4000adc6780b4e585ba..d38045e40c29d4271564c83edf4cae7094626acd 100644
 --- a/gio/gcharsetconverter.c
 +++ b/gio/gcharsetconverter.c
-@@ -47,8 +47,10 @@ enum {
-  * GIConv.
+@@ -45,8 +45,10 @@ enum {
+  * [struct@GLib.IConv].
   */
  
 -static void g_charset_converter_iface_init          (GConverterIface *iface);
@@ -16,9 +16,9 @@ index 499319999da3df9d79b03d8bba6a4d4c6341ffea..ab22439a74c370d45b85636d87455074
 +static void g_charset_converter_initable_iface_init (GInitableIface  *iface,
 +                                                     gpointer         iface_data);
  
- /**
-  * GCharsetConverter:
-@@ -423,7 +425,8 @@ g_charset_converter_get_num_fallbacks (GCharsetConverter *converter)
+ struct _GCharsetConverter
+ {
+@@ -433,7 +435,8 @@ g_charset_converter_get_num_fallbacks (GCharsetConverter *converter)
  }
  
  static void
@@ -28,7 +28,7 @@ index 499319999da3df9d79b03d8bba6a4d4c6341ffea..ab22439a74c370d45b85636d87455074
  {
    iface->convert = g_charset_converter_convert;
    iface->reset = g_charset_converter_reset;
-@@ -468,7 +471,8 @@ g_charset_converter_initable_init (GInitable     *initable,
+@@ -478,7 +481,8 @@ g_charset_converter_initable_init (GInitable     *initable,
  }
  
  static void

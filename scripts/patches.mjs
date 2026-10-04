@@ -29,6 +29,9 @@ function git(cwd, ...args) {
   return execFileSync(
     "git",
     [
+      // The tree may be owned by another user (e.g. root inside `make docker`).
+      "-c",
+      "safe.directory=*",
       "-c",
       "user.name=wiregasm",
       "-c",

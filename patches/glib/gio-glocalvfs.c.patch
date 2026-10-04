@@ -1,8 +1,8 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/glocalvfs.c b/gio/glocalvfs.c
-index a830cc35002109c461dd64cbd0096bcb974969f7..bb7909740af968d4f92372fad6ac5ac0d269acfd 100644
+index 7266ee0f833e8c88277d1a8c448293ea456b05f9..7c330d026a399bcd0bb8c791fec81c30a2f85d5b 100644
 --- a/gio/glocalvfs.c
 +++ b/gio/glocalvfs.c
 @@ -28,7 +28,7 @@
@@ -14,7 +14,7 @@ index a830cc35002109c461dd64cbd0096bcb974969f7..bb7909740af968d4f92372fad6ac5ac0
  #include "glib-unix.h"
  #include <pwd.h>
  #endif
-@@ -147,7 +147,7 @@ g_local_vfs_parse_name (GVfs       *vfs,
+@@ -134,7 +134,7 @@ g_local_vfs_parse_name (GVfs       *vfs,
      {
        if (*parse_name == '~')
  	{
@@ -23,7 +23,7 @@ index a830cc35002109c461dd64cbd0096bcb974969f7..bb7909740af968d4f92372fad6ac5ac0
  	  const char *user_start;
  	  user_start = parse_name + 1;
  #endif
-@@ -158,7 +158,7 @@ g_local_vfs_parse_name (GVfs       *vfs,
+@@ -145,7 +145,7 @@ g_local_vfs_parse_name (GVfs       *vfs,
  	  
  	  user_end = parse_name;
  

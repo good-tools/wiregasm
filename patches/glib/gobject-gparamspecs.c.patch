@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gobject/gparamspecs.c b/gobject/gparamspecs.c
-index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b33cea80d6 100644
+index 12a81245ac285475eda6cf4ad8acbd2e60efa968..66c97bde50059178192701dae210a92156513af5 100644
 --- a/gobject/gparamspecs.c
 +++ b/gobject/gparamspecs.c
-@@ -66,7 +66,8 @@
+@@ -43,7 +43,8 @@
  
  /* --- param spec functions --- */
  static void
@@ -15,7 +15,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecChar *cspec = G_PARAM_SPEC_CHAR (pspec);
    
-@@ -105,7 +106,8 @@ param_char_validate (GParamSpec *pspec,
+@@ -82,7 +83,8 @@ param_char_validate (GParamSpec *pspec,
  }
  
  static void
@@ -25,7 +25,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecUChar *uspec = G_PARAM_SPEC_UCHAR (pspec);
    
-@@ -171,7 +173,8 @@ param_boolean_validate (GParamSpec *pspec,
+@@ -148,7 +150,8 @@ param_boolean_validate (GParamSpec *pspec,
  }
  
  static void
@@ -35,7 +35,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecInt *ispec = G_PARAM_SPEC_INT (pspec);
    
-@@ -221,7 +224,8 @@ param_int_values_cmp (GParamSpec   *pspec,
+@@ -198,7 +201,8 @@ param_int_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -45,7 +45,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecUInt *uspec = G_PARAM_SPEC_UINT (pspec);
    
-@@ -271,7 +275,8 @@ param_uint_values_cmp (GParamSpec   *pspec,
+@@ -248,7 +252,8 @@ param_uint_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -55,7 +55,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecLong *lspec = G_PARAM_SPEC_LONG (pspec);
    
-@@ -326,7 +331,8 @@ param_long_values_cmp (GParamSpec   *pspec,
+@@ -303,7 +308,8 @@ param_long_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -65,7 +65,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecULong *uspec = G_PARAM_SPEC_ULONG (pspec);
    
-@@ -380,7 +386,8 @@ param_ulong_values_cmp (GParamSpec   *pspec,
+@@ -357,7 +363,8 @@ param_ulong_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -75,7 +75,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecInt64 *lspec = G_PARAM_SPEC_INT64 (pspec);
    
-@@ -430,7 +437,8 @@ param_int64_values_cmp (GParamSpec   *pspec,
+@@ -407,7 +414,8 @@ param_int64_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -85,7 +85,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecUInt64 *uspec = G_PARAM_SPEC_UINT64 (pspec);
    
-@@ -480,7 +488,8 @@ param_uint64_values_cmp (GParamSpec   *pspec,
+@@ -457,7 +465,8 @@ param_uint64_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -95,7 +95,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecUnichar *uspec = G_PARAM_SPEC_UNICHAR (pspec);
    
-@@ -529,7 +538,8 @@ param_unichar_values_cmp (GParamSpec   *pspec,
+@@ -506,7 +515,8 @@ param_unichar_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -105,7 +105,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecEnum *espec = G_PARAM_SPEC_ENUM (pspec);
    
-@@ -584,7 +594,8 @@ param_enum_validate (GParamSpec *pspec,
+@@ -561,7 +571,8 @@ param_enum_validate (GParamSpec *pspec,
  }
  
  static void
@@ -115,7 +115,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecFlags *fspec = G_PARAM_SPEC_FLAGS (pspec);
    
-@@ -639,7 +650,8 @@ param_flags_validate (GParamSpec *pspec,
+@@ -616,7 +627,8 @@ param_flags_validate (GParamSpec *pspec,
  }
  
  static void
@@ -125,7 +125,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecFloat *fspec = G_PARAM_SPEC_FLOAT (pspec);
    
-@@ -692,7 +704,8 @@ param_float_values_cmp (GParamSpec   *pspec,
+@@ -669,7 +681,8 @@ param_float_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -135,7 +135,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecDouble *dspec = G_PARAM_SPEC_DOUBLE (pspec);
    
-@@ -745,7 +758,8 @@ param_double_values_cmp (GParamSpec   *pspec,
+@@ -722,7 +735,8 @@ param_double_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -145,7 +145,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecString *sspec = G_PARAM_SPEC_STRING (pspec);
    
-@@ -876,7 +890,8 @@ param_string_values_cmp (GParamSpec   *pspec,
+@@ -853,7 +867,8 @@ param_string_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -155,7 +155,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    /* GParamSpecParam *spec = G_PARAM_SPEC_PARAM (pspec); */
  }
-@@ -919,7 +934,8 @@ param_param_validate (GParamSpec *pspec,
+@@ -896,7 +911,8 @@ param_param_validate (GParamSpec *pspec,
  }
  
  static void
@@ -165,7 +165,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    /* GParamSpecBoxed *bspec = G_PARAM_SPEC_BOXED (pspec); */
  }
-@@ -945,7 +961,8 @@ param_boxed_values_cmp (GParamSpec    *pspec,
+@@ -922,7 +938,8 @@ param_boxed_values_cmp (GParamSpec    *pspec,
  }
  
  static void
@@ -175,7 +175,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    /* GParamSpecPointer *spec = G_PARAM_SPEC_POINTER (pspec); */
  }
-@@ -971,7 +988,8 @@ param_pointer_values_cmp (GParamSpec   *pspec,
+@@ -948,7 +965,8 @@ param_pointer_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -185,7 +185,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    GParamSpecValueArray *aspec = G_PARAM_SPEC_VALUE_ARRAY (pspec);
  
-@@ -1122,7 +1140,8 @@ param_value_array_values_cmp (GParamSpec   *pspec,
+@@ -1099,7 +1117,8 @@ param_value_array_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -195,7 +195,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    /* GParamSpecObject *ospec = G_PARAM_SPEC_OBJECT (pspec); */
  }
-@@ -1177,7 +1196,8 @@ param_object_values_cmp (GParamSpec   *pspec,
+@@ -1154,7 +1173,8 @@ param_object_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -205,7 +205,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
    /* GParamSpecOverride *ospec = G_PARAM_SPEC_OVERRIDE (pspec); */
  }
-@@ -1235,7 +1255,8 @@ param_override_values_cmp (GParamSpec   *pspec,
+@@ -1212,7 +1232,8 @@ param_override_values_cmp (GParamSpec   *pspec,
  }
  
  static void
@@ -215,7 +215,7 @@ index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b3
  {
  }
  
-@@ -1290,7 +1311,8 @@ param_gtype_values_cmp (GParamSpec   *pspec,
+@@ -1267,7 +1288,8 @@ param_gtype_values_cmp (GParamSpec   *pspec,
  }
  
  static void

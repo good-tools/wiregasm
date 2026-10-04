@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gbufferedoutputstream.c b/gio/gbufferedoutputstream.c
-index 4999a7d69b247b625ab2cf814a4b5c24e221a4d5..af5581c5592dc665197903667e63c32f27a9ad9d 100644
+index f82b10f11492d04bddc9844d80c9e0cc065463f6..dc0198c425bcd1b82eda9bf99a68bf92818d9911 100644
 --- a/gio/gbufferedoutputstream.c
 +++ b/gio/gbufferedoutputstream.c
-@@ -107,7 +107,8 @@ static gboolean g_buffered_output_stream_close_finish (GOutputStream        *str
+@@ -103,7 +103,8 @@ static gboolean g_buffered_output_stream_close_finish (GOutputStream        *str
                                                         GAsyncResult         *result,
                                                         GError              **error);
  
@@ -15,7 +15,7 @@ index 4999a7d69b247b625ab2cf814a4b5c24e221a4d5..af5581c5592dc665197903667e63c32f
  static goffset  g_buffered_output_stream_tell                (GSeekable       *seekable);
  static gboolean g_buffered_output_stream_can_seek            (GSeekable       *seekable);
  static gboolean g_buffered_output_stream_seek                (GSeekable       *seekable,
-@@ -348,7 +349,8 @@ g_buffered_output_stream_init (GBufferedOutputStream *stream)
+@@ -350,7 +351,8 @@ g_buffered_output_stream_init (GBufferedOutputStream *stream)
  }
  
  static void

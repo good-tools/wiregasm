@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gobject/gparam.h b/gobject/gparam.h
-index 6454e69a9dfed82ecacd6bdef292a384f85212b4..f65e76ad57e2eed29f54c16ef2b26b2bbb9b75a7 100644
+index 89374fec0c3d9d5a92891e386a12e8c9e8336817..5f1329567ac1e0c35e76b9887be1987fed2527bb 100644
 --- a/gobject/gparam.h
 +++ b/gobject/gparam.h
-@@ -399,7 +399,8 @@ struct _GParamSpecTypeInfo
+@@ -389,7 +389,8 @@ struct _GParamSpecTypeInfo
    /* type system portion */
    guint16         instance_size;                               /* obligatory */
    guint16         n_preallocs;                                 /* optional */

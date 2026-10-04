@@ -1,21 +1,21 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gportalsupport.c b/gio/gportalsupport.c
-index 7d0e3226c4c8179b033a57f28dbd8cf22e7bc22d..b471d32ac4c1942db79f6e2c53935ffc45afd61a 100644
+index b002e93f697ac0aad7f2406002bf34d0e7f5c6b1..4bfcede7bc6fe9b5e82adbab8ed19f6546a34f0c 100644
 --- a/gio/gportalsupport.c
 +++ b/gio/gportalsupport.c
-@@ -27,6 +27,7 @@ static gboolean use_portal;
+@@ -29,6 +29,7 @@ static gboolean use_portal;
  static gboolean network_available;
  static gboolean dconf_access;
  
 +#ifndef G_PLATFORM_WASM
- static void
- read_flatpak_info (void)
- {
-@@ -88,24 +89,37 @@ read_flatpak_info (void)
+ #ifdef G_PORTAL_SUPPORT_TEST
+ static const char *snapctl = "snapctl";
+ #else
+@@ -136,21 +137,29 @@ sandbox_info_read (void)
  
-   g_once_init_leave (&flatpak_info_read, 1);
+   g_once_init_leave (&sandbox_info_is_read, 1);
  }
 +#endif
  
@@ -25,7 +25,11 @@ index 7d0e3226c4c8179b033a57f28dbd8cf22e7bc22d..b471d32ac4c1942db79f6e2c53935ffc
 +#ifdef G_PLATFORM_WASM
 +  return FALSE;
 +#else
-   read_flatpak_info ();
+   sandbox_info_read ();
+ 
+   if (sandbox_type == G_SANDBOX_TYPE_SNAP)
+     return snap_plug_is_connected ("desktop");
+ 
    return use_portal;
 +#endif
  }
@@ -36,7 +40,12 @@ index 7d0e3226c4c8179b033a57f28dbd8cf22e7bc22d..b471d32ac4c1942db79f6e2c53935ffc
 +#ifdef G_PLATFORM_WASM
 +  return FALSE;
 +#else
-   read_flatpak_info ();
+   sandbox_info_read ();
+ 
+   if (sandbox_type == G_SANDBOX_TYPE_SNAP)
+@@ -164,15 +173,20 @@ glib_network_available_in_sandbox (void)
+     }
+ 
    return network_available;
 +#endif
  }
@@ -47,7 +56,11 @@ index 7d0e3226c4c8179b033a57f28dbd8cf22e7bc22d..b471d32ac4c1942db79f6e2c53935ffc
 +#ifdef G_PLATFORM_WASM
 +  return FALSE;
 +#else
-   read_flatpak_info ();
+   sandbox_info_read ();
+ 
+   if (sandbox_type == G_SANDBOX_TYPE_SNAP)
+     return snap_plug_is_connected ("gsettings");
+ 
    return dconf_access;
 +#endif
  }

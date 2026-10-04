@@ -1,8 +1,8 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gunixvolume.c b/gio/gunixvolume.c
-index a0f00ffbb666d2c9395c0a90ffa681624a0f8971..2257a287f2ff719814d23067c4bc17cbac666beb 100644
+index 67374570b7c7d0dd64f82668efb92d8f520060a4..0862c3c3b951d8cf6708297c801e9d930dfa6048 100644
 --- a/gio/gunixvolume.c
 +++ b/gio/gunixvolume.c
 @@ -61,7 +61,8 @@ struct _GUnixVolume {

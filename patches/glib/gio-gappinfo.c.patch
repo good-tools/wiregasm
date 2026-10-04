@@ -1,11 +1,11 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gappinfo.c b/gio/gappinfo.c
-index d1a1a1d65cb9c52801cbb07efb318ca4e51bd204..559dcde8c1cc3be02a06f14b0f4975752eabab93 100644
+index 652cae6e1a944c110d4f10adf198d462d4ed438f..8e7f17a97b80511ed6368f911994926094980629 100644
 --- a/gio/gappinfo.c
 +++ b/gio/gappinfo.c
-@@ -1016,7 +1016,7 @@ g_app_info_launch_default_for_uri (const char         *uri,
+@@ -1020,7 +1020,7 @@ g_app_info_launch_default_for_uri (const char         *uri,
        g_object_unref (app_info);
      }
  
@@ -14,7 +14,7 @@ index d1a1a1d65cb9c52801cbb07efb318ca4e51bd204..559dcde8c1cc3be02a06f14b0f497575
    if (!res && glib_should_use_portal ())
      {
        const char *parent_window = NULL;
-@@ -1068,7 +1068,7 @@ launch_default_for_uri_portal_open_uri_cb (GObject      *object,
+@@ -1072,7 +1072,7 @@ launch_default_for_uri_portal_open_uri_cb (GObject      *object,
  static void
  launch_default_for_uri_portal_open_uri (GTask *task, GError *error)
  {

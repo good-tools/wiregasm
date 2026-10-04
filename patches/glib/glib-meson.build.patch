@@ -1,14 +1,12 @@
 Why: Do not build tools
-Why: Remove GRegex pre-emptively
 Why: Add support for WebAssembly
-Why: Revert "Remove GRegex pre-emptively"
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/glib/meson.build b/glib/meson.build
-index 4130b1ba6f134b80c69bfe9fce3dd87ae31a2878..f9ece815f9d958d8fcce1e047344141fd9d931c2 100644
+index d2efebadce8bf49100f26db9269531fe0d8d262b..96f4b9bf7935859bb4e6e979277b85f310e17442 100644
 --- a/glib/meson.build
 +++ b/glib/meson.build
-@@ -362,9 +362,10 @@ if host_system == 'windows'
+@@ -370,9 +370,10 @@ if host_system == 'windows'
    if cc.get_id() == 'msvc' or cc.get_id() == 'clang-cl'
      glib_sources += files('dirent/wdirent.c')
    endif
@@ -20,7 +18,7 @@ index 4130b1ba6f134b80c69bfe9fce3dd87ae31a2878..f9ece815f9d958d8fcce1e047344141f
  endif
  
  if host_system == 'linux'
-@@ -475,7 +476,7 @@ if host_system == 'windows'
+@@ -487,7 +488,7 @@ if host_system == 'windows'
        include_directories : configinc,
        dependencies : [libglib_dep])
    endif

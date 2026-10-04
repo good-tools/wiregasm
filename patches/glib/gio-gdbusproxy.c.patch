@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gdbusproxy.c b/gio/gdbusproxy.c
-index 292c7b5e1697043ee3e0e4b653ecf67e188be300..b40ee81c1f878b06dabaf72af0bfcc1d6619d5e1 100644
+index 5d9a637c355613d072560802b5dbf5ee57efb723..a4b3b84ba7d92df1334231976ab9f7349dcf7cca 100644
 --- a/gio/gdbusproxy.c
 +++ b/gio/gdbusproxy.c
-@@ -177,9 +177,12 @@ enum
+@@ -179,9 +179,12 @@ enum
  
  static guint signals[LAST_SIGNAL] = {0};
  
@@ -21,7 +21,7 @@ index 292c7b5e1697043ee3e0e4b653ecf67e188be300..b40ee81c1f878b06dabaf72af0bfcc1d
  
  G_DEFINE_TYPE_WITH_CODE (GDBusProxy, g_dbus_proxy, G_TYPE_OBJECT,
                           G_ADD_PRIVATE (GDBusProxy)
-@@ -1849,7 +1852,8 @@ async_initable_init_finish (GAsyncInitable  *initable,
+@@ -1826,7 +1829,8 @@ async_initable_init_finish (GAsyncInitable  *initable,
  }
  
  static void
@@ -31,7 +31,7 @@ index 292c7b5e1697043ee3e0e4b653ecf67e188be300..b40ee81c1f878b06dabaf72af0bfcc1d
  {
    async_initable_iface->init_async = async_initable_init_async;
    async_initable_iface->init_finish = async_initable_init_finish;
-@@ -1936,7 +1940,8 @@ initable_init (GInitable     *initable,
+@@ -1913,7 +1917,8 @@ initable_init (GInitable     *initable,
  }
  
  static void
@@ -41,7 +41,7 @@ index 292c7b5e1697043ee3e0e4b653ecf67e188be300..b40ee81c1f878b06dabaf72af0bfcc1d
  {
    initable_iface->init = initable_init;
  }
-@@ -3191,7 +3196,8 @@ _g_dbus_proxy_set_object (GDBusInterface *interface,
+@@ -3168,7 +3173,8 @@ _g_dbus_proxy_set_object (GDBusInterface *interface,
  }
  
  static void

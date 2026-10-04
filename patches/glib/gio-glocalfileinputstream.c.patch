@@ -1,9 +1,9 @@
 Why: Add support for WebAssembly
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/glocalfileinputstream.c b/gio/glocalfileinputstream.c
-index 933f317147ece1b797d171e6af92040dcaa210e1..c370eba84e598c0b60276852571a1b184f31f452 100644
+index 933f317147ece1b797d171e6af92040dcaa210e1..b0229f492a9351925613c2cae314de4ebbb1e8a0 100644
 --- a/gio/glocalfileinputstream.c
 +++ b/gio/glocalfileinputstream.c
 @@ -37,9 +37,11 @@
@@ -14,8 +14,8 @@ index 933f317147ece1b797d171e6af92040dcaa210e1..c370eba84e598c0b60276852571a1b18
  #include "glib-unix.h"
  #include "gfiledescriptorbased.h"
 -#endif
-+#endif /*!G_PLATFORM_WASM*/
-+#endif /*G_OS_UNIX*/
++#endif /* !G_PLATFORM_WASM */
++#endif /* G_OS_UNIX */
  
  #ifdef G_OS_WIN32
  #include <io.h>

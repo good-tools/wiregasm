@@ -1,8 +1,8 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gobject/gsourceclosure.c b/gobject/gsourceclosure.c
-index 6a42f779cbbd7e37d5fd8c6bfc974a3f637e6a0b..4b79b13accc34919bbf7b9f20d29fe878aca488f 100644
+index 3ca5e45f9a3928913f429e80be3849b5fa0faeba..84117485c062c4726b70b730d77bc751cb1e5b00 100644
 --- a/gobject/gsourceclosure.c
 +++ b/gobject/gsourceclosure.c
 @@ -25,7 +25,7 @@
@@ -32,11 +32,20 @@ index 6a42f779cbbd7e37d5fd8c6bfc974a3f637e6a0b..4b79b13accc34919bbf7b9f20d29fe87
  static gboolean
  g_unix_fd_source_closure_callback (int           fd,
                                     GIOCondition  condition,
-@@ -203,12 +203,12 @@ closure_callback_get (gpointer     cb_data,
-         closure_callback = (GSourceFunc)io_watch_closure_callback;
-       else if (source->source_funcs == &g_child_watch_funcs)
+@@ -199,16 +199,18 @@ closure_callback_get (gpointer     cb_data,
+ 
+   if (!closure_callback)
+     {
+-      if (source->source_funcs == &g_io_watch_funcs)
+-        closure_callback = (GSourceFunc)io_watch_closure_callback;
+-      else if (source->source_funcs == &g_child_watch_funcs)
++      if (source->source_funcs == &g_child_watch_funcs)
          closure_callback = (GSourceFunc)g_child_watch_closure_callback;
 -#ifdef G_OS_UNIX
++#ifndef G_PLATFORM_WASM
++      else if (source->source_funcs == &g_io_watch_funcs)
++        closure_callback = (GSourceFunc)io_watch_closure_callback;
++#endif
 +#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
        else if (source->source_funcs == &g_unix_fd_source_funcs)
          closure_callback = (GSourceFunc)g_unix_fd_source_closure_callback;
@@ -47,7 +56,7 @@ index 6a42f779cbbd7e37d5fd8c6bfc974a3f637e6a0b..4b79b13accc34919bbf7b9f20d29fe87
                 source->source_funcs == &g_unix_signal_funcs ||
  #endif
                 source->source_funcs == &g_idle_funcs)
-@@ -251,7 +251,7 @@ g_source_set_closure (GSource  *source,
+@@ -251,12 +253,14 @@ g_source_set_closure (GSource  *source,
    g_return_if_fail (closure != NULL);
  
    if (!source->source_funcs->closure_callback &&
@@ -56,7 +65,14 @@ index 6a42f779cbbd7e37d5fd8c6bfc974a3f637e6a0b..4b79b13accc34919bbf7b9f20d29fe87
        source->source_funcs != &g_unix_fd_source_funcs &&
        source->source_funcs != &g_unix_signal_funcs &&
  #endif
-@@ -276,7 +276,7 @@ g_source_set_closure (GSource  *source,
+       source->source_funcs != &g_child_watch_funcs &&
++#ifndef G_PLATFORM_WASM
+       source->source_funcs != &g_io_watch_funcs &&
++#endif
+       source->source_funcs != &g_timeout_funcs &&
+       source->source_funcs != &g_idle_funcs)
+     {
+@@ -276,7 +280,7 @@ g_source_set_closure (GSource  *source,
        if (marshal)
  	g_closure_set_marshal (closure, marshal);
        else if (source->source_funcs == &g_idle_funcs ||

@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gsimpleasyncresult.c b/gio/gsimpleasyncresult.c
-index d0de309735aa21a7b5e46b2440d8adf684cff387..fa677e5db424997d99024cf026ca847017062dbf 100644
+index ef5492f8e9e9fc6b80332bd456b1d23885f135f5..2ce78569854c553dda792edfac7f86f0788180ce 100644
 --- a/gio/gsimpleasyncresult.c
 +++ b/gio/gsimpleasyncresult.c
-@@ -207,7 +207,8 @@
+@@ -205,7 +205,8 @@
  
  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
  
@@ -15,7 +15,7 @@ index d0de309735aa21a7b5e46b2440d8adf684cff387..fa677e5db424997d99024cf026ca8470
  
  struct _GSimpleAsyncResult
  {
-@@ -466,7 +467,8 @@ g_simple_async_result_is_tagged (GAsyncResult *res,
+@@ -464,7 +465,8 @@ g_simple_async_result_is_tagged (GAsyncResult *res,
  }
  
  static void

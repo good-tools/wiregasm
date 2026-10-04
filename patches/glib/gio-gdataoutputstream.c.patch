@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gdataoutputstream.c b/gio/gdataoutputstream.c
-index f2d1f3988aca39d45191d2c7e4043031267a7bea..4484089d808682c7b77c67ee0bd28288f0bd9881 100644
+index f183f96268ec2c50e6899835593e1704b4e3345a..fe8ced0be59108ce9df9a30a5cefb2a88593033c 100644
 --- a/gio/gdataoutputstream.c
 +++ b/gio/gdataoutputstream.c
-@@ -60,7 +60,8 @@ static void g_data_output_stream_get_property (GObject      *object,
+@@ -55,7 +55,8 @@ static void g_data_output_stream_get_property (GObject      *object,
  					       GValue       *value,
  					       GParamSpec   *pspec);
  
@@ -15,7 +15,7 @@ index f2d1f3988aca39d45191d2c7e4043031267a7bea..4484089d808682c7b77c67ee0bd28288
  static goffset  g_data_output_stream_tell                (GSeekable       *seekable);
  static gboolean g_data_output_stream_can_seek            (GSeekable       *seekable);
  static gboolean g_data_output_stream_seek                (GSeekable       *seekable,
-@@ -162,7 +163,8 @@ g_data_output_stream_init (GDataOutputStream *stream)
+@@ -155,7 +156,8 @@ g_data_output_stream_init (GDataOutputStream *stream)
  }
  
  static void

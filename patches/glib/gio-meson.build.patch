@@ -1,10 +1,10 @@
 Why: Do not build tools
 Why: Network libs are not available in WASM
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/meson.build b/gio/meson.build
-index 0ddbb6a298333cbb11ea3ed425bbd79d2bbe0b0c..4c0123487ecf5751b2cca063de23ca7ccad8f2c3 100644
+index 59c2b0fc023e7580ca12b202b824c5d830280554..c75847175f1f5f87dff8c6174aa2da104fcd23dc 100644
 --- a/gio/meson.build
 +++ b/gio/meson.build
 @@ -39,7 +39,7 @@ endif
@@ -16,7 +16,7 @@ index 0ddbb6a298333cbb11ea3ed425bbd79d2bbe0b0c..4c0123487ecf5751b2cca063de23ca7c
    # res_query()
    res_query_test = '''#include <resolv.h>
                        int main (int argc, char ** argv) {
-@@ -354,7 +354,7 @@ gdbus_daemon_sources = [
+@@ -352,7 +352,7 @@ gdbus_daemon_sources = [
    gdbus_daemon_generated,
  ]
  
@@ -25,9 +25,9 @@ index 0ddbb6a298333cbb11ea3ed425bbd79d2bbe0b0c..4c0123487ecf5751b2cca063de23ca7c
    unix_sources = files(
      'gfiledescriptorbased.c',
      'giounix-private.c',
-@@ -406,20 +406,6 @@ if host_system != 'windows'
+@@ -404,20 +404,6 @@ if host_system != 'windows'
      contenttype_sources += files('gcontenttype.c')
-     appinfo_sources += files('gdesktopappinfo.c')
+     unix_sources += files('gdesktopappinfo.c')
      gio_unix_include_headers += files('gdesktopappinfo.h')
 -    launch_desktop_sources = files('gio-launch-desktop.c')
 -
@@ -46,16 +46,25 @@ index 0ddbb6a298333cbb11ea3ed425bbd79d2bbe0b0c..4c0123487ecf5751b2cca063de23ca7c
    endif
  
    subdir('xdgmime')
-@@ -433,7 +419,7 @@ if host_system != 'windows'
+@@ -431,7 +417,7 @@ if host_system != 'windows'
        'gnetworkmonitornm.c',
      )
    endif
 -else
 +elif host_system == 'windows'
-   appinfo_sources += files('gwin32appinfo.c')
+   win32_sources += files('gwin32appinfo.c')
    contenttype_sources += files('gcontenttype-win32.c')
    platform_deps += [cc.find_library('shlwapi'),
-@@ -908,7 +894,7 @@ if host_system == 'windows'
+@@ -473,6 +459,8 @@ else
+     'gwin32outputstream.h',
+   )
+   install_headers(gio_win32_include_headers, subdir : 'gio-win32-2.0/gio')
++elif host_system == 'emscripten'
++  contenttype_sources += files('gcontenttype-wasm.c')
+ endif
+ 
+ gio_base_sources = files(
+@@ -913,7 +901,7 @@ if host_system == 'windows'
      description : 'Windows specific headers for glib I/O library',
    )
    meson.override_dependency('gio-windows-2.0', libgio_dep)
@@ -64,7 +73,7 @@ index 0ddbb6a298333cbb11ea3ed425bbd79d2bbe0b0c..4c0123487ecf5751b2cca063de23ca7c
    pkg.generate(requires : ['gobject-2.0', 'gio-2.0'],
      subdirs : ['gio-unix-2.0'],
      version : glib_version,
-@@ -957,115 +943,6 @@ gconstructor_as_data_h = custom_target('gconstructor_as_data.h',
+@@ -962,119 +950,6 @@ gconstructor_as_data_h = custom_target('gconstructor_as_data.h',
      output : ['gconstructor_as_data.h'],
      command : [python, '@INPUT0@', '@INPUT1@', 'gconstructor_code', '@OUTPUT@'])
  
@@ -91,7 +100,7 @@ index 0ddbb6a298333cbb11ea3ed425bbd79d2bbe0b0c..4c0123487ecf5751b2cca063de23ca7c
 -  'gio-tool-tree.c',
 -]
 -
--executable('gio', gio_tool_sources,
+-gio_tool = executable('gio', gio_tool_sources,
 -  install : true,
 -  install_tag : 'bin',
 -  c_args : gio_c_args,
@@ -132,6 +141,10 @@ index 0ddbb6a298333cbb11ea3ed425bbd79d2bbe0b0c..4c0123487ecf5751b2cca063de23ca7c
 -  # intl.lib is not compatible with SAFESEH
 -  link_args : noseh_link_args,
 -  dependencies : [libgio_dep, libgobject_dep, libgmodule_dep, libglib_dep, gvdb_dep])
+-install_data('gresource.dtd',
+-  install_dir: get_option('datadir') / dtds_subdir,
+-  install_tag: 'devel',
+-)
 -
 -# Cannot override those programs in cross compilation case because they are
 -# native executables that cannot be run on the build machine.
@@ -180,26 +193,17 @@ index 0ddbb6a298333cbb11ea3ed425bbd79d2bbe0b0c..4c0123487ecf5751b2cca063de23ca7c
  if enable_systemtap
    gio_stp = configure_file(input : 'gio.stp.in',
      output : '@0@.stp'.format(libgio.full_path().split('/').get(-1)),
-@@ -1075,25 +952,6 @@ if enable_systemtap
+@@ -1084,16 +959,6 @@ if enable_systemtap
    )
  endif
  
 -if multiarch_bindir != get_option('bindir')
 -  foreach exe : ['gio-querymodules', 'glib-compile-schemas']
--    if meson.version().version_compare('>=0.61.0')
--      install_symlink(
--        exe,
--        install_dir : get_option('bindir'),
--        pointing_to : get_option('prefix') / multiarch_bindir / exe,
--      )
--    else
--      warning(
--        'Please use Meson >= 0.61.0 or create a symlink @1@ -> @2@ in packaging'.format(
--          get_option('prefix') / get_option('bindir') / exe,
--          get_option('prefix') / multiarch_bindir / exe,
--        )
--      )
--    endif
+-    install_symlink(
+-      exe,
+-      install_dir : get_option('bindir'),
+-      pointing_to : get_option('prefix') / multiarch_bindir / exe,
+-    )
 -  endforeach
 -endif
 -

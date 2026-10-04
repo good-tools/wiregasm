@@ -1,12 +1,12 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gfileoutputstream.c b/gio/gfileoutputstream.c
-index d767c53a183b5751cb178c30953c438f077100c5..495bfa893b2291f079b55e47d25e6f8961de3dc4 100644
+index 786d037c361fe10c95114b9074849e786772c0c3..bb724050ab384bd7837b816903c3b204218c8059 100644
 --- a/gio/gfileoutputstream.c
 +++ b/gio/gfileoutputstream.c
-@@ -54,7 +54,8 @@
-  * stream, use g_seekable_truncate().
+@@ -51,7 +51,8 @@
+  * stream, use [method@Gio.Seekable.truncate].
   **/
  
 -static void       g_file_output_stream_seekable_iface_init    (GSeekableIface       *iface);
@@ -15,7 +15,7 @@ index d767c53a183b5751cb178c30953c438f077100c5..495bfa893b2291f079b55e47d25e6f89
  static goffset    g_file_output_stream_seekable_tell          (GSeekable            *seekable);
  static gboolean   g_file_output_stream_seekable_can_seek      (GSeekable            *seekable);
  static gboolean   g_file_output_stream_seekable_seek          (GSeekable            *seekable,
-@@ -94,7 +95,8 @@ g_file_output_stream_class_init (GFileOutputStreamClass *klass)
+@@ -91,7 +92,8 @@ g_file_output_stream_class_init (GFileOutputStreamClass *klass)
  }
  
  static void

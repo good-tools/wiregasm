@@ -1,11 +1,11 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/glib/gtimezone.c b/glib/gtimezone.c
-index 00492995c85c2daa73d39facab57c22f065639c2..a8623ae7678f28f9b4f9639df941d45e37bbd72a 100644
+index 0c3cae3f7aff9c86f5dd8a162c8c8eae0ef12c2a..a90c8657818d0e191310f2c9989f43dbe4a43090 100644
 --- a/glib/gtimezone.c
 +++ b/glib/gtimezone.c
-@@ -211,7 +211,7 @@ static GTimeZone *tz_local = NULL;
+@@ -204,7 +204,7 @@ static GTimeZone *tz_local = NULL;
                             there's no point in getting carried
                             away. */
  
@@ -14,16 +14,16 @@ index 00492995c85c2daa73d39facab57c22f065639c2..a8623ae7678f28f9b4f9639df941d45e
  static GTimeZone *parse_footertz (const gchar *, size_t);
  #endif
  
-@@ -445,7 +445,7 @@ zone_for_constant_offset (GTimeZone *gtz, const gchar *name)
-   gtz->transitions = NULL;
+@@ -504,7 +504,7 @@ zone_identifier_illumos (void)
  }
+ #endif /* defined(__sun) && defined(__SRVR) */
  
 -#ifdef G_OS_UNIX
 +#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
- 
- #if defined(__sun) && defined(__SVR4)
  /*
-@@ -1704,7 +1704,7 @@ rules_from_identifier (const gchar   *identifier,
+  * returns the path to the top of the Olson zoneinfo timezone hierarchy.
+  */
+@@ -1696,7 +1696,7 @@ rules_from_identifier (const gchar   *identifier,
    return create_ruleset_from_rule (rules, &tzr);
  }
  
@@ -32,7 +32,7 @@ index 00492995c85c2daa73d39facab57c22f065639c2..a8623ae7678f28f9b4f9639df941d45e
  static GTimeZone *
  parse_footertz (const gchar *footer, size_t footerlen)
  {
-@@ -1863,7 +1863,9 @@ g_time_zone_new_identifier (const gchar *identifier)
+@@ -1855,7 +1855,9 @@ g_time_zone_new_identifier (const gchar *identifier)
    else
      {
        G_LOCK (tz_default);
@@ -43,7 +43,7 @@ index 00492995c85c2daa73d39facab57c22f065639c2..a8623ae7678f28f9b4f9639df941d45e
        resolved_identifier = zone_identifier_unix ();
  #elif defined (G_OS_WIN32)
        resolved_identifier = windows_default_tzname ();
-@@ -1903,7 +1905,7 @@ g_time_zone_new_identifier (const gchar *identifier)
+@@ -1895,7 +1897,7 @@ g_time_zone_new_identifier (const gchar *identifier)
  
    if (tz->t_info == NULL)
      {

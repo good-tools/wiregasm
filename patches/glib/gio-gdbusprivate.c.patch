@@ -1,0 +1,88 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
+
+diff --git a/gio/gdbusprivate.c b/gio/gdbusprivate.c
+index 28083e4ed77671d3dbcb0177f1fc1817fb923a0c..039363b2014c3040adcae8c203156b0b353bf3bb 100644
+--- a/gio/gdbusprivate.c
++++ b/gio/gdbusprivate.c
+@@ -48,7 +48,7 @@
+ #include "gsocketoutputstream.h"
+ #include "gtask.h"
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ #include "gunixfdmessage.h"
+ #include "gunixconnection.h"
+ #include "gunixcredentialsmessage.h"
+@@ -600,7 +600,7 @@ _g_dbus_worker_do_read_cb (GInputStream  *input_stream,
+           if (FALSE)
+             {
+             }
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+           else if (G_IS_UNIX_FD_MESSAGE (control_message))
+             {
+               GUnixFDMessage *fd_message;
+@@ -770,7 +770,7 @@ _g_dbus_worker_do_read_cb (GInputStream  *input_stream,
+               goto out;
+             }
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+           if (worker->read_fd_list != NULL)
+             {
+               g_dbus_message_set_unix_fd_list (message, worker->read_fd_list);
+@@ -970,7 +970,7 @@ write_message_async_cb (GObject      *source_object,
+  * write-lock is not held on entry
+  * output_pending is PENDING_WRITE on entry
+  */
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ static gboolean
+ on_socket_ready (GSocket      *socket,
+                  GIOCondition  condition,
+@@ -992,7 +992,7 @@ static void
+ write_message_continue_writing (MessageToWriteData *data)
+ {
+   GOutputStream *ostream;
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+   GUnixFDList *fd_list;
+ #endif
+ 
+@@ -1003,7 +1003,7 @@ write_message_continue_writing (MessageToWriteData *data)
+    * like @data is not always freed on every code path in this function. */
+ 
+   ostream = g_io_stream_get_output_stream (data->worker->stream);
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+   fd_list = g_dbus_message_get_unix_fd_list (data->message);
+ #endif
+ 
+@@ -1013,7 +1013,7 @@ write_message_continue_writing (MessageToWriteData *data)
+   if (FALSE)
+     {
+     }
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+   else if (G_IS_SOCKET_OUTPUT_STREAM (ostream) && data->total_written == 0)
+     {
+       GOutputVector vector;
+@@ -1100,7 +1100,7 @@ write_message_continue_writing (MessageToWriteData *data)
+ #endif
+   else
+     {
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+       if (data->total_written == 0 && fd_list != NULL)
+         {
+           /* We were trying to write byte 0 of the message, which needs
+@@ -1125,7 +1125,7 @@ write_message_continue_writing (MessageToWriteData *data)
+                                    write_message_async_cb,
+                                    data);  /* steal @data */
+     }
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+  out:
+ #endif
+   ;

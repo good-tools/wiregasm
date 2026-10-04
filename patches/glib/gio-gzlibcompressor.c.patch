@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gzlibcompressor.c b/gio/gzlibcompressor.c
-index a1c018a01ca7776c6aa43e9daf7a42518dfb00b5..59d9a7822c9dd306d8c467d3316814f74b1091e4 100644
+index 00bde8fe2f80388d36d4a20a9776639558155647..99e1c712527162380630a65036ee81fe550b9acd 100644
 --- a/gio/gzlibcompressor.c
 +++ b/gio/gzlibcompressor.c
-@@ -51,7 +51,8 @@ enum {
+@@ -49,7 +49,8 @@ enum {
   * compresses data using zlib.
   */
  
@@ -13,9 +13,9 @@ index a1c018a01ca7776c6aa43e9daf7a42518dfb00b5..59d9a7822c9dd306d8c467d3316814f7
 +static void g_zlib_compressor_iface_init          (GConverterIface *iface,
 +                                                   gpointer         iface_data);
  
- /**
-  * GZlibCompressor:
-@@ -431,7 +432,8 @@ g_zlib_compressor_convert (GConverter *converter,
+ struct _GZlibCompressor
+ {
+@@ -434,7 +435,8 @@ g_zlib_compressor_convert (GConverter *converter,
  }
  
  static void

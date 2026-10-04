@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gbytesicon.c b/gio/gbytesicon.c
-index b402a5178956a3e56ce8081850a01611d9029923..8a88f8da073b73a6169dbe168f0a233cb85c6eec 100644
+index 37c242afbcefbf2f5ca8291aeb8734440b4fd876..e22e9e055eb4064cc97c141c0d3a2d1ffd832b9c 100644
 --- a/gio/gbytesicon.c
 +++ b/gio/gbytesicon.c
-@@ -59,8 +59,10 @@ enum
+@@ -56,8 +56,10 @@ enum
    PROP_BYTES
  };
  
@@ -18,7 +18,7 @@ index b402a5178956a3e56ce8081850a01611d9029923..8a88f8da073b73a6169dbe168f0a233c
  G_DEFINE_TYPE_WITH_CODE (GBytesIcon, g_bytes_icon, G_TYPE_OBJECT,
                           G_IMPLEMENT_INTERFACE (G_TYPE_ICON, g_bytes_icon_icon_iface_init)
                           G_IMPLEMENT_INTERFACE (G_TYPE_LOADABLE_ICON, g_bytes_icon_loadable_icon_iface_init))
-@@ -210,7 +212,8 @@ g_bytes_icon_serialize (GIcon *icon)
+@@ -205,7 +207,8 @@ g_bytes_icon_serialize (GIcon *icon)
  }
  
  static void
@@ -28,7 +28,7 @@ index b402a5178956a3e56ce8081850a01611d9029923..8a88f8da073b73a6169dbe168f0a233c
  {
    iface->hash = g_bytes_icon_hash;
    iface->equal = g_bytes_icon_equal;
-@@ -263,7 +266,8 @@ g_bytes_icon_load_finish (GLoadableIcon  *icon,
+@@ -258,7 +261,8 @@ g_bytes_icon_load_finish (GLoadableIcon  *icon,
  }
  
  static void

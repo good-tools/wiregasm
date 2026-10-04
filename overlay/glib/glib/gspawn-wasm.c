@@ -1,6 +1,6 @@
 /* gspawn-wasm.c - Process launching on WebAssembly, no-op implementation
  *
- *  Copyright 2022 Kleis Auke Wolthuizen
+ * Copyright (C) 2022 Kleis Auke Wolthuizen
  *
  * SPDX-License-Identifier: LGPL-2.1-or-later
  *

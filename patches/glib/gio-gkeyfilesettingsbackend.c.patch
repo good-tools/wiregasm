@@ -1,8 +1,8 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gkeyfilesettingsbackend.c b/gio/gkeyfilesettingsbackend.c
-index 79a02668b8b03f6f3af3a7cd42357b68c00ed8a0..74371b1cf2beca384def3429e8f1f0f694564446 100644
+index a86c4d913c0f6f8d0d1ceaa1707f5ce3f6f29103..d279b84d4300296247627b30bbf5361ac4f2240f 100644
 --- a/gio/gkeyfilesettingsbackend.c
 +++ b/gio/gkeyfilesettingsbackend.c
 @@ -79,7 +79,7 @@ typedef struct

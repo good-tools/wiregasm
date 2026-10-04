@@ -1,11 +1,11 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gunixfdlist.c b/gio/gunixfdlist.c
-index e0617141422c8b0885d408dd01c3a319f63ea1ea..d7ced32fe3fbf99a4f463320c83699f3561c29bf 100644
+index 88a5a5f8a8b44d57b104405a26792a6fc6e71c15..d2c2f7308628d2502cc911cd47601a5ad5bb8127 100644
 --- a/gio/gunixfdlist.c
 +++ b/gio/gunixfdlist.c
-@@ -54,6 +54,10 @@
+@@ -45,6 +45,10 @@
  #include "glib/glib-private.h"
  #include "glib/gstdio.h"
  

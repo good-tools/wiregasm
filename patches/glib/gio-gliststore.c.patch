@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gliststore.c b/gio/gliststore.c
-index e7dbbd38fe804f78a664c7e9a928685b9867a739..4b7e75cb4f026744c7d4d84491ceb420a24fc3ff 100644
+index 41450f6c304f8c0ed2899702ea4f47b76e84dea4..9cfa53016d0969bc7b52a5e42951d924beb201f8 100644
 --- a/gio/gliststore.c
 +++ b/gio/gliststore.c
-@@ -68,7 +68,8 @@ enum
+@@ -58,7 +58,8 @@ enum
    N_PROPERTIES
  };
  
@@ -15,7 +15,7 @@ index e7dbbd38fe804f78a664c7e9a928685b9867a739..4b7e75cb4f026744c7d4d84491ceb420
  
  G_DEFINE_TYPE_WITH_CODE (GListStore, g_list_store, G_TYPE_OBJECT,
                           G_IMPLEMENT_INTERFACE (G_TYPE_LIST_MODEL, g_list_store_iface_init));
-@@ -229,7 +230,8 @@ g_list_store_get_item (GListModel *list,
+@@ -219,7 +220,8 @@ g_list_store_get_item (GListModel *list,
  }
  
  static void

@@ -1,8 +1,8 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/glocalfileinfo.c b/gio/glocalfileinfo.c
-index b63f7826c6d8661589d40189a91029c956c18447..32cc2c38eb8f03091499a5aefb8c538281ddfc13 100644
+index 2df7c91e5229157a5b3f5ae9995931929ae09ac4..7aa6418fef1268adbd88e33ec61abf17e20da5e6 100644
 --- a/gio/glocalfileinfo.c
 +++ b/gio/glocalfileinfo.c
 @@ -62,8 +62,10 @@
@@ -12,17 +12,33 @@ index b63f7826c6d8661589d40189a91029c956c18447..32cc2c38eb8f03091499a5aefb8c5382
 +#ifndef G_PLATFORM_WASM
  #include "glib-unix.h"
 -#endif
-+#endif /*!G_PLATFORM_WASM*/
-+#endif /*G_OS_UNIX*/
++#endif /* !G_PLATFORM_WASM */
++#endif /* G_OS_UNIX */
  
  #include "glib-private.h"
  
-@@ -1944,7 +1946,7 @@ _g_local_file_info_get (const char             *basename,
+@@ -1342,7 +1344,7 @@ get_content_type (const char          *basename,
+ 
+       content_type = g_content_type_guess (basename, NULL, 0, &result_uncertain);
+       
+-#if !defined(G_OS_WIN32) && !defined(__APPLE__)
++#if !defined(G_OS_WIN32) && !defined(__APPLE__) && !defined(G_PLATFORM_WASM)
+       if (!fast && result_uncertain && path != NULL)
+ 	{
+           /* Sniff the first 16KiB of the file (sometimes less, if xdgmime
+@@ -2000,6 +2002,7 @@ _g_local_file_info_get (const char             *basename,
    if (stat_ok)
      set_info_from_stat (info, &statbuf, attribute_matcher);
  
--#ifdef G_OS_UNIX
-+#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
-   if (stat_ok && _g_local_file_is_lost_found_dir (path, _g_stat_dev (&statbuf)))
-     g_file_info_set_is_hidden (info, TRUE);
++#ifndef G_PLATFORM_WASM
+ #ifndef G_OS_WIN32
+   if (_g_file_attribute_matcher_matches_id (attribute_matcher,
+ 					    G_FILE_ATTRIBUTE_ID_STANDARD_IS_HIDDEN))
+@@ -2035,6 +2038,7 @@ _g_local_file_info_get (const char             *basename,
+ 
+   _g_file_info_set_attribute_boolean_by_id (info, G_FILE_ATTRIBUTE_ID_STANDARD_IS_BACKUP, FALSE);
  #endif
++#endif /* !G_PLATFORM_WASM */
+ 
+   symlink_target = NULL;
+   if (is_symlink)

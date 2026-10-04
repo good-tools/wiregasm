@@ -1,5 +1,5 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gsocks4aproxy.c b/gio/gsocks4aproxy.c
 index 3dad118eb784f873d56b17c201b057b497068449..e4a1306e689673de83705dba8c88ee50007ff989 100644

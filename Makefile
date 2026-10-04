@@ -10,6 +10,9 @@
 #   make clean         remove build outputs (keeps downloaded tarballs)
 #   make distclean     also remove downloaded tarballs
 #
+# `make docker` runs as the calling user, so build outputs aren't owned by root;
+# emscripten's system library cache lives in .cache/emscripten for the same reason.
+#
 # Dependencies are described in mk/deps/<pkg>.mk; the generic rules live in mk/rules.mk.
 
 EMSDK_VERSION := 6.0.11
@@ -56,7 +59,8 @@ check-patches: $(foreach p,$(PACKAGES),$(STAMP)/$(p).src)
 docker:
 	docker build -t wiregasm-builder:$(EMSDK_VERSION) --build-arg EMSDK_VERSION=$(EMSDK_VERSION) --build-arg MESON_VERSION=$(MESON_VERSION) \
 		-f docker/build.Dockerfile docker
-	docker run --rm -v "$(CURDIR)":/src -w /src wiregasm-builder:$(EMSDK_VERSION) \
+	docker run --rm -v "$(CURDIR)":/src -w /src -u "$$(id -u):$$(id -g)" \
+		-e HOME=/tmp -e EM_CACHE=/src/.cache/emscripten wiregasm-builder:$(EMSDK_VERSION) \
 		make -j"$$(nproc)" $(filter-out docker,$(MAKECMDGOALS))
 
 clean:

@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gosxappinfo.m b/gio/gosxappinfo.m
-index 60b088641bdc862ecb5625d16d7b61f04d48739a..671baa0645cbfe719864f5dcad183945787a923a 100644
+index 50b08e0be9b9e0478b65c72273ddbe41a22c39b6..9b587d92acdbc7f9e70955f26aea7c6c55519c89 100644
 --- a/gio/gosxappinfo.m
 +++ b/gio/gosxappinfo.m
-@@ -43,7 +43,8 @@
+@@ -41,7 +41,8 @@
   * Note that `<gio/gosxappinfo.h>` is unique to OSX.
   */
  
@@ -14,8 +14,8 @@ index 60b088641bdc862ecb5625d16d7b61f04d48739a..671baa0645cbfe719864f5dcad183945
 +                                              gpointer       iface_data);
  static const char *g_osx_app_info_get_id     (GAppInfo      *appinfo);
  
- /**
-@@ -557,7 +558,8 @@ g_osx_app_info_can_delete (GAppInfo *appinfo)
+ struct _GOsxAppInfo
+@@ -550,7 +551,8 @@ g_osx_app_info_can_delete (GAppInfo *appinfo)
  }
  
  static void

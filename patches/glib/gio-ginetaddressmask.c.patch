@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/ginetaddressmask.c b/gio/ginetaddressmask.c
-index c0704db14a002de31ce7f27d8b152bcad14b932c..e9a19061862f0cf516033cd21b736aa1fea168f3 100644
+index 1431b94358ea523ebb0fc4a8b0d78d4541107012..ec262dcb71d5311d0c1f91fba4752c8c698a5ee2 100644
 --- a/gio/ginetaddressmask.c
 +++ b/gio/ginetaddressmask.c
-@@ -56,7 +56,8 @@ struct _GInetAddressMaskPrivate
+@@ -47,7 +47,8 @@ struct _GInetAddressMaskPrivate
    guint         length;
  };
  
@@ -15,7 +15,7 @@ index c0704db14a002de31ce7f27d8b152bcad14b932c..e9a19061862f0cf516033cd21b736aa1
  
  G_DEFINE_TYPE_WITH_CODE (GInetAddressMask, g_inet_address_mask, G_TYPE_OBJECT,
                           G_ADD_PRIVATE (GInetAddressMask)
-@@ -230,7 +231,8 @@ g_inet_address_mask_initable_init (GInitable     *initable,
+@@ -238,7 +239,8 @@ g_inet_address_mask_initable_init (GInitable     *initable,
  }
  
  static void

@@ -1,5 +1,5 @@
-nghttp2_VERSION := 1.61.0
+nghttp2_VERSION := 1.62.1
 nghttp2_URL     := https://github.com/nghttp2/nghttp2/releases/download/v$(nghttp2_VERSION)/nghttp2-$(nghttp2_VERSION).tar.xz
-nghttp2_SHA512  := 01e930d7caf464699505f92b76e2bc8192d168612dc564d2546812c42afea2fb81d552d70e8a5fed35e2bf5deadbec8eda095af94a2484bca41542988afce52a
+nghttp2_SHA512  := d5d6b068712e9b467547b0e5380465b8540317134f3f26c2b0c60eb9c604be2f37b4517a98b371d5f5fb668ce2ee35603ddd944224f11e96382aa541a6a17b4c
 nghttp2_BUILD   := autotools
 nghttp2_CONF    := --enable-lib-only

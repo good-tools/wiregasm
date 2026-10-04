@@ -1,0 +1,16 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
+
+diff --git a/gio/gunixconnection.c b/gio/gunixconnection.c
+index 94a92e3c454cfc79ffddeaa32da8d3bbdfa8eae5..e2c3a814585a46c740bf956d03265d5ca7a237bd 100644
+--- a/gio/gunixconnection.c
++++ b/gio/gunixconnection.c
+@@ -141,7 +141,7 @@ g_unix_connection_receive_fd (GUnixConnection  *connection,
+                               GCancellable     *cancellable,
+                               GError          **error)
+ {
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+   GSocketControlMessage **scms;
+   gint *fds, nfd, fd, nscm;
+   GUnixFDMessage *fdmsg;

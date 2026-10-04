@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gconverteroutputstream.c b/gio/gconverteroutputstream.c
-index b26f645d4d76a8a5417fda79065ebcd671ca99e0..4e563c0ffa0cc2a5d884380b6dba84328a15e1a1 100644
+index 1877b0e4ea2c75e45880594d28eeae28ef713742..942d5f750ca67e46b4ef1ca017a993156dbea442 100644
 --- a/gio/gconverteroutputstream.c
 +++ b/gio/gconverteroutputstream.c
-@@ -108,7 +108,8 @@ static gssize   g_converter_output_stream_write_nonblocking (GPollableOutputStre
+@@ -105,7 +105,8 @@ static gssize   g_converter_output_stream_write_nonblocking (GPollableOutputStre
  static GSource *g_converter_output_stream_create_source     (GPollableOutputStream *stream,
  							     GCancellable          *cancellable);
  

@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gmemoryinputstream.c b/gio/gmemoryinputstream.c
-index 80f77d107e296a257909f655f81e6ae9019b57ea..ec02e057d7e64d878af21cd3b850c8feb7a7c1d0 100644
+index de164542d87a55c0d26caba83d291e54eda509e8..f017c37cfc5dcbe1afd57fe505cdfe6d27a54ce6 100644
 --- a/gio/gmemoryinputstream.c
 +++ b/gio/gmemoryinputstream.c
-@@ -80,7 +80,8 @@ static gboolean g_memory_input_stream_close_finish (GInputStream         *stream
+@@ -77,7 +77,8 @@ static gboolean g_memory_input_stream_close_finish (GInputStream         *stream
  						    GAsyncResult         *result,
  						    GError              **error);
  
@@ -15,7 +15,7 @@ index 80f77d107e296a257909f655f81e6ae9019b57ea..ec02e057d7e64d878af21cd3b850c8fe
  static goffset  g_memory_input_stream_tell                (GSeekable       *seekable);
  static gboolean g_memory_input_stream_can_seek            (GSeekable       *seekable);
  static gboolean g_memory_input_stream_seek                (GSeekable       *seekable,
-@@ -94,7 +95,8 @@ static gboolean g_memory_input_stream_truncate            (GSeekable       *seek
+@@ -91,7 +92,8 @@ static gboolean g_memory_input_stream_truncate            (GSeekable       *seek
                                                             GCancellable    *cancellable,
                                                             GError         **error);
  
@@ -25,7 +25,7 @@ index 80f77d107e296a257909f655f81e6ae9019b57ea..ec02e057d7e64d878af21cd3b850c8fe
  static gboolean g_memory_input_stream_is_readable         (GPollableInputStream *stream);
  static GSource *g_memory_input_stream_create_source       (GPollableInputStream *stream,
  							   GCancellable          *cancellable);
-@@ -145,7 +147,8 @@ g_memory_input_stream_finalize (GObject *object)
+@@ -142,7 +144,8 @@ g_memory_input_stream_finalize (GObject *object)
  }
  
  static void
@@ -35,7 +35,7 @@ index 80f77d107e296a257909f655f81e6ae9019b57ea..ec02e057d7e64d878af21cd3b850c8fe
  {
    iface->tell         = g_memory_input_stream_tell;
    iface->can_seek     = g_memory_input_stream_can_seek;
-@@ -155,7 +158,8 @@ g_memory_input_stream_seekable_iface_init (GSeekableIface *iface)
+@@ -152,7 +155,8 @@ g_memory_input_stream_seekable_iface_init (GSeekableIface *iface)
  }
  
  static void
