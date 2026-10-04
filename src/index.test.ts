@@ -794,6 +794,14 @@ describe("Wiregasm Library - Set Preferences", () => {
     expect(pref2.range_value).toContain("8001");
     // defaults should still be present
     expect(pref2.range_value).toContain("80");
+
+    // setting it again should still preserve defaults
+    wg.set_pref("http", "tcp.port", "8002");
+    const pref3 = wg.get_pref("http", "tcp.port");
+    expect(pref3.range_value.split(",")).toEqual(
+      expect.arrayContaining(["80", "8002"])
+    );
+    expect(pref3.range_value).not.toContain("8001");
   });
 
   test("set preferences works for diameter", async () => {
