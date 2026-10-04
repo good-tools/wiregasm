@@ -1,4 +1,4 @@
-// Minimal static server for the browser e2e test:
+// Minimal static server for the browser e2e test, on 127.0.0.1 only:
 //   /            -> e2e/
 //   /pkg/...     -> the packed package (e2e/.pkg/package)
 //   /samples/... -> samples/
@@ -8,27 +8,38 @@ import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
 const port = Number(process.env.PORT ?? 4173);
+const MOUNTS = [
+  ["/pkg/", path.join(root, "e2e/.pkg/package")],
+  ["/samples/", path.join(root, "samples")],
+  ["/", path.join(root, "e2e")],
+];
 const TYPES = {
   ".html": "text/html",
   ".js": "text/javascript",
   ".wasm": "application/wasm",
-  ".data": "application/octet-stream",
-  ".cap": "application/octet-stream",
 };
+
+// Resolve a request path inside its mount; null if it would escape it.
+function resolve(urlPath) {
+  for (const [prefix, base] of MOUNTS) {
+    if (!urlPath.startsWith(prefix)) continue;
+    const file = path.resolve(base, `.${urlPath.slice(prefix.length - 1)}`);
+    const rel = path.relative(base, file);
+    if (rel.startsWith("..") || path.isAbsolute(rel)) return null;
+    return rel === "" ? path.join(base, "index.html") : file;
+  }
+  return null;
+}
 
 http
   .createServer((req, res) => {
-    const url = decodeURIComponent(new URL(req.url, "http://x").pathname);
     let file;
-    if (url.startsWith("/pkg/"))
-      file = path.join(root, "e2e/.pkg/package", url.slice(5));
-    else if (url.startsWith("/samples/")) file = path.join(root, url);
-    else file = path.join(root, "e2e", url === "/" ? "index.html" : url);
-    if (
-      !file.startsWith(root) ||
-      !fs.existsSync(file) ||
-      fs.statSync(file).isDirectory()
-    ) {
+    try {
+      file = resolve(decodeURIComponent(new URL(req.url, "http://x").pathname));
+    } catch {
+      file = null;
+    }
+    if (!file || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
       res.writeHead(404).end();
       return;
     }
@@ -37,4 +48,6 @@ http
     });
     fs.createReadStream(file).pipe(res);
   })
-  .listen(port, () => console.log(`e2e server on http://localhost:${port}`));
+  .listen(port, "127.0.0.1", () =>
+    console.log(`e2e server on http://127.0.0.1:${port}`)
+  );
