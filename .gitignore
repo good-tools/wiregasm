@@ -6,13 +6,6 @@ dist
 .cache
 coverage
 
+# make: downloaded tarballs live in .cache/tarballs
+build/
 built/
-
-lib/*
-!lib/wiregasm
-lib/wiregasm/wg_build
-!lib/tarballs
-!lib/crossfile.meson
-!lib/Makefile
-lib/tarballs/*
-!lib/tarballs/.gitkeep

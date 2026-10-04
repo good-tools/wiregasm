@@ -1,4 +1,5 @@
-FROM emscripten/emsdk:3.1.31
+ARG EMSDK_VERSION=3.1.31
+FROM emscripten/emsdk:${EMSDK_VERSION}
 
 RUN echo "## Update and install packages" \
     && apt-get -qq -y update \
