@@ -6,6 +6,16 @@ Packet Analyzer powered by Wireshark compiled for WebAssembly.
 
 Demo it on [good.tools](https://good.tools/packet-dissector).
 
+## Supported environments
+* **Node.js** 22 or later (the maintained LTS lines)
+* **Browsers** with WebAssembly BigInt integration and bulk memory (Chrome 85+, Firefox 79+, Safari 15+)
+
+The module is built with Emscripten 6.
+
+### Upgrading from 1.x
+* Node.js older than 22 is no longer supported.
+* Only the documented loader options are read from the object passed to `loadWiregasm`: `locateFile`, `print`, `printErr`, `handleStatus`, `wasmBinary` and `getPreloadedPackage`, plus Emscripten's standard ones such as `instantiateWasm`.
+
 ## Build
 The library can be built in two ways:
 1. `npm run build:emscripten` using a docker image with all of the build tools installed

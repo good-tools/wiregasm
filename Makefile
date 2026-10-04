@@ -12,7 +12,8 @@
 #
 # Dependencies are described in mk/deps/<pkg>.mk; the generic rules live in mk/rules.mk.
 
-EMSDK_VERSION := 3.1.31
+EMSDK_VERSION := 6.0.11
+MESON_VERSION := 1.12.1
 
 TARBALLS := .cache/tarballs
 SRC      := build/src
@@ -53,7 +54,7 @@ update-patches: guard-PKG
 check-patches: $(foreach p,$(PACKAGES),$(STAMP)/$(p).src)
 
 docker:
-	docker build -t wiregasm-builder:$(EMSDK_VERSION) --build-arg EMSDK_VERSION=$(EMSDK_VERSION) \
+	docker build -t wiregasm-builder:$(EMSDK_VERSION) --build-arg EMSDK_VERSION=$(EMSDK_VERSION) --build-arg MESON_VERSION=$(MESON_VERSION) \
 		-f docker/build.Dockerfile docker
 	docker run --rm -v "$(CURDIR)":/src -w /src wiregasm-builder:$(EMSDK_VERSION) \
 		make -j"$$(nproc)" $(filter-out docker,$(MAKECMDGOALS))
