@@ -137,17 +137,18 @@ export class Wiregasm {
     if (!Object.keys(taps).every((k) => ALLOWED_TAP_KEYS.has(k))) {
       throw new Error(
         `Invalid arguments. Allowed keys are: ${Array.from(
-          ALLOWED_GRAPH_KEYS
+          ALLOWED_TAP_KEYS
         ).join(", ")}.`
       );
     }
 
+    const session = this.loadedSession();
     const args = new this.lib.MapInput();
     for (const [k, v] of Object.entries(taps)) {
       args.set(k, v);
     }
 
-    const response = this.session.tap(args);
+    const response = session.tap(args);
     return {
       error: response.error,
       taps: vectorToArray(response.taps).map((tap) => {
@@ -180,7 +181,7 @@ export class Wiregasm {
   }
 
   download(token: string): DownloadResponse {
-    return this.session.download(token);
+    return this.loadedSession().download(token);
   }
 
   iograph(input: MapInput) {
@@ -196,12 +197,13 @@ export class Wiregasm {
       );
     }
 
+    const session = this.loadedSession();
     const args = new this.lib.MapInput();
     for (const [k, v] of Object.entries(input)) {
       args.set(k, v);
     }
 
-    const out = this.session.iograph(args);
+    const out = session.iograph(args);
     return {
       ...out,
       iograph: vectorToArray(out.iograph).map((t) => ({
@@ -238,7 +240,13 @@ export class Wiregasm {
 
     this.session = new this.lib.DissectSession(path);
 
-    return this.session.load();
+    const response = this.session.load();
+    if (response.code !== 0) {
+      // Don't keep a session for a file that failed to open.
+      this.session.delete();
+      this.session = null;
+    }
+    return response;
   }
 
   /**
@@ -249,7 +257,7 @@ export class Wiregasm {
    * @param limit Limit the output to N frames
    */
   frames(filter: string, skip = 0, limit = 0): FramesResponse {
-    return this.session.getFrames(filter, skip, limit);
+    return this.loadedSession().getFrames(filter, skip, limit);
   }
 
   /**
@@ -258,11 +266,18 @@ export class Wiregasm {
    * @param number Frame number
    */
   frame(num: number): Frame {
-    return this.session.getFrame(num);
+    return this.loadedSession().getFrame(num);
   }
 
   follow(follow: string, filter: string): Follow {
-    return this.session.follow(follow, filter);
+    return this.loadedSession().follow(follow, filter);
+  }
+
+  private loadedSession(): DissectSession {
+    if (this.session === null) {
+      throw new Error("No capture file loaded, call load() first.");
+    }
+    return this.session;
   }
 
   destroy() {

@@ -100,6 +100,30 @@ describe("Wiregasm Library Wrapper", () => {
     wg.destroy();
   });
 
+  test("session methods before load() throw a clear error", () => {
+    const msg = "No capture file loaded, call load() first.";
+    expect(() => wg.frames("")).toThrow(msg);
+    expect(() => wg.frame(1)).toThrow(msg);
+    expect(() => wg.follow("TCP", "tcp.stream eq 0")).toThrow(msg);
+    expect(() => wg.tap({ tap0: "conv:TCP" })).toThrow(msg);
+    expect(() => wg.iograph({ graph0: "packets" })).toThrow(msg);
+    expect(() => wg.download("token")).toThrow(msg);
+  });
+
+  test("a failed load() leaves no session behind", () => {
+    const ret = wg.load("not-a-capture.txt", "hello world");
+    expect(ret.code).not.toEqual(0);
+    expect(() => wg.frames("")).toThrow(
+      "No capture file loaded, call load() first."
+    );
+  });
+
+  test("tap() lists the allowed tap keys for unknown keys", () => {
+    expect(() => wg.tap({ tap0: "conv:TCP", graph0: "x" })).toThrow(
+      /Allowed keys are: tap0, .*filter14\./
+    );
+  });
+
   test("columns array returned correctly", async () => {
     const cols = wg.columns();
     expect(cols).toEqual([
