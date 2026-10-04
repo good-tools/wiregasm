@@ -95,8 +95,10 @@ jobs:
 
     # Caches the installed dependencies (glib, wireshark, ...) only. The key
     # covers everything that changes them; lib/wiregasm is always rebuilt.
+    # Installed like the builder image does: into the system Python, so that
+    # glib's build scripts see the same modules (setuptools, packaging).
     - name: Install meson
-      run: pipx install "meson==$MESON_VERSION"
+      run: sudo pip3 install --break-system-packages "meson==$MESON_VERSION"
 
     - name: Cache dependencies
       id: deps-cache
