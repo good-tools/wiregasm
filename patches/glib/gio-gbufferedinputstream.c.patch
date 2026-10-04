@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gbufferedinputstream.c b/gio/gbufferedinputstream.c
-index 55450ce0e6e73184266c8297e942e5334a8410cf..8f144c6fabf076e883a1099d4f394a4404367288 100644
+index 64cb293ef35384e11d34beb99d7af42551f33919..f89aa8152a085b7fd3c63fd9fe13b831979fd2d8 100644
 --- a/gio/gbufferedinputstream.c
 +++ b/gio/gbufferedinputstream.c
-@@ -115,7 +115,8 @@ static gssize g_buffered_input_stream_real_fill_finish (GBufferedInputStream  *s
+@@ -111,7 +111,8 @@ static gssize g_buffered_input_stream_real_fill_finish (GBufferedInputStream  *s
                                                          GAsyncResult          *result,
                                                          GError               **error);
  
@@ -15,7 +15,7 @@ index 55450ce0e6e73184266c8297e942e5334a8410cf..8f144c6fabf076e883a1099d4f394a44
  static goffset  g_buffered_input_stream_tell                (GSeekable       *seekable);
  static gboolean g_buffered_input_stream_can_seek            (GSeekable       *seekable);
  static gboolean g_buffered_input_stream_seek                (GSeekable       *seekable,
-@@ -302,7 +303,8 @@ g_buffered_input_stream_finalize (GObject *object)
+@@ -301,7 +302,8 @@ g_buffered_input_stream_finalize (GObject *object)
  }
  
  static void

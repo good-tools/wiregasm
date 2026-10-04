@@ -1,8 +1,8 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gdummytlsbackend.c b/gio/gdummytlsbackend.c
-index 1ec00c99e8b2d42b3a75b186b5e5e31485679cf5..d2f73c5f3a358dcdde1de1d6f96635a75ab43d56 100644
+index 4c69f1d010a344644e50f27dbc14f524bd79c061..05c374ce3e0d4d2f3f8c30f002562a93352cb3b2 100644
 --- a/gio/gdummytlsbackend.c
 +++ b/gio/gdummytlsbackend.c
 @@ -53,7 +53,8 @@ struct _GDummyTlsBackend {

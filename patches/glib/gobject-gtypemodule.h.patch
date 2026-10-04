@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gobject/gtypemodule.h b/gobject/gtypemodule.h
-index e386b50dff51c0190b7b4acfc851a96a1ed043f7..f3096a939bfabd2b4c85594c430a887736c7b5ef 100644
+index fba714bc28ca924a17ec7f747f33b2a147ac2a90..f4ef08478024c0c00dfce8b053e49bc189cb3378 100644
 --- a/gobject/gtypemodule.h
 +++ b/gobject/gtypemodule.h
-@@ -209,12 +209,12 @@ type_name##_register_type (GTypeModule *type_module) \
+@@ -202,12 +202,12 @@ type_name##_register_type (GTypeModule *type_module) \
      sizeof (TypeName##Class), \
      (GBaseInitFunc) NULL, \
      (GBaseFinalizeFunc) NULL, \
@@ -21,7 +21,7 @@ index e386b50dff51c0190b7b4acfc851a96a1ed043f7..f3096a939bfabd2b4c85594c430a8877
      NULL    /* value_table */ \
    }; \
    type_name##_type_id = g_type_module_register_type (type_module, \
-@@ -244,7 +244,7 @@ type_name##_register_type (GTypeModule *type_module) \
+@@ -237,7 +237,7 @@ type_name##_register_type (GTypeModule *type_module) \
   */
  #define G_IMPLEMENT_INTERFACE_DYNAMIC(TYPE_IFACE, iface_init)       { \
    const GInterfaceInfo g_implement_interface_info = { \

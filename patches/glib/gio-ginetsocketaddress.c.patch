@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/ginetsocketaddress.c b/gio/ginetsocketaddress.c
-index 7693035581595a1ea6382f5d1ec340422e6e0374..f09158cb7347575f84028882d2dc1a5e03b20ea9 100644
+index c17bd1497e136b912d5d398c26d00f0c74a9848a..1d705f61f583729c6b814825f1a563fa6ba48bd0 100644
 --- a/gio/ginetsocketaddress.c
 +++ b/gio/ginetsocketaddress.c
-@@ -57,7 +57,8 @@ struct _GInetSocketAddressPrivate
+@@ -51,7 +51,8 @@ struct _GInetSocketAddressPrivate
    guint32       scope_id;
  };
  

@@ -1,0 +1,25 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
+
+diff --git a/gio/glocalfilemonitor.c b/gio/glocalfilemonitor.c
+index 8de40793945e110b3fb50f51b7f6dcf1ec6ae0e1..acf3e0291a4c542945cfe5db306f0820fd739d1e 100644
+--- a/gio/glocalfilemonitor.c
++++ b/gio/glocalfilemonitor.c
+@@ -742,7 +742,7 @@ g_local_file_monitor_set_property (GObject *object, guint prop_id,
+     g_object_notify (object, "rate-limit");
+ }
+ 
+-#ifndef G_OS_WIN32
++#if !defined(G_OS_WIN32) && !defined(G_PLATFORM_WASM)
+ static void
+ g_local_file_monitor_mounts_changed (GUnixMountMonitor *mount_monitor,
+                                      gpointer           user_data)
+@@ -792,7 +792,7 @@ g_local_file_monitor_start (GLocalFileMonitor *local_monitor,
+ 
+   if (is_directory && !class->mount_notify && (flags & G_FILE_MONITOR_WATCH_MOUNTS))
+     {
+-#ifdef G_OS_WIN32
++#if defined(G_OS_WIN32) || defined(G_PLATFORM_WASM)
+       /*claim everything was mounted */
+       local_monitor->was_mounted = TRUE;
+ #else

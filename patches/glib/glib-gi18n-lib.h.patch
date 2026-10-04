@@ -1,5 +1,5 @@
 Why: Disable NLS
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/glib/gi18n-lib.h b/glib/gi18n-lib.h
 index fe9e79dbd96052b9c9b6ed85f7e55c920b94c4c2..8597f90d1de9fff9ef2c3665ff067259910ae280 100644

@@ -1,11 +1,11 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gapplicationcommandline.c b/gio/gapplicationcommandline.c
-index 9fe52da5dd413108914c95d56fa8a8d731ece7a1..51e7986ff72b7125e6bc604cf86277803d32925d 100644
+index b3a6d00b42c624d1729d3e883e63532ed5966426..ffb682d2831fe342012968c6d5115ee2b06118db 100644
 --- a/gio/gapplicationcommandline.c
 +++ b/gio/gapplicationcommandline.c
-@@ -297,7 +297,9 @@ g_application_command_line_real_printerr_literal (GApplicationCommandLine *cmdli
+@@ -295,7 +295,9 @@ g_application_command_line_real_printerr_literal (GApplicationCommandLine *cmdli
  static GInputStream *
  g_application_command_line_real_get_stdin (GApplicationCommandLine *cmdline)
  {

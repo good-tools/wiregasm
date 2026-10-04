@@ -1,11 +1,11 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/glib/gutils.c b/glib/gutils.c
-index 78ccd612145aa693a77366620ff7a0b122cdafaf..16fd528b377fbf6e5edd27bc0610c6f58f16d32c 100644
+index bb88c76b2ad1a01eec6b2dfb11f3ef6c60a3ca19..0365375ab305b543ab3c2a1f183a287b3a802d53 100644
 --- a/glib/gutils.c
 +++ b/glib/gutils.c
-@@ -1414,7 +1414,7 @@ get_windows_version (gboolean with_windows)
+@@ -1522,7 +1522,7 @@ get_windows_version (gboolean with_windows)
  }
  #endif
  
@@ -14,7 +14,7 @@ index 78ccd612145aa693a77366620ff7a0b122cdafaf..16fd528b377fbf6e5edd27bc0610c6f5
  static gchar *
  get_os_info_from_os_release (const gchar *key_name,
                               const gchar *buffer)
-@@ -1571,6 +1571,11 @@ g_get_os_info (const gchar *key_name)
+@@ -1679,6 +1679,11 @@ g_get_os_info (const gchar *key_name)
      return g_strdup ("macOS");
    else
      return NULL;

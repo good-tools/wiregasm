@@ -1,9 +1,9 @@
 Why: Add support for WebAssembly
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/glocalfile.c b/gio/glocalfile.c
-index 4f8df369bb9401f1a2b7fb8daf059c4014356672..c1628c7d4167fc294fee4d6bd5d90dbba82a7dc0 100644
+index 56ee5e5b42c0af211b07182e1c2e25b0ca302167..d4defc24359791f5ffba8b86e744adcab7ecf07d 100644
 --- a/gio/glocalfile.c
 +++ b/gio/glocalfile.c
 @@ -27,7 +27,7 @@
@@ -15,7 +15,7 @@ index 4f8df369bb9401f1a2b7fb8daf059c4014356672..c1628c7d4167fc294fee4d6bd5d90dbb
  #include <dirent.h>
  #include <unistd.h>
  #endif
-@@ -65,7 +65,7 @@
+@@ -69,7 +69,7 @@
  #include <glib/gstdio.h>
  #include <glib/gstdioprivate.h>
  #include "glibintl.h"
@@ -24,7 +24,7 @@ index 4f8df369bb9401f1a2b7fb8daf059c4014356672..c1628c7d4167fc294fee4d6bd5d90dbb
  #include "glib-unix.h"
  #include "gportalsupport.h"
  #include "gtrashportal.h"
-@@ -95,7 +95,8 @@
+@@ -102,7 +102,8 @@
  #endif
  
  
@@ -33,28 +33,127 @@ index 4f8df369bb9401f1a2b7fb8daf059c4014356672..c1628c7d4167fc294fee4d6bd5d90dbb
 +                                          gpointer    iface_data);
  
  static GFileAttributeInfoList *local_writable_attributes = NULL;
- static /* GFileAttributeInfoList * */ gsize local_writable_namespaces = 0;
-@@ -1925,7 +1926,7 @@ _g_local_file_has_trash_dir (const char *dirname, dev_t dir_dev)
+ static GFileAttributeInfoList *local_writable_namespaces = NULL;
+@@ -758,7 +759,7 @@ get_fs_type (long f_type)
+ }
+ #endif
+ 
+-#ifndef G_OS_WIN32
++#if !defined(G_OS_WIN32) && !defined(G_PLATFORM_WASM)
+ 
+ G_LOCK_DEFINE_STATIC(mount_info_hash);
+ static GHashTable *mount_info_hash = NULL;
+@@ -1102,6 +1103,7 @@ g_local_file_query_filesystem_info (GFile         *file,
+     g_file_info_set_attribute_string (info, G_FILE_ATTRIBUTE_FILESYSTEM_TYPE, fstype);
+ #endif /* G_OS_WIN32 */
+ 
++#ifndef G_PLATFORM_WASM
+   if (g_file_attribute_matcher_matches (attribute_matcher,
+                                         G_FILE_ATTRIBUTE_FILESYSTEM_READONLY) ||
+       g_file_attribute_matcher_matches (attribute_matcher,
+@@ -1113,6 +1115,7 @@ g_local_file_query_filesystem_info (GFile         *file,
+       get_mount_info (info, local->filename, attribute_matcher);
+ #endif /* G_OS_WIN32 */
+     }
++#endif /* !G_PLATFORM_WASM */
+ 
+   g_file_attribute_matcher_unref (attribute_matcher);
+   
+@@ -1124,6 +1127,7 @@ g_local_file_find_enclosing_mount (GFile         *file,
+                                    GCancellable  *cancellable,
+                                    GError       **error)
+ {
++#ifndef G_PLATFORM_WASM
+   GLocalFile *local = G_LOCAL_FILE (file);
+   GStatBuf buf;
+   char *mountpoint;
+@@ -1142,6 +1146,7 @@ g_local_file_find_enclosing_mount (GFile         *file,
+     return mount;
+ 
+ error:
++#endif
+   g_set_io_error (error,
+ 		  /* Translators: This is an error message when trying to find
+ 		   * the enclosing (user visible) mount of a file, but none
+@@ -1525,7 +1530,7 @@ g_local_file_delete (GFile         *file,
+   return TRUE;
+ }
+ 
+-#ifndef G_OS_WIN32
++#if !defined(G_OS_WIN32) && !defined(G_PLATFORM_WASM)
+ 
+ static char *
+ strip_trailing_slashes (const char *path)
+@@ -1934,7 +1939,6 @@ _g_local_file_has_trash_dir (const char *dirname, dev_t dir_dev)
    return res;
  }
  
--#ifdef G_OS_UNIX
-+#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+-#ifndef G_OS_WIN32
  gboolean
  _g_local_file_is_lost_found_dir (const char *path, dev_t path_dev)
  {
-@@ -1989,8 +1990,10 @@ g_local_file_trash (GFile         *file,
-   GVfs *vfs;
-   int errsv;
+@@ -1973,7 +1977,6 @@ _g_local_file_is_lost_found_dir (const char *path, dev_t path_dev)
+   g_free (mount_dir);
+   return ret;
+ }
+-#endif
  
-+#ifndef G_PLATFORM_WASM
-   if (glib_should_use_portal ())
-     return g_trash_portal_trash_file (file, error);
-+#endif
+ static gboolean
+ g_local_file_trash (GFile         *file,
+@@ -2349,7 +2352,7 @@ g_local_file_trash (GFile         *file,
+   
+   return TRUE;
+ }
+-#else /* G_OS_WIN32 */
++#elif defined(G_OS_WIN32)
+ gboolean
+ _g_local_file_has_trash_dir (const char *dirname, dev_t dir_dev)
+ {
+@@ -2395,7 +2398,24 @@ g_local_file_trash (GFile         *file,
+   g_free (wfilename);
+   return success;
+ }
+-#endif /* G_OS_WIN32 */
++#else /* G_PLATFORM_WASM */
++gboolean
++_g_local_file_has_trash_dir (const char *dirname, dev_t dir_dev)
++{
++  return FALSE;
++}
++
++static gboolean
++g_local_file_trash (GFile         *file,
++		    GCancellable  *cancellable,
++		    GError       **error)
++{
++  g_set_io_error (error,
++                  _("g_local_file_trash is no-op on WebAssembly"),
++                  file, ENOTSUP);
++  return FALSE;
++}
++#endif /* G_PLATFORM_WASM */
  
-   if (g_lstat (local->filename, &file_stat) != 0)
-     {
-@@ -2991,7 +2994,8 @@ g_local_file_measure_disk_usage (GFile                         *file,
+ static gboolean
+ g_local_file_make_directory (GFile         *file,
+@@ -2599,7 +2619,7 @@ g_local_file_move (GFile                  *source,
+   return TRUE;
+ }
+ 
+-#ifdef G_OS_WIN32
++#if defined(G_OS_WIN32) || defined(G_PLATFORM_WASM)
+ 
+ gboolean
+ g_local_file_is_nfs_home (const gchar *filename)
+@@ -2663,7 +2683,7 @@ g_local_file_is_nfs_home (const gchar *filename)
+ 
+   return FALSE;
+ }
+-#endif /* !G_OS_WIN32 */
++#endif /* !G_OS_WIN32 && !G_PLATFORM_WASM */
+ 
+ static GFileMonitor*
+ g_local_file_monitor_dir (GFile             *file,
+@@ -3042,7 +3062,8 @@ g_local_file_measure_disk_usage (GFile                         *file,
  }
  
  static void

@@ -1,8 +1,8 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gtestdbus.c b/gio/gtestdbus.c
-index cf7d1a4b8ed9e305aca62a7279abadf79df2a298..c06597c825756327b6f53d248d2c29c46c5c68bf 100644
+index 29727e2e132df2131d000152d0f210e3870d8740..24caf661c776bf14d394d6460cda6274ee890f17 100644
 --- a/gio/gtestdbus.c
 +++ b/gio/gtestdbus.c
 @@ -48,7 +48,7 @@
@@ -12,14 +12,44 @@ index cf7d1a4b8ed9e305aca62a7279abadf79df2a298..c06597c825756327b6f53d248d2c29c4
 -#ifdef G_OS_UNIX
 +#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
  #include "glib-unix.h"
+ #include "glib-unixprivate.h"
+ #endif
+@@ -148,7 +148,7 @@ _g_test_watcher_remove_pid (GPid pid)
+      will be killed anyway */
+ }
+ 
+-#else
++#elif defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ 
+ #define ADD_PID_FORMAT "add pid %d\n"
+ #define REMOVE_PID_FORMAT "remove pid %d\n"
+@@ -327,6 +327,20 @@ _g_test_watcher_remove_pid (GPid pid)
+   g_free (command);
+ }
+ 
++#else
++
++static void
++_g_test_watcher_add_pid (GPid pid)
++{
++  /* no-op */
++}
++
++static void
++_g_test_watcher_remove_pid (GPid pid)
++{
++  /* no-op */
++}
++
  #endif
  
-@@ -603,7 +603,7 @@ static gboolean
+ /* -------------------------------------------------------------------------- */
+@@ -597,7 +611,7 @@ static gboolean
  make_pipe (gint     pipe_fds[2],
             GError **error)
  {
 -#if defined(G_OS_UNIX)
 +#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
-   return g_unix_open_pipe (pipe_fds, FD_CLOEXEC, error);
+   return g_unix_open_pipe (pipe_fds, O_CLOEXEC, error);
  #elif defined(G_OS_WIN32)
    if (_pipe (pipe_fds, 4096, _O_BINARY) < 0)

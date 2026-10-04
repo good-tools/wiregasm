@@ -1,8 +1,8 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/win32/gwinhttpfile.c b/gio/win32/gwinhttpfile.c
-index e73c87658b4e0f3e316e2b0304a3aa36ed5c919e..c9c2d0336a23ad000eb7c2883f17faefb19ad79c 100644
+index 605c28460c8c6be6e564342d9e5f37aefba06884..e0769cdaacb0846ca803e0544558375f17f04880 100644
 --- a/gio/win32/gwinhttpfile.c
 +++ b/gio/win32/gwinhttpfile.c
 @@ -37,7 +37,8 @@
@@ -15,7 +15,7 @@ index e73c87658b4e0f3e316e2b0304a3aa36ed5c919e..c9c2d0336a23ad000eb7c2883f17faef
  
  #define g_winhttp_file_get_type _g_winhttp_file_get_type
  G_DEFINE_TYPE_WITH_CODE (GWinHttpFile, g_winhttp_file, G_TYPE_OBJECT,
-@@ -757,7 +758,8 @@ g_winhttp_file_move (GFile                  *source,
+@@ -769,7 +770,8 @@ g_winhttp_file_move (GFile                  *source,
  #endif
  
  static void

@@ -1,11 +1,11 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/glib/gbacktrace.c b/glib/gbacktrace.c
-index 9c52a7d295a87b2473b98180effc51c6afe08a8c..38c0b473e144567577de12ebc9debdefac03bba3 100644
+index 0f81502e5083e6284c4394036e79111e22807864..226871af4af893c8c7992b9bb702c89f084d7ecf 100644
 --- a/glib/gbacktrace.c
 +++ b/glib/gbacktrace.c
-@@ -259,7 +259,7 @@ g_on_error_query (const gchar *prg_name)
+@@ -260,7 +260,7 @@ g_on_error_query (const gchar *prg_name)
  void
  g_on_error_stack_trace (const gchar *prg_name)
  {
@@ -14,7 +14,7 @@ index 9c52a7d295a87b2473b98180effc51c6afe08a8c..38c0b473e144567577de12ebc9debdef
    pid_t pid;
    gchar buf[16];
    const gchar *args[5] = { DEBUGGER, NULL, NULL, NULL, NULL };
-@@ -301,9 +301,11 @@ g_on_error_stack_trace (const gchar *prg_name)
+@@ -302,9 +302,11 @@ g_on_error_stack_trace (const gchar *prg_name)
          break;
      }
  #else

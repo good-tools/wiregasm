@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gsettings.c b/gio/gsettings.c
-index 12b987050e7f46788cbedd0d9a8cc004e7404d9c..4ff6fd67afe3976f2d2cd483c310ba34badea9f7 100644
+index a14ba809481f0dcf63704a197da7e8418f7c8cb1..9f4ae47fb5e2c518a1a9a47cd8d0208f3f83b100 100644
 --- a/gio/gsettings.c
 +++ b/gio/gsettings.c
-@@ -3163,7 +3163,8 @@ typedef struct
+@@ -3142,7 +3142,8 @@ typedef struct
  typedef GObjectClass GSettingsActionClass;
  
  static GType g_settings_action_get_type (void);
@@ -15,7 +15,7 @@ index 12b987050e7f46788cbedd0d9a8cc004e7404d9c..4ff6fd67afe3976f2d2cd483c310ba34
  G_DEFINE_TYPE_WITH_CODE (GSettingsAction, g_settings_action, G_TYPE_OBJECT,
                           G_IMPLEMENT_INTERFACE (G_TYPE_ACTION, g_settings_action_iface_init))
  
-@@ -3323,7 +3324,8 @@ g_settings_action_init (GSettingsAction *gsa)
+@@ -3299,7 +3300,8 @@ g_settings_action_init (GSettingsAction *gsa)
  }
  
  static void

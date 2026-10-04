@@ -1,8 +1,9 @@
+Why: Add support for WebAssembly
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gresourcefile.c b/gio/gresourcefile.c
-index 24f20f2903d24ae660c37a1f95e1d9f05f3d1594..a52dbbca513777ff10255f89d188e793bf3802db 100644
+index 1621839cf73a67e9486213ef06782464eb554dee..6efe0550016782312f21db23da61a7de922ed40b 100644
 --- a/gio/gresourcefile.c
 +++ b/gio/gresourcefile.c
 @@ -68,7 +68,8 @@ struct _GResourceFileEnumeratorClass
@@ -15,7 +16,23 @@ index 24f20f2903d24ae660c37a1f95e1d9f05f3d1594..a52dbbca513777ff10255f89d188e793
  
  static GFileAttributeInfoList *resource_writable_attributes = NULL;
  static GFileAttributeInfoList *resource_writable_namespaces = NULL;
-@@ -660,7 +661,8 @@ g_resource_file_set_display_name (GFile         *file,
+@@ -516,6 +517,7 @@ g_resource_file_query_info (GFile                *file,
+       g_file_info_set_file_type (info, G_FILE_TYPE_REGULAR);
+       g_file_info_set_size (info, size);
+ 
++#ifndef G_PLATFORM_WASM
+       if ((_g_file_attribute_matcher_matches_id (matcher, G_FILE_ATTRIBUTE_ID_STANDARD_CONTENT_TYPE) ||
+            ((~resource_flags & G_RESOURCE_FLAGS_COMPRESSED) && 
+             _g_file_attribute_matcher_matches_id (matcher, G_FILE_ATTRIBUTE_ID_STANDARD_FAST_CONTENT_TYPE))) &&
+@@ -530,6 +532,7 @@ g_resource_file_query_info (GFile                *file,
+           g_bytes_unref (bytes);
+         }
+       else
++#endif
+         content_type = NULL;
+ 
+       if (content_type)
+@@ -665,7 +668,8 @@ g_resource_file_set_display_name (GFile         *file,
  }
  
  static void

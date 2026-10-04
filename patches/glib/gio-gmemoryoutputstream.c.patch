@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gmemoryoutputstream.c b/gio/gmemoryoutputstream.c
-index 0339a7ad7de174895dcb98659627eb9cf9098a4c..119554ee6d24c49809d47b04e7edc89d87aefaf7 100644
+index bf080852c1d0992718d21ffc97bd8bcfbef24a1b..31dcfcb468f2cdd8630ca0b7781fdaeeee3803cd 100644
 --- a/gio/gmemoryoutputstream.c
 +++ b/gio/gmemoryoutputstream.c
-@@ -99,7 +99,8 @@ static gboolean g_memory_output_stream_close_finish (GOutputStream        *strea
+@@ -96,7 +96,8 @@ static gboolean g_memory_output_stream_close_finish (GOutputStream        *strea
                                                       GAsyncResult         *result,
                                                       GError              **error);
  
@@ -15,7 +15,7 @@ index 0339a7ad7de174895dcb98659627eb9cf9098a4c..119554ee6d24c49809d47b04e7edc89d
  static goffset  g_memory_output_stream_tell                (GSeekable       *seekable);
  static gboolean g_memory_output_stream_can_seek            (GSeekable       *seekable);
  static gboolean g_memory_output_stream_seek                (GSeekable       *seekable,
-@@ -117,7 +118,8 @@ static gboolean g_memory_output_stream_is_writable       (GPollableOutputStream
+@@ -114,7 +115,8 @@ static gboolean g_memory_output_stream_is_writable       (GPollableOutputStream
  static GSource *g_memory_output_stream_create_source     (GPollableOutputStream *stream,
                                                            GCancellable          *cancellable);
  
@@ -25,7 +25,7 @@ index 0339a7ad7de174895dcb98659627eb9cf9098a4c..119554ee6d24c49809d47b04e7edc89d
  
  G_DEFINE_TYPE_WITH_CODE (GMemoryOutputStream, g_memory_output_stream, G_TYPE_OUTPUT_STREAM,
                           G_ADD_PRIVATE (GMemoryOutputStream)
-@@ -224,7 +226,8 @@ g_memory_output_stream_class_init (GMemoryOutputStreamClass *klass)
+@@ -211,7 +213,8 @@ g_memory_output_stream_class_init (GMemoryOutputStreamClass *klass)
  }
  
  static void
@@ -35,7 +35,7 @@ index 0339a7ad7de174895dcb98659627eb9cf9098a4c..119554ee6d24c49809d47b04e7edc89d
  {
    iface->is_writable = g_memory_output_stream_is_writable;
    iface->create_source = g_memory_output_stream_create_source;
-@@ -313,7 +316,8 @@ g_memory_output_stream_finalize (GObject *object)
+@@ -300,7 +303,8 @@ g_memory_output_stream_finalize (GObject *object)
  }
  
  static void

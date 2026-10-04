@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gtask.c b/gio/gtask.c
-index 1d5b37e85dd7490c826e52c59d0599f05792291c..bbeac35296d6cc896ff95c217199e65ae9fb730a 100644
+index e6815e2d05d5e4076cb2ca6a0534b6bd78fbff5b..f2633a54a9d50428ecf39ff5df0eaed7f99b83ab 100644
 --- a/gio/gtask.c
 +++ b/gio/gtask.c
-@@ -611,7 +611,8 @@ typedef enum
+@@ -623,7 +623,8 @@ typedef enum
    PROP_COMPLETED = 1,
  } GTaskProperty;
  
@@ -15,7 +15,7 @@ index 1d5b37e85dd7490c826e52c59d0599f05792291c..bbeac35296d6cc896ff95c217199e65a
  static void g_task_thread_pool_init (void);
  
  G_DEFINE_TYPE_WITH_CODE (GTask, g_task, G_TYPE_OBJECT,
-@@ -2308,7 +2309,8 @@ g_task_is_tagged (GAsyncResult *res,
+@@ -2503,7 +2504,8 @@ g_task_is_tagged (GAsyncResult *res,
  }
  
  static void

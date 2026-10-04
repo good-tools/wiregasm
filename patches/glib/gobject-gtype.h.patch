@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gobject/gtype.h b/gobject/gtype.h
-index dc8fa25d485710d543c9122d9a6c8b1671438abc..42fbcdbc748540216f0755431d716c422add2234 100644
+index a16da45932555e9810a8c88d3e758d20a66caf58..6158dff51d478f98ff6fa870230440e6d4566ad1 100644
 --- a/gobject/gtype.h
 +++ b/gobject/gtype.h
-@@ -1985,7 +1985,7 @@ guint     g_type_get_type_registration_serial (void);
+@@ -2108,7 +2108,7 @@ guint     g_type_get_type_registration_serial (void);
   */
  #define G_IMPLEMENT_INTERFACE(TYPE_IFACE, iface_init)       { \
    const GInterfaceInfo g_implement_interface_info = { \
@@ -14,7 +14,7 @@ index dc8fa25d485710d543c9122d9a6c8b1671438abc..42fbcdbc748540216f0755431d716c42
    }; \
    g_type_add_interface_static (g_define_type_id, TYPE_IFACE, &g_implement_interface_info); \
  }
-@@ -2127,7 +2127,8 @@ guint     g_type_get_type_registration_serial (void);
+@@ -2250,7 +2250,8 @@ guint     g_type_get_type_registration_serial (void);
   */
  #if GLIB_VERSION_MAX_ALLOWED >= GLIB_VERSION_2_38
  #define _G_DEFINE_TYPE_EXTENDED_CLASS_INIT(TypeName, type_name) \
@@ -24,7 +24,7 @@ index dc8fa25d485710d543c9122d9a6c8b1671438abc..42fbcdbc748540216f0755431d716c42
  { \
    type_name##_parent_class = g_type_class_peek_parent (klass); \
    if (TypeName##_private_offset != 0) \
-@@ -2137,7 +2138,8 @@ static void     type_name##_class_intern_init (gpointer klass) \
+@@ -2260,7 +2261,8 @@ static void     type_name##_class_intern_init (gpointer klass) \
  
  #else
  #define _G_DEFINE_TYPE_EXTENDED_CLASS_INIT(TypeName, type_name) \
@@ -34,7 +34,7 @@ index dc8fa25d485710d543c9122d9a6c8b1671438abc..42fbcdbc748540216f0755431d716c42
  { \
    type_name##_parent_class = g_type_class_peek_parent (klass); \
    type_name##_class_init ((TypeName##Class*) klass); \
-@@ -2149,6 +2151,11 @@ static void     type_name##_class_intern_init (gpointer klass) \
+@@ -2282,6 +2284,11 @@ static void     type_name##_class_intern_init (gpointer klass) \
  \
  static void     type_name##_init              (TypeName        *self); \
  static void     type_name##_class_init        (TypeName##Class *klass); \
@@ -46,7 +46,7 @@ index dc8fa25d485710d543c9122d9a6c8b1671438abc..42fbcdbc748540216f0755431d716c42
  static GType    type_name##_get_type_once     (void); \
  static gpointer type_name##_parent_class = NULL; \
  static gint     TypeName##_private_offset; \
-@@ -2186,9 +2193,9 @@ type_name##_get_type_once (void) \
+@@ -2319,9 +2326,9 @@ type_name##_get_type_once (void) \
          g_type_register_static_simple (TYPE_PARENT, \
                                         g_intern_static_string (#TypeName), \
                                         sizeof (TypeName##Class), \
@@ -58,7 +58,7 @@ index dc8fa25d485710d543c9122d9a6c8b1671438abc..42fbcdbc748540216f0755431d716c42
                                         (GTypeFlags) flags); \
      { /* custom code follows */
  #define _G_DEFINE_TYPE_EXTENDED_END()	\
-@@ -2208,7 +2215,12 @@ type_name##_get_type_once (void) \
+@@ -2341,7 +2348,12 @@ type_name##_get_type_once (void) \
   * to avoid deprecation warnings with older GLIB_VERSION_MAX_ALLOWED */
  #define _G_DEFINE_INTERFACE_EXTENDED_BEGIN(TypeName, type_name, TYPE_PREREQ) \
  \
@@ -72,7 +72,7 @@ index dc8fa25d485710d543c9122d9a6c8b1671438abc..42fbcdbc748540216f0755431d716c42
  \
  GType \
  type_name##_get_type (void) \
-@@ -2220,7 +2232,7 @@ type_name##_get_type (void) \
+@@ -2353,7 +2365,7 @@ type_name##_get_type (void) \
          g_type_register_static_simple (G_TYPE_INTERFACE, \
                                         g_intern_static_string (#TypeName), \
                                         sizeof (TypeName##Interface), \

@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gdbusconnection.c b/gio/gdbusconnection.c
-index d9887f768e1bf0e21ba7ffccb11693eb76cb9b08..39ed39e3ee111aa4fb831e09ee22ae1ea16a0bfd 100644
+index 4c1d2e24a06a3b8c2824aca16a13a3cd776f6a5c..5d93427813beeca636b301294e4a5c2edfe02c2d 100644
 --- a/gio/gdbusconnection.c
 +++ b/gio/gdbusconnection.c
-@@ -510,8 +510,10 @@ static void schedule_method_call (GDBusConnection            *connection,
+@@ -653,8 +653,10 @@ static void schedule_method_call (GDBusConnection            *connection,
  
  static guint signals[LAST_SIGNAL] = { 0 };
  
@@ -18,7 +18,7 @@ index d9887f768e1bf0e21ba7ffccb11693eb76cb9b08..39ed39e3ee111aa4fb831e09ee22ae1e
  
  G_DEFINE_TYPE_WITH_CODE (GDBusConnection, g_dbus_connection, G_TYPE_OBJECT,
                           G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init)
-@@ -2662,7 +2664,8 @@ initable_init (GInitable     *initable,
+@@ -3024,7 +3026,8 @@ initable_init (GInitable     *initable,
  }
  
  static void
@@ -28,7 +28,7 @@ index d9887f768e1bf0e21ba7ffccb11693eb76cb9b08..39ed39e3ee111aa4fb831e09ee22ae1e
  {
    initable_iface->init = initable_init;
  }
-@@ -2670,7 +2673,8 @@ initable_iface_init (GInitableIface *initable_iface)
+@@ -3032,7 +3035,8 @@ initable_iface_init (GInitableIface *initable_iface)
  /* ---------------------------------------------------------------------------------------------------- */
  
  static void

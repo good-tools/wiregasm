@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gemblem.c b/gio/gemblem.c
-index af1ba000609031af012b6133fa822d84d55d34af..7f926f2b68dc42e71a552d3f3daf1fd3a9c4d7fe 100644
+index dc032672e07bf1a4056362b388662d14795c89fe..e328e1c4d015259e6d642885ded07eb2a4e81cb7 100644
 --- a/gio/gemblem.c
 +++ b/gio/gemblem.c
-@@ -44,7 +44,8 @@
+@@ -41,7 +41,8 @@
   * supported. More may be added in the future.
   */
  
@@ -15,7 +15,7 @@ index af1ba000609031af012b6133fa822d84d55d34af..7f926f2b68dc42e71a552d3f3daf1fd3
  
  struct _GEmblem
  {
-@@ -371,7 +372,8 @@ g_emblem_serialize (GIcon *icon)
+@@ -378,7 +379,8 @@ g_emblem_serialize (GIcon *icon)
  }
  
  static void

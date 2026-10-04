@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gpropertyaction.c b/gio/gpropertyaction.c
-index 8df765e985a92f9291010c17d36ae42ab30551da..285c242101d94945072b703b085e05aad8754571 100644
+index 6b671f54bf53ea5b68441b3011a114c6e60baa55..61a0f045888f0436c7e88d1c0af733d8b99001f8 100644
 --- a/gio/gpropertyaction.c
 +++ b/gio/gpropertyaction.c
-@@ -108,7 +108,8 @@ struct _GPropertyAction
+@@ -98,7 +98,8 @@ struct _GPropertyAction
  
  typedef GObjectClass GPropertyActionClass;
  
@@ -15,7 +15,7 @@ index 8df765e985a92f9291010c17d36ae42ab30551da..285c242101d94945072b703b085e05aa
  G_DEFINE_TYPE_WITH_CODE (GPropertyAction, g_property_action, G_TYPE_OBJECT,
    G_IMPLEMENT_INTERFACE (G_TYPE_ACTION, g_property_action_iface_init))
  
-@@ -426,7 +427,8 @@ g_property_action_init (GPropertyAction *property)
+@@ -437,7 +438,8 @@ g_property_action_init (GPropertyAction *property)
  }
  
  void

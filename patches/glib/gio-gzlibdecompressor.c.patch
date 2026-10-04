@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gzlibdecompressor.c b/gio/gzlibdecompressor.c
-index f7045093e681ac4c4662ea9fe046556c15b740d5..1133d5e5e2a7e20de28a096b5228232d0750d8c3 100644
+index dbe126d3c67bb80418fe1ba5db755d81ca89c09d..0b114ec6ebc891b5eab583d9fc94a3cad033a6b5 100644
 --- a/gio/gzlibdecompressor.c
 +++ b/gio/gzlibdecompressor.c
-@@ -50,7 +50,8 @@ enum {
+@@ -48,7 +48,8 @@ enum {
   * decompresses data compressed with zlib.
   */
  
@@ -15,7 +15,7 @@ index f7045093e681ac4c4662ea9fe046556c15b740d5..1133d5e5e2a7e20de28a096b5228232d
  
  typedef struct {
    gz_header gzheader;
-@@ -411,7 +412,8 @@ g_zlib_decompressor_convert (GConverter *converter,
+@@ -407,7 +408,8 @@ g_zlib_decompressor_convert (GConverter *converter,
  }
  
  static void

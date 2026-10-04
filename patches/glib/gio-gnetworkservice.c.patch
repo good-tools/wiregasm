@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gnetworkservice.c b/gio/gnetworkservice.c
-index 8fa74eca352ca804727c461aff7b960418bde304..beeeb9cae47ee71007b10dbdec4e1ac914dbf90b 100644
+index 39c9df1b963b262285c37db3f5bd6a76e66c40aa..069557010da3b41f7a5ead2f7fd1735fa07c3b1a 100644
 --- a/gio/gnetworkservice.c
 +++ b/gio/gnetworkservice.c
-@@ -88,7 +88,8 @@ static void g_network_service_get_property (GObject      *object,
+@@ -79,7 +79,8 @@ static void g_network_service_get_property (GObject      *object,
                                              GValue       *value,
                                              GParamSpec   *pspec);
  
@@ -15,7 +15,7 @@ index 8fa74eca352ca804727c461aff7b960418bde304..beeeb9cae47ee71007b10dbdec4e1ac9
  static GSocketAddressEnumerator *g_network_service_connectable_enumerate        (GSocketConnectable      *connectable);
  static GSocketAddressEnumerator *g_network_service_connectable_proxy_enumerate  (GSocketConnectable      *connectable);
  static gchar                    *g_network_service_connectable_to_string        (GSocketConnectable      *connectable);
-@@ -158,7 +159,8 @@ g_network_service_class_init (GNetworkServiceClass *klass)
+@@ -172,7 +173,8 @@ g_network_service_class_init (GNetworkServiceClass *klass)
  }
  
  static void

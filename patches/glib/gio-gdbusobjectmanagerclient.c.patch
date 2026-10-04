@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gdbusobjectmanagerclient.c b/gio/gdbusobjectmanagerclient.c
-index fa5e73041e2da6fcbb8b6730a8e33d4cb4d26165..f7951c3435d4aa8a20f2c0d3accde20816e83e6b 100644
+index cb35d0669347d73cce4c27c726a08a67bdeea681..c12177e201e2cedeb61e6721ff8696e133a684a1 100644
 --- a/gio/gdbusobjectmanagerclient.c
 +++ b/gio/gdbusobjectmanagerclient.c
-@@ -174,9 +174,12 @@ enum
+@@ -177,9 +177,12 @@ enum
  
  static guint signals[LAST_SIGNAL] = { 0 };
  
@@ -21,7 +21,7 @@ index fa5e73041e2da6fcbb8b6730a8e33d4cb4d26165..f7951c3435d4aa8a20f2c0d3accde208
  
  G_DEFINE_TYPE_WITH_CODE (GDBusObjectManagerClient, g_dbus_object_manager_client, G_TYPE_OBJECT,
                           G_ADD_PRIVATE (GDBusObjectManagerClient)
-@@ -1516,13 +1519,15 @@ initable_init (GInitable     *initable,
+@@ -1500,13 +1503,15 @@ initable_init (GInitable     *initable,
  }
  
  static void
@@ -39,7 +39,7 @@ index fa5e73041e2da6fcbb8b6730a8e33d4cb4d26165..f7951c3435d4aa8a20f2c0d3accde208
  {
    /* for now, just use default: run GInitable code in thread */
  }
-@@ -1863,7 +1868,8 @@ g_dbus_object_manager_client_get_objects (GDBusObjectManager *_manager)
+@@ -1847,7 +1852,8 @@ g_dbus_object_manager_client_get_objects (GDBusObjectManager *_manager)
  
  
  static void

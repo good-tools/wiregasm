@@ -1,11 +1,11 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/glib/gthread.c b/glib/gthread.c
-index bc9b1c2b370ae98898982a54e228d561df5712fe..f9969b174a31c9952b5c438ecc1aef320c10f977 100644
+index a264353ecb70a2bb1d783497b0d5b217e15ec2a1..05b3e4316f67d187df6aa02a04d5aad1afc1d79f 100644
 --- a/glib/gthread.c
 +++ b/glib/gthread.c
-@@ -56,6 +56,10 @@
+@@ -60,6 +60,10 @@
  #include <windows.h>
  #endif /* G_OS_WIN32 */
  
@@ -16,7 +16,7 @@ index bc9b1c2b370ae98898982a54e228d561df5712fe..f9969b174a31c9952b5c438ecc1aef32
  #include "gslice.h"
  #include "gstrfuncs.h"
  #include "gtestutils.h"
-@@ -1070,7 +1074,9 @@ g_thread_self (void)
+@@ -1064,7 +1068,9 @@ g_thread_self (void)
  guint
  g_get_num_processors (void)
  {

@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gthemedicon.c b/gio/gthemedicon.c
-index 8551bd27d3be60376f52aab0c5ecb55b1cf82458..63866e905e8abe1a636b27ad24bb01ab73c9c697 100644
+index 1d6aacdf198416eebd73ef4ed118a724e2b97ff9..1efc5123ca487a475081277b57bf2b47deba51d4 100644
 --- a/gio/gthemedicon.c
 +++ b/gio/gthemedicon.c
-@@ -45,7 +45,8 @@
+@@ -44,7 +44,8 @@
   * themes that inherit other themes.
   **/
  
@@ -15,7 +15,7 @@ index 8551bd27d3be60376f52aab0c5ecb55b1cf82458..63866e905e8abe1a636b27ad24bb01ab
  
  struct _GThemedIcon
  {
-@@ -620,7 +621,8 @@ g_themed_icon_serialize (GIcon *icon)
+@@ -613,7 +614,8 @@ g_themed_icon_serialize (GIcon *icon)
  }
  
  static void

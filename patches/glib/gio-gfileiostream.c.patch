@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gfileiostream.c b/gio/gfileiostream.c
-index 97dbc322f23ef25a1e97c8e936e6cccafa227ad3..8080aab9aeac3dc01589d7565cd9f80c792a0370 100644
+index 4a030c0932b9ce06e6e318ced1251b0e02227296..ac491ddbfa97e9dc499298ea74b47db4ae7f0c20 100644
 --- a/gio/gfileiostream.c
 +++ b/gio/gfileiostream.c
-@@ -62,7 +62,8 @@
+@@ -59,7 +59,8 @@
   * Since: 2.22
   **/
  
@@ -15,7 +15,7 @@ index 97dbc322f23ef25a1e97c8e936e6cccafa227ad3..8080aab9aeac3dc01589d7565cd9f80c
  static goffset    g_file_io_stream_seekable_tell          (GSeekable            *seekable);
  static gboolean   g_file_io_stream_seekable_can_seek      (GSeekable            *seekable);
  static gboolean   g_file_io_stream_seekable_seek          (GSeekable            *seekable,
-@@ -95,7 +96,8 @@ G_DEFINE_TYPE_WITH_CODE (GFileIOStream, g_file_io_stream, G_TYPE_IO_STREAM,
+@@ -92,7 +93,8 @@ G_DEFINE_TYPE_WITH_CODE (GFileIOStream, g_file_io_stream, G_TYPE_IO_STREAM,
  						g_file_io_stream_seekable_iface_init))
  
  static void

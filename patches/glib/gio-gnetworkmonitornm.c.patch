@@ -1,5 +1,5 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gnetworkmonitornm.c b/gio/gnetworkmonitornm.c
 index 207d50d5e3d3d37d83fae85c006ff316456c8854..22eea24f193db6aede8ea36a523f322de6bc5eda 100644

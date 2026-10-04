@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gwin32registrykey.c b/gio/gwin32registrykey.c
-index df20db1023cecdc4f3cae093b1f150064615194b..e468cf578f7af58ad1257c1391eafe7d77843f9f 100644
+index bd83b38b5ec0de126e94fd3b8b2372c492f0fc5d..bcc19cd7b8464795a625da9ea903d850f5f12b72 100644
 --- a/gio/gwin32registrykey.c
 +++ b/gio/gwin32registrykey.c
-@@ -434,7 +434,8 @@ struct _GWin32RegistryKeyPrivate {
+@@ -432,7 +432,8 @@ struct _GWin32RegistryKeyPrivate {
    gpointer user_data;
  };
  
@@ -15,7 +15,7 @@ index df20db1023cecdc4f3cae093b1f150064615194b..e468cf578f7af58ad1257c1391eafe7d
  static gboolean g_win32_registry_key_initable_init       (GInitable       *initable,
                                                            GCancellable    *cancellable,
                                                            GError         **error);
-@@ -541,7 +542,8 @@ g_win32_registry_key_new_w (const gunichar2  *path,
+@@ -539,7 +540,8 @@ g_win32_registry_key_new_w (const gunichar2  *path,
  }
  
  static void

@@ -1,11 +1,11 @@
 Why: Add support for WebAssembly
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/glib/gwakeup.c b/glib/gwakeup.c
-index 0f76be62bd5ad2bd8826835d0c5de511f583d1c4..354d03d0c1a74fa015b5aa31f5fd479459b63cad 100644
+index 82080421621cc9aae6cbd94242f2480a9630bbb0..1f6140e00efbecec8628751b26d650c4ec8d3442 100644
 --- a/glib/gwakeup.c
 +++ b/glib/gwakeup.c
-@@ -111,16 +111,24 @@ g_wakeup_free (GWakeup *wakeup)
+@@ -110,16 +110,24 @@ g_wakeup_free (GWakeup *wakeup)
  
  #else
  
@@ -13,7 +13,7 @@ index 0f76be62bd5ad2bd8826835d0c5de511f583d1c4..354d03d0c1a74fa015b5aa31f5fd4794
 +#ifdef GLIB_COMPILATION
 +#include "gmessages.h"
 +#endif
-+#else /*!G_PLATFORM_WASM*/
++#else /* !G_PLATFORM_WASM */
  #include "glib-unix.h"
  #include <fcntl.h>
  
@@ -29,8 +29,8 @@ index 0f76be62bd5ad2bd8826835d0c5de511f583d1c4..354d03d0c1a74fa015b5aa31f5fd4794
 +#endif
  };
  
- /**
-@@ -137,6 +145,10 @@ struct _GWakeup
+ /*< private >
+@@ -136,6 +144,10 @@ struct _GWakeup
  GWakeup *
  g_wakeup_new (void)
  {
@@ -41,15 +41,15 @@ index 0f76be62bd5ad2bd8826835d0c5de511f583d1c4..354d03d0c1a74fa015b5aa31f5fd4794
    GError *error = NULL;
    GWakeup *wakeup;
  
-@@ -167,6 +179,7 @@ g_wakeup_new (void)
+@@ -166,6 +178,7 @@ g_wakeup_new (void)
      g_error ("Set pipes non-blocking for GWakeup: %s", error->message);
  
    return wakeup;
 +#endif
  }
  
- /**
-@@ -185,8 +198,12 @@ void
+ /*< private >
+@@ -184,8 +197,12 @@ void
  g_wakeup_get_pollfd (GWakeup *wakeup,
                       GPollFD *poll_fd)
  {
@@ -61,23 +61,26 @@ index 0f76be62bd5ad2bd8826835d0c5de511f583d1c4..354d03d0c1a74fa015b5aa31f5fd4794
 +#endif
  }
  
- /**
-@@ -206,10 +223,14 @@ g_wakeup_get_pollfd (GWakeup *wakeup,
+ /*< private >
+@@ -205,6 +222,9 @@ g_wakeup_get_pollfd (GWakeup *wakeup,
  void
  g_wakeup_acknowledge (GWakeup *wakeup)
  {
 +#ifdef G_PLATFORM_WASM
 +  g_error ("g_wakeup_acknowledge is no-op on WebAssembly");
 +#else
-   char buffer[16];
+   int res;
  
-   /* read until it is empty */
-   while (read (wakeup->fds[0], buffer, sizeof buffer) == sizeof buffer);
+   if (wakeup->fds[1] == -1)
+@@ -225,6 +245,7 @@ g_wakeup_acknowledge (GWakeup *wakeup)
+         res = read (wakeup->fds[0], &value, sizeof (value));
+       while (res == sizeof (value) || G_UNLIKELY (res == -1 && errno == EINTR));
+     }
 +#endif
  }
  
- /**
-@@ -229,6 +250,9 @@ g_wakeup_acknowledge (GWakeup *wakeup)
+ /*< private >
+@@ -244,6 +265,9 @@ g_wakeup_acknowledge (GWakeup *wakeup)
  void
  g_wakeup_signal (GWakeup *wakeup)
  {
@@ -87,15 +90,15 @@ index 0f76be62bd5ad2bd8826835d0c5de511f583d1c4..354d03d0c1a74fa015b5aa31f5fd4794
    int res;
  
    if (wakeup->fds[1] == -1)
-@@ -251,6 +275,7 @@ g_wakeup_signal (GWakeup *wakeup)
+@@ -266,6 +290,7 @@ g_wakeup_signal (GWakeup *wakeup)
          res = write (wakeup->fds[1], &one, sizeof one);
        while (G_UNLIKELY (res == -1 && errno == EINTR));
      }
 +#endif
  }
  
- /**
-@@ -265,12 +290,16 @@ g_wakeup_signal (GWakeup *wakeup)
+ /*< private >
+@@ -280,12 +305,16 @@ g_wakeup_signal (GWakeup *wakeup)
  void
  g_wakeup_free (GWakeup *wakeup)
  {

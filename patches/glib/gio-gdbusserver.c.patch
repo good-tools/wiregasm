@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gdbusserver.c b/gio/gdbusserver.c
-index db0c9ab50a822501be62419794f0173489aed16e..cd40a20bd44b9723203cf3186199a8bae0cedc39 100644
+index 4e23e52e4be93cd18ba305afe0424655672259b2..891a3c8be65e8eda825392308e6378d992ca86ee 100644
 --- a/gio/gdbusserver.c
 +++ b/gio/gdbusserver.c
-@@ -165,7 +165,8 @@ enum
+@@ -158,7 +158,8 @@ enum
  
  static guint _signals[LAST_SIGNAL] = {0};
  
@@ -15,7 +15,7 @@ index db0c9ab50a822501be62419794f0173489aed16e..cd40a20bd44b9723203cf3186199a8ba
  
  G_DEFINE_TYPE_WITH_CODE (GDBusServer, g_dbus_server, G_TYPE_OBJECT,
                           G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
-@@ -1182,7 +1183,8 @@ initable_init (GInitable     *initable,
+@@ -1163,7 +1164,8 @@ initable_init (GInitable     *initable,
  
  
  static void

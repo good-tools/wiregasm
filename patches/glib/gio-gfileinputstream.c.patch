@@ -1,12 +1,12 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gfileinputstream.c b/gio/gfileinputstream.c
-index 44eb07c68edddcf294c36a9785814dd3e782c8ad..f5c19c80edf21511c1a10333e0c771f9061a992c 100644
+index f71beb5bb3c5a4b9b9a7c98d528c0d1fd2224b07..bd62a7b24477e107e4bdadbadea9cf13112e9035 100644
 --- a/gio/gfileinputstream.c
 +++ b/gio/gfileinputstream.c
-@@ -49,7 +49,8 @@
-  * To position a file input stream, use g_seekable_seek().
+@@ -46,7 +46,8 @@
+  * To position a file input stream, use [vfunc@Gio.Seekable.seek].
   **/
  
 -static void       g_file_input_stream_seekable_iface_init    (GSeekableIface       *iface);
@@ -15,7 +15,7 @@ index 44eb07c68edddcf294c36a9785814dd3e782c8ad..f5c19c80edf21511c1a10333e0c771f9
  static goffset    g_file_input_stream_seekable_tell          (GSeekable            *seekable);
  static gboolean   g_file_input_stream_seekable_can_seek      (GSeekable            *seekable);
  static gboolean   g_file_input_stream_seekable_seek          (GSeekable            *seekable,
-@@ -90,7 +91,8 @@ g_file_input_stream_class_init (GFileInputStreamClass *klass)
+@@ -87,7 +88,8 @@ g_file_input_stream_class_init (GFileInputStreamClass *klass)
  }
  
  static void

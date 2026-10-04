@@ -1,0 +1,34 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
+
+diff --git a/gio/giomodule.c b/gio/giomodule.c
+index 1e1495528bbd95fde71f0e442a37f1328c6c9f92..c080aed5bef858bad6e2603c4b3a7a8edae06f9f 100644
+--- a/gio/giomodule.c
++++ b/gio/giomodule.c
+@@ -1085,7 +1085,7 @@ extern GType g_memory_monitor_portal_get_type (void);
+ extern GType g_memory_monitor_win32_get_type (void);
+ extern GType g_power_profile_monitor_dbus_get_type (void);
+ 
+-#ifdef G_OS_UNIX
++#ifdef G_OS_UNIX && !defined(G_PLATFORM_WASM)
+ extern GType g_fdo_notification_backend_get_type (void);
+ extern GType g_gtk_notification_backend_get_type (void);
+ extern GType g_portal_notification_backend_get_type (void);
+@@ -1180,7 +1180,7 @@ _g_io_modules_ensure_extension_points_registered (void)
+ 
+   if (g_once_init_enter (&registered_extensions))
+     {
+-#if defined(G_OS_UNIX) && !defined(__APPLE__)
++#if defined(G_OS_UNIX) && !defined(__APPLE__) && !defined(G_PLATFORM_WASM)
+ #if !GLIB_CHECK_VERSION (3, 0, 0)
+       ep = g_io_extension_point_register (G_DESKTOP_APP_INFO_LOOKUP_EXTENSION_POINT_NAME);
+       g_io_extension_point_set_required_type (ep, G_TYPE_DESKTOP_APP_INFO_LOOKUP);
+@@ -1351,7 +1351,7 @@ _g_io_modules_ensure_loaded (void)
+       g_type_ensure (g_nextstep_settings_backend_get_type ());
+       g_type_ensure (g_osx_app_info_get_type ());
+ #endif
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+       g_type_ensure (_g_unix_volume_monitor_get_type ());
+       g_type_ensure (g_debug_controller_dbus_get_type ());
+       g_type_ensure (g_fdo_notification_backend_get_type ());

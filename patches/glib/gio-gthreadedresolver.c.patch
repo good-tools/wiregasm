@@ -1,0 +1,41 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
+
+diff --git a/gio/gthreadedresolver.c b/gio/gthreadedresolver.c
+index b8588e77e15127854339df38488c69da45a3b784..cef6c03e409b46a610289ddeb2e3b6472c0bc88c 100644
+--- a/gio/gthreadedresolver.c
++++ b/gio/gthreadedresolver.c
+@@ -1275,7 +1275,7 @@ do_lookup_records (const gchar          *rrname,
+ {
+   GList *records;
+ 
+-#if defined(G_OS_UNIX)
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+   gint len = 512;
+   gint herr;
+   GByteArray *answer;
+@@ -1340,7 +1340,8 @@ do_lookup_records (const gchar          *rrname,
+ 
+ #endif  /* HAVE_RES_NQUERY */
+ 
+-#else
++  return g_steal_pointer (&records);
++#elif defined(G_OS_WIN32)
+ 
+   DNS_STATUS status;
+   DNS_RECORDA *results = NULL;
+@@ -1359,9 +1360,12 @@ do_lookup_records (const gchar          *rrname,
+   if (results != NULL)
+     DnsRecordListFree (results, DnsFreeRecordList);
+ 
+-#endif
+-
+   return g_steal_pointer (&records);
++#else
++  g_set_error (error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_INTERNAL,
++               _("do_lookup_records is no-op on WebAssembly"));
++  return NULL;
++#endif
+ }
+ 
+ static GList *

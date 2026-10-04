@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gsocketaddress.c b/gio/gsocketaddress.c
-index 994037c0596caadb21e40b4e0ce0857fa2a12789..03afad81b1bf2378e335a0a0d52a7d20b284264b 100644
+index 09cb9abbe95cad3511854a16d92849c5fadb8d6f..8d46fbd7e1e17b43f8da79f69d7663fe0e5d1e67 100644
 --- a/gio/gsocketaddress.c
 +++ b/gio/gsocketaddress.c
-@@ -68,7 +68,8 @@ enum
+@@ -59,7 +59,8 @@ enum
    PROP_FAMILY
  };
  
@@ -15,7 +15,7 @@ index 994037c0596caadb21e40b4e0ce0857fa2a12789..03afad81b1bf2378e335a0a0d52a7d20
  static GSocketAddressEnumerator *g_socket_address_connectable_enumerate	       (GSocketConnectable      *connectable);
  static GSocketAddressEnumerator *g_socket_address_connectable_proxy_enumerate  (GSocketConnectable      *connectable);
  
-@@ -129,7 +130,8 @@ g_socket_address_class_init (GSocketAddressClass *klass)
+@@ -125,7 +126,8 @@ g_socket_address_class_init (GSocketAddressClass *klass)
  }
  
  static void

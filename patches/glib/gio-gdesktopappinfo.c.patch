@@ -1,9 +1,9 @@
 Why: Add support for WebAssembly
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gdesktopappinfo.c b/gio/gdesktopappinfo.c
-index d0cdef51a936f845a43207546c37e4b56c5eb2e8..be082b86e9c44da3677c24d08869f4b179603d41 100644
+index 87db7a97a1eb8e99a659de0e4acbb2ace67e8d83..4512a2b611193cbc76ccd881f8bdf2e6370f1d36 100644
 --- a/gio/gdesktopappinfo.c
 +++ b/gio/gdesktopappinfo.c
 @@ -42,7 +42,7 @@
@@ -15,16 +15,16 @@ index d0cdef51a936f845a43207546c37e4b56c5eb2e8..be082b86e9c44da3677c24d08869f4b1
  #include "glib-unix.h"
  #endif
  #include "gfile.h"
-@@ -57,7 +57,7 @@
- #include "gappinfoprivate.h"
+@@ -58,7 +58,7 @@
  #include "glocalfilemonitor.h"
+ #include "gutilsprivate.h"
  
 -#ifdef G_OS_UNIX
 +#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
  #include "gdocumentportal.h"
  #endif
  
-@@ -89,7 +89,8 @@ enum {
+@@ -87,7 +87,8 @@ enum {
    PROP_FILENAME
  };
  
@@ -34,7 +34,7 @@ index d0cdef51a936f845a43207546c37e4b56c5eb2e8..be082b86e9c44da3677c24d08869f4b1
  static gboolean g_desktop_app_info_ensure_saved       (GDesktopAppInfo  *info,
                                                         GError          **error);
  static gboolean g_desktop_app_info_load_file (GDesktopAppInfo *self);
-@@ -3168,7 +3169,7 @@ g_desktop_app_info_launch_uris_with_dbus (GDesktopAppInfo    *info,
+@@ -3275,7 +3276,7 @@ g_desktop_app_info_launch_uris_with_dbus (GDesktopAppInfo    *info,
  
    g_return_val_if_fail (info != NULL, FALSE);
  
@@ -43,7 +43,7 @@ index d0cdef51a936f845a43207546c37e4b56c5eb2e8..be082b86e9c44da3677c24d08869f4b1
    app_id = g_desktop_app_info_get_string (info, "X-Flatpak");
    if (app_id && *app_id)
      {
-@@ -4271,7 +4272,8 @@ g_app_info_create_from_commandline (const char           *commandline,
+@@ -4378,7 +4379,8 @@ g_app_info_create_from_commandline (const char           *commandline,
  /* GAppInfo interface init */
  
  static void

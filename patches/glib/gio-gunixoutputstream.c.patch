@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gunixoutputstream.c b/gio/gunixoutputstream.c
-index 8a71c315cab01463c40bab073c72c3298f7e9194..40012eb0a9fd13774d99438c43955a7bdc25ed55 100644
+index 96d9e952ee8ed99625d658e84f20f24ef5e8b63f..63fc280f02c801ed3ff2d7aee6878df6613c23e0 100644
 --- a/gio/gunixoutputstream.c
 +++ b/gio/gunixoutputstream.c
-@@ -69,8 +69,10 @@ struct _GUnixOutputStreamPrivate {
+@@ -66,8 +66,10 @@ struct _GUnixOutputStreamPrivate {
    guint can_poll : 1;
  };
  
@@ -18,7 +18,7 @@ index 8a71c315cab01463c40bab073c72c3298f7e9194..40012eb0a9fd13774d99438c43955a7b
  
  G_DEFINE_TYPE_WITH_CODE (GUnixOutputStream, g_unix_output_stream, G_TYPE_OUTPUT_STREAM,
                           G_ADD_PRIVATE (GUnixOutputStream)
-@@ -158,7 +160,8 @@ g_unix_output_stream_class_init (GUnixOutputStreamClass *klass)
+@@ -151,7 +153,8 @@ g_unix_output_stream_class_init (GUnixOutputStreamClass *klass)
  }
  
  static void
@@ -28,7 +28,7 @@ index 8a71c315cab01463c40bab073c72c3298f7e9194..40012eb0a9fd13774d99438c43955a7b
  {
    iface->can_poll = g_unix_output_stream_pollable_can_poll;
    iface->is_writable = g_unix_output_stream_pollable_is_writable;
-@@ -167,7 +170,8 @@ g_unix_output_stream_pollable_iface_init (GPollableOutputStreamInterface *iface)
+@@ -160,7 +163,8 @@ g_unix_output_stream_pollable_iface_init (GPollableOutputStreamInterface *iface)
  }
  
  static void

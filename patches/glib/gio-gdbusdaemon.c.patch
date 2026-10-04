@@ -1,8 +1,8 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gdbusdaemon.c b/gio/gdbusdaemon.c
-index 5a8e523f050008c1251bcac7bbde96853666ac46..4f955f996334b7bf3c41b5922abe746f5f7ba3cb 100644
+index 3474b7091d1fd2d248f9859569105633c7294e95..11dc9eb20c378774eb4cc5479d7cc3606f37c2b0 100644
 --- a/gio/gdbusdaemon.c
 +++ b/gio/gdbusdaemon.c
 @@ -90,8 +90,10 @@ enum
@@ -18,7 +18,7 @@ index 5a8e523f050008c1251bcac7bbde96853666ac46..4f955f996334b7bf3c41b5922abe746f
  
  #define g_dbus_daemon_get_type _g_dbus_daemon_get_type
  G_DEFINE_TYPE_WITH_CODE (GDBusDaemon, g_dbus_daemon, _G_TYPE_FREEDESKTOP_DBUS_SKELETON,
-@@ -1718,7 +1720,8 @@ g_dbus_daemon_class_init (GDBusDaemonClass *klass)
+@@ -1700,7 +1702,8 @@ g_dbus_daemon_class_init (GDBusDaemonClass *klass)
  }
  
  static void
@@ -28,7 +28,7 @@ index 5a8e523f050008c1251bcac7bbde96853666ac46..4f955f996334b7bf3c41b5922abe746f
  {
    iface->handle_add_match = handle_add_match;
    iface->handle_get_connection_selinux_security_context = handle_get_connection_selinux_security_context;
-@@ -1740,7 +1743,8 @@ g_dbus_daemon_iface_init (_GFreedesktopDBusIface *iface)
+@@ -1722,7 +1725,8 @@ g_dbus_daemon_iface_init (_GFreedesktopDBusIface *iface)
  }
  
  static void

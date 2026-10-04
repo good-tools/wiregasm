@@ -1,9 +1,9 @@
 Why: Add support for WebAssembly
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gsocketinputstream.c b/gio/gsocketinputstream.c
-index 5307fcdada43ce3a2f7e9e4bc1e70366db00a2da..1c4a6421ae74655d050c7ba62af9672c866a2a40 100644
+index 7a15f512db9910842c09dd3a7b473d32c4bbbd93..81fa563f88e4d864a66fb6c0541869975fa323e7 100644
 --- a/gio/gsocketinputstream.c
 +++ b/gio/gsocketinputstream.c
 @@ -41,14 +41,16 @@ struct _GSocketInputStreamPrivate
@@ -36,7 +36,7 @@ index 5307fcdada43ce3a2f7e9e4bc1e70366db00a2da..1c4a6421ae74655d050c7ba62af9672c
  static int
  g_socket_input_stream_get_fd (GFileDescriptorBased *fd_based)
  {
-@@ -198,16 +200,18 @@ g_socket_input_stream_class_init (GSocketInputStreamClass *klass)
+@@ -196,16 +198,18 @@ g_socket_input_stream_class_init (GSocketInputStreamClass *klass)
  							G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
  }
  

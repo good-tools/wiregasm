@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gapplication.c b/gio/gapplication.c
-index 1d602c763de44f9b5acbee848d396133bcbf5244..8e3abe893f7d583b74ea69c0e8fef88737bc3b92 100644
+index b7d2870e995c7a9e99b0d2c0a3d47d488d01cadc..1128d211352a266b60c3325d913d1cc87a470cf4 100644
 --- a/gio/gapplication.c
 +++ b/gio/gapplication.c
-@@ -287,8 +287,10 @@ enum
+@@ -290,8 +290,10 @@ enum
  
  static guint g_application_signals[NR_SIGNALS];
  
@@ -18,7 +18,7 @@ index 1d602c763de44f9b5acbee848d396133bcbf5244..8e3abe893f7d583b74ea69c0e8fef887
  G_DEFINE_TYPE_WITH_CODE (GApplication, g_application, G_TYPE_OBJECT,
   G_ADD_PRIVATE (GApplication)
   G_IMPLEMENT_INTERFACE (G_TYPE_ACTION_GROUP, g_application_action_group_iface_init)
-@@ -314,7 +316,8 @@ typedef struct
+@@ -317,7 +319,8 @@ typedef struct
  } GApplicationExportedActions;
  
  static GType g_application_exported_actions_get_type   (void);
@@ -28,7 +28,7 @@ index 1d602c763de44f9b5acbee848d396133bcbf5244..8e3abe893f7d583b74ea69c0e8fef887
  G_DEFINE_TYPE_WITH_CODE (GApplicationExportedActions, g_application_exported_actions, G_TYPE_SIMPLE_ACTION_GROUP,
                           G_IMPLEMENT_INTERFACE (G_TYPE_REMOTE_ACTION_GROUP, g_application_exported_actions_iface_init))
  
-@@ -358,7 +361,8 @@ g_application_exported_actions_init (GApplicationExportedActions *actions)
+@@ -361,7 +364,8 @@ g_application_exported_actions_init (GApplicationExportedActions *actions)
  }
  
  static void
@@ -38,7 +38,7 @@ index 1d602c763de44f9b5acbee848d396133bcbf5244..8e3abe893f7d583b74ea69c0e8fef887
  {
    iface->activate_action_full = g_application_exported_actions_activate_action_full;
    iface->change_action_state_full = g_application_exported_actions_change_action_state_full;
-@@ -2731,7 +2735,8 @@ g_application_remove_action (GActionMap  *action_map,
+@@ -2872,7 +2876,8 @@ g_application_remove_action (GActionMap  *action_map,
  }
  
  static void
@@ -48,7 +48,7 @@ index 1d602c763de44f9b5acbee848d396133bcbf5244..8e3abe893f7d583b74ea69c0e8fef887
  {
    iface->list_actions = g_application_list_actions;
    iface->query_action = g_application_query_action;
-@@ -2740,7 +2745,8 @@ g_application_action_group_iface_init (GActionGroupInterface *iface)
+@@ -2881,7 +2886,8 @@ g_application_action_group_iface_init (GActionGroupInterface *iface)
  }
  
  static void

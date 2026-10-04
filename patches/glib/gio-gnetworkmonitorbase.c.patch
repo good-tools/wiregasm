@@ -1,8 +1,8 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gnetworkmonitorbase.c b/gio/gnetworkmonitorbase.c
-index 4654d22e316469af3093bf6b591adb22c3190191..51ceaf7dfa9089c87c8e15be78bbf38c1951330e 100644
+index 78e26344477735d41fb31224ffadff913c5dbca1..ab9b88305070ba9dff31a0d41ed6cd1029a9e8e6 100644
 --- a/gio/gnetworkmonitorbase.c
 +++ b/gio/gnetworkmonitorbase.c
 @@ -33,8 +33,10 @@
@@ -18,7 +18,7 @@ index 4654d22e316469af3093bf6b591adb22c3190191..51ceaf7dfa9089c87c8e15be78bbf38c
  
  enum
  {
-@@ -344,7 +346,8 @@ g_network_monitor_base_can_reach_finish (GNetworkMonitor  *monitor,
+@@ -345,7 +347,8 @@ g_network_monitor_base_can_reach_finish (GNetworkMonitor  *monitor,
  }
  
  static void
@@ -28,7 +28,7 @@ index 4654d22e316469af3093bf6b591adb22c3190191..51ceaf7dfa9089c87c8e15be78bbf38c
  {
    monitor_iface->can_reach = g_network_monitor_base_can_reach;
    monitor_iface->can_reach_async = g_network_monitor_base_can_reach_async;
-@@ -366,7 +369,8 @@ g_network_monitor_base_initable_init (GInitable     *initable,
+@@ -367,7 +370,8 @@ g_network_monitor_base_initable_init (GInitable     *initable,
  }
  
  static void

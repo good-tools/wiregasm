@@ -1,9 +1,9 @@
 Why: Add support for WebAssembly
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gsocket.c b/gio/gsocket.c
-index bd5549f3a22daf34d7af52f38e51eb42106ab7d6..6c05a81d133bd1b8dec1f5eadb471e4390ac7dfd 100644
+index c2ddadeaf00956224aceb49e75e56c261daf79bd..84d60ae6c00c60b8cdd27f10eb6b4cc479124fc1 100644
 --- a/gio/gsocket.c
 +++ b/gio/gsocket.c
 @@ -31,7 +31,7 @@
@@ -24,7 +24,7 @@ index bd5549f3a22daf34d7af52f38e51eb42106ab7d6..6c05a81d133bd1b8dec1f5eadb471e43
  #include <sys/uio.h>
  #endif
  
-@@ -143,12 +143,14 @@
+@@ -159,12 +159,14 @@
   * Since: 2.22
   */
  
@@ -41,35 +41,35 @@ index bd5549f3a22daf34d7af52f38e51eb42106ab7d6..6c05a81d133bd1b8dec1f5eadb471e43
  static gint     g_socket_datagram_based_receive_messages (GDatagramBased  *self,
                                                            GInputMessage   *messages,
                                                            guint            num_messages,
-@@ -708,9 +710,9 @@ g_socket_constructed (GObject *object)
- 
-   if (socket->priv->fd != -1)
-     {
+@@ -606,9 +608,9 @@ g_socket_details_from_fd (GSocket *socket)
+ static void
+ socket_set_nonblock (int fd)
+ {
 -#ifndef G_OS_WIN32
 +#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
-       GError *error = NULL;
+   GError *error = NULL;
 -#else
 +#elif defined(G_OS_WIN32)
-       gulong arg;
+   gulong arg;
  #endif
  
-@@ -718,13 +720,13 @@ g_socket_constructed (GObject *object)
-        * nonblocking automatically in certain operations. This way we make
-        * things work the same on all platforms.
-        */
+@@ -616,13 +618,13 @@ socket_set_nonblock (int fd)
+    * nonblocking automatically in certain operations. This way we make
+    * things work the same on all platforms.
+    */
 -#ifndef G_OS_WIN32
 +#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
-       if (!g_unix_set_fd_nonblocking (socket->priv->fd, TRUE, &error))
-         {
-           g_warning ("Error setting socket nonblocking: %s", error->message);
-           g_clear_error (&error);
-         }
+   if (!g_unix_set_fd_nonblocking (fd, TRUE, &error))
+     {
+       g_warning ("Error setting socket to nonblocking mode: %s", error->message);
+       g_clear_error (&error);
+     }
 -#else
 +#elif defined(G_OS_WIN32)
-       arg = TRUE;
+   arg = TRUE;
  
-       if (ioctlsocket (socket->priv->fd, FIONBIO, &arg) == SOCKET_ERROR)
-@@ -1103,13 +1105,15 @@ g_socket_class_init (GSocketClass *klass)
+   if (ioctlsocket (fd, FIONBIO, &arg) == SOCKET_ERROR)
+@@ -1169,13 +1171,15 @@ g_socket_class_init (GSocketClass *klass)
  }
  
  static void
@@ -87,16 +87,18 @@ index bd5549f3a22daf34d7af52f38e51eb42106ab7d6..6c05a81d133bd1b8dec1f5eadb471e43
  {
    iface->receive_messages = g_socket_datagram_based_receive_messages;
    iface->send_messages = g_socket_datagram_based_send_messages;
-@@ -4012,7 +4016,7 @@ socket_source_dispatch (GSource     *source,
+@@ -4242,7 +4246,9 @@ socket_source_dispatch (GSource     *source,
      events = G_IO_NVAL;
    else
      events = update_condition (socket_source->socket);
 -#else
-+#elif defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
++#elif defined(G_PLATFORM_WASM)
++  events = G_IO_NVAL;
++#elif defined(G_OS_UNIX)
    if (g_socket_is_closed (socket_source->socket))
      {
        if (socket_source->fd_tag)
-@@ -4150,7 +4154,7 @@ socket_source_new (GSocket      *socket,
+@@ -4380,7 +4386,7 @@ socket_source_new (GSocket      *socket,
    socket_source->pollfd.events = condition;
    socket_source->pollfd.revents = 0;
    g_source_add_poll (source, &socket_source->pollfd);

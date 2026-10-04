@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gsimpleproxyresolver.c b/gio/gsimpleproxyresolver.c
-index 8de26cb7b6cbca92031d22f1ec7bb92d960dbcc6..1ca5cdaff48fe7b5fedc989445a74f8aed3c3500 100644
+index 41136527f05abfded45ddcf179f712f6e6acc9ba..33669d44bbef064cdf791243db6bc1eed20dbb82 100644
 --- a/gio/gsimpleproxyresolver.c
 +++ b/gio/gsimpleproxyresolver.c
-@@ -64,7 +64,8 @@ struct _GSimpleProxyResolverPrivate {
+@@ -61,7 +61,8 @@ struct _GSimpleProxyResolverPrivate {
    GSimpleProxyResolverDomain *ignore_domains;
  };
  
@@ -15,7 +15,7 @@ index 8de26cb7b6cbca92031d22f1ec7bb92d960dbcc6..1ca5cdaff48fe7b5fedc989445a74f8a
  
  G_DEFINE_TYPE_WITH_CODE (GSimpleProxyResolver, g_simple_proxy_resolver, G_TYPE_OBJECT,
                           G_ADD_PRIVATE (GSimpleProxyResolver)
-@@ -484,7 +485,8 @@ g_simple_proxy_resolver_class_init (GSimpleProxyResolverClass *resolver_class)
+@@ -477,7 +478,8 @@ g_simple_proxy_resolver_class_init (GSimpleProxyResolverClass *resolver_class)
  }
  
  static void

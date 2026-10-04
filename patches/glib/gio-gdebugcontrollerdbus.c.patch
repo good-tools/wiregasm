@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gdebugcontrollerdbus.c b/gio/gdebugcontrollerdbus.c
-index 84d2e6499214c495b865917d828ddad9a773cfb2..97cf3c5793baca052685e10ed09ac7d18942afb8 100644
+index 03dd1be98adc0ac6080716f3dd12fde5c405b8f5..cc22d5ab6e2b1c27445d71c42c3f021060762f6a 100644
 --- a/gio/gdebugcontrollerdbus.c
 +++ b/gio/gdebugcontrollerdbus.c
-@@ -160,8 +160,10 @@ static GDBusInterfaceInfo *org_gtk_Debugging;
+@@ -161,8 +161,10 @@ static GDBusInterfaceInfo *org_gtk_Debugging;
  
  #define G_DEBUG_CONTROLLER_DBUS_GET_INITABLE_IFACE(o) (G_TYPE_INSTANCE_GET_INTERFACE ((o), G_TYPE_INITABLE, GInitable))
  

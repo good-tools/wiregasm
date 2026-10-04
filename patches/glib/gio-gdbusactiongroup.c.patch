@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gdbusactiongroup.c b/gio/gdbusactiongroup.c
-index 275c5fc0159099c526629dc9d9c23c0465c266dd..34c6c080fe6f84875cbe3abebcb77c209805d197 100644
+index 0bd53112165c2bbe46043bef78f22a5b7f09a35d..060f1478a5ea5f10de4dbd220775bdea1bf730cf 100644
 --- a/gio/gdbusactiongroup.c
 +++ b/gio/gdbusactiongroup.c
-@@ -131,8 +131,10 @@ action_info_new_from_iter (GVariantIter *iter)
+@@ -122,8 +122,10 @@ action_info_new_from_iter (GVariantIter *iter)
    return info;
  }
  
@@ -18,7 +18,7 @@ index 275c5fc0159099c526629dc9d9c23c0465c266dd..34c6c080fe6f84875cbe3abebcb77c20
  G_DEFINE_TYPE_WITH_CODE (GDBusActionGroup, g_dbus_action_group, G_TYPE_OBJECT,
    G_IMPLEMENT_INTERFACE (G_TYPE_ACTION_GROUP, g_dbus_action_group_iface_init)
    G_IMPLEMENT_INTERFACE (G_TYPE_REMOTE_ACTION_GROUP, g_dbus_action_group_remote_iface_init))
-@@ -459,14 +461,16 @@ g_dbus_action_group_class_init (GDBusActionGroupClass *class)
+@@ -450,14 +452,16 @@ g_dbus_action_group_class_init (GDBusActionGroupClass *class)
  }
  
  static void

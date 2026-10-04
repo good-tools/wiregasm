@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gsimpleaction.c b/gio/gsimpleaction.c
-index 4e7e5b5eea627ff4e81e9069e2d69f37d8972c88..7ec06dd518a1b33363f02b685a7323c90ca74d39 100644
+index 6e3080bec972f0de012a12ab6e1d01ba607431f8..de2524f05bd59ace7d76661705a235928cb15469 100644
 --- a/gio/gsimpleaction.c
 +++ b/gio/gsimpleaction.c
-@@ -60,7 +60,8 @@ struct _GSimpleAction
+@@ -48,7 +48,8 @@ struct _GSimpleAction
  
  typedef GObjectClass GSimpleActionClass;
  
@@ -15,7 +15,7 @@ index 4e7e5b5eea627ff4e81e9069e2d69f37d8972c88..7ec06dd518a1b33363f02b685a7323c9
  G_DEFINE_TYPE_WITH_CODE (GSimpleAction, g_simple_action, G_TYPE_OBJECT,
    G_IMPLEMENT_INTERFACE (G_TYPE_ACTION, g_simple_action_iface_init))
  
-@@ -349,7 +350,8 @@ g_simple_action_init (GSimpleAction *simple)
+@@ -337,7 +338,8 @@ g_simple_action_init (GSimpleAction *simple)
  }
  
  void

@@ -1,11 +1,11 @@
 Why: Fix function pointer cast issues
-Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.80.3...kleisauke:wasm-vips-2.80.3 (without "Remove GRegex pre-emptively": Wireshark needs GRegex)
 
 diff --git a/gio/gunixinputstream.c b/gio/gunixinputstream.c
-index 2180ce8dcaf032a628efbe206317f9492a02953a..8596bfe79d79c0d0ac182ff1725739720f1c07df 100644
+index 210decd67f15a14ebf53cac86adaa79340d984b6..13560798316b7a257dbbceb405a35f8c889d5485 100644
 --- a/gio/gunixinputstream.c
 +++ b/gio/gunixinputstream.c
-@@ -67,8 +67,10 @@ struct _GUnixInputStreamPrivate {
+@@ -64,8 +64,10 @@ struct _GUnixInputStreamPrivate {
    guint can_poll : 1;
  };
  
@@ -18,7 +18,7 @@ index 2180ce8dcaf032a628efbe206317f9492a02953a..8596bfe79d79c0d0ac182ff172573972
  
  G_DEFINE_TYPE_WITH_CODE (GUnixInputStream, g_unix_input_stream, G_TYPE_INPUT_STREAM,
                           G_ADD_PRIVATE (GUnixInputStream)
-@@ -159,7 +161,8 @@ g_unix_input_stream_class_init (GUnixInputStreamClass *klass)
+@@ -152,7 +154,8 @@ g_unix_input_stream_class_init (GUnixInputStreamClass *klass)
  }
  
  static void
@@ -28,7 +28,7 @@ index 2180ce8dcaf032a628efbe206317f9492a02953a..8596bfe79d79c0d0ac182ff172573972
  {
    iface->can_poll = g_unix_input_stream_pollable_can_poll;
    iface->is_readable = g_unix_input_stream_pollable_is_readable;
-@@ -167,7 +170,8 @@ g_unix_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface)
+@@ -160,7 +163,8 @@ g_unix_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface)
  }
  
  static void
