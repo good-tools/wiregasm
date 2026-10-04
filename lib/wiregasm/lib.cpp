@@ -152,7 +152,7 @@ wg_cf_open(capture_file *cfile, const char *fname, unsigned int type, gboolean i
 
 static gboolean
 process_packet(capture_file *cf, epan_dissect_t *edt,
-               gint64 offset, wtap_rec *rec, Buffer *buf) {
+               gint64 offset, wtap_rec *rec) {
   frame_data fdlocal;
   gboolean passed;
 
@@ -182,10 +182,6 @@ process_packet(capture_file *cf, epan_dissect_t *edt,
     if (cf->dfcode)
       epan_dissect_prime_with_dfilter(edt, cf->dfcode);
 
-    /* This is the first and only pass, so prime the epan_dissect_t
-       with the hfids postdissectors want on the first pass. */
-    prime_epan_dissect_with_postdissector_wanted_hfids(edt);
-
     frame_data_set_before_dissect(&fdlocal, &cf->elapsed_time,
                                   &cf->provider.ref, cf->provider.prev_dis);
     if (cf->provider.ref == &fdlocal) {
@@ -194,7 +190,6 @@ process_packet(capture_file *cf, epan_dissect_t *edt,
     }
 
     epan_dissect_run(edt, cf->cd_t, rec,
-                     frame_tvbuff_new_buffer(&cf->provider, &fdlocal, buf),
                      &fdlocal, NULL);
 
     /* Run the read filter if we have one. */
@@ -238,7 +233,6 @@ load_cap_file(capture_file *cf, int max_packet_count, gint64 max_byte_count, sum
   gchar *err_info = NULL;
   gint64 data_offset;
   wtap_rec rec;
-  Buffer buf;
   epan_dissect_t *edt = NULL;
 
   {
@@ -267,11 +261,10 @@ load_cap_file(capture_file *cf, int max_packet_count, gint64 max_byte_count, sum
       edt = epan_dissect_new(cf->epan, create_proto_tree, FALSE);
     }
 
-    wtap_rec_init(&rec);
-    ws_buffer_init(&buf, 1514);
+    wtap_rec_init(&rec, 1514);
 
-    while (wtap_read(cf->provider.wth, &rec, &buf, &err, &err_info, &data_offset)) {
-      if (process_packet(cf, edt, data_offset, &rec, &buf)) {
+    while (wtap_read(cf->provider.wth, &rec, &err, &err_info, &data_offset)) {
+      if (process_packet(cf, edt, data_offset, &rec)) {
         wtap_rec_reset(&rec);
         /* Stop reading if we have the maximum number of packets;
          * When the -c option has not been used, max_packet_count
@@ -291,7 +284,6 @@ load_cap_file(capture_file *cf, int max_packet_count, gint64 max_byte_count, sum
     }
 
     wtap_rec_cleanup(&rec);
-    ws_buffer_free(&buf);
 
     /* Close the sequential I/O side, to free up memory it requires. */
     wtap_sequential_close(cf->provider.wth);
@@ -322,7 +314,6 @@ int wg_load_cap_file(capture_file *cfile, summary_tally *summary) {
 int wg_retap(capture_file *cfile) {
   guint32 framenum;
   frame_data *fdata;
-  Buffer buf;
   wtap_rec rec;
   int err;
   char *err_info = NULL;
@@ -349,8 +340,7 @@ int wg_retap(capture_file *cfile) {
   create_proto_tree =
       (have_filtering_tap_listeners() || (tap_flags & TL_REQUIRES_PROTO_TREE));
 
-  wtap_rec_init(&rec);
-  ws_buffer_init(&buf, 1514);
+  wtap_rec_init(&rec, 1514);
   epan_dissect_init(&edt, cfile->epan, create_proto_tree, false);
 
   reset_tap_listeners();
@@ -358,21 +348,19 @@ int wg_retap(capture_file *cfile) {
   for (framenum = 1; framenum <= cfile->count; framenum++) {
     fdata = wg_get_frame(cfile, framenum);
 
-    if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, &rec, &buf, &err, &err_info))
+    if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, &rec, &err, &err_info))
       break;
 
     fdata->ref_time = FALSE;
     fdata->frame_ref_num = (framenum != 1) ? 1 : 0;
     fdata->prev_dis_num = framenum - 1;
     epan_dissect_run_with_taps(&edt, cfile->cd_t, &rec,
-                               frame_tvbuff_new_buffer(&cfile->provider, fdata, &buf),
                                fdata, cinfo);
     wtap_rec_reset(&rec);
     epan_dissect_reset(&edt);
   }
 
   wtap_rec_cleanup(&rec);
-  ws_buffer_free(&buf);
   epan_dissect_cleanup(&edt);
   draw_tap_listeners(true);
 
@@ -430,7 +418,7 @@ wg_session_process_frame_cb_tree(epan_dissect_t *edt, proto_tree *tree, tvbuff_t
       char label_str[ITEM_LABEL_LENGTH];
 
       label_str[0] = '\0';
-      proto_item_fill_label(finfo, label_str);
+      proto_item_fill_label(finfo, label_str, NULL);
       t.label = string(label_str);
     } else {
       t.label = string(finfo->rep->representation);
@@ -572,7 +560,7 @@ void wg_session_process_frame_cb(capture_file *cfile, epan_dissect_t *edt, proto
 
     tvb = get_data_source_tvb(src);
     length = tvb_captured_length(tvb);
-    char *src_name = get_data_source_name(src);
+    char *src_name = get_data_source_description(src);
     const guchar *cp = tvb_get_ptr(tvb, 0, length);
     char *encoded = g_base64_encode(cp, length);
     f->data_sources.push_back(DataSource{string(src_name), string(encoded)});
@@ -708,7 +696,7 @@ void wg_session_process_frames_cb(capture_file *cfile, epan_dissect_t *edt, prot
 
 enum dissect_request_status
 wg_dissect_request(capture_file *cfile, guint32 framenum, guint32 frame_ref_num,
-                   guint32 prev_dis_num, wtap_rec *rec, Buffer *buf,
+                   guint32 prev_dis_num, wtap_rec *rec,
                    column_info *cinfo, guint32 dissect_flags,
                    wg_dissect_func_t cb, void *data,
                    int *err, gchar **err_info) {
@@ -720,7 +708,7 @@ wg_dissect_request(capture_file *cfile, guint32 framenum, guint32 frame_ref_num,
   if (fdata == NULL)
     return DISSECT_REQUEST_NO_SUCH_FRAME;
 
-  if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, rec, buf, err, err_info)) {
+  if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, rec, err, err_info)) {
     if (cinfo != NULL)
       col_fill_in_error(cinfo, fdata, FALSE, FALSE /* fill_fd_columns */);
     return DISSECT_REQUEST_READ_ERROR; /* error reading the record */
@@ -747,7 +735,6 @@ wg_dissect_request(capture_file *cfile, guint32 framenum, guint32 frame_ref_num,
   fdata->frame_ref_num = frame_ref_num;
   fdata->prev_dis_num = prev_dis_num;
   epan_dissect_run(&edt, cfile->cd_t, rec,
-                   frame_tvbuff_new_buffer(&cfile->provider, fdata, buf),
                    fdata, cinfo);
 
   if (cinfo) {
@@ -769,7 +756,6 @@ int wg_filter(capture_file *cfile, const char *dftext, guint8 **result, guint *p
 
   guint32 framenum, prev_dis_num = 0;
   guint32 frames_count;
-  Buffer buf;
   wtap_rec rec;
   int err;
   char *err_info = NULL;
@@ -795,8 +781,7 @@ int wg_filter(capture_file *cfile, const char *dftext, guint8 **result, guint *p
 
   frames_count = cfile->count;
 
-  wtap_rec_init(&rec);
-  ws_buffer_init(&buf, 1514);
+  wtap_rec_init(&rec, 1514);
   epan_dissect_init(&edt, cfile->epan, TRUE, FALSE);
 
   passed_bits = 0;
@@ -810,7 +795,7 @@ int wg_filter(capture_file *cfile, const char *dftext, guint8 **result, guint *p
       passed_bits = 0;
     }
 
-    if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, &rec, &buf, &err, &err_info))
+    if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, &rec, &err, &err_info))
       break;
 
     /* frame_data_set_before_dissect */
@@ -820,7 +805,6 @@ int wg_filter(capture_file *cfile, const char *dftext, guint8 **result, guint *p
     fdata->frame_ref_num = (framenum != 1) ? 1 : 0;
     fdata->prev_dis_num = prev_dis_num;
     epan_dissect_run(&edt, cfile->cd_t, &rec,
-                     frame_tvbuff_new_buffer(&cfile->provider, fdata, &buf),
                      fdata, NULL);
 
     if (dfilter_apply_edt(dfcode, &edt)) {
@@ -840,7 +824,6 @@ int wg_filter(capture_file *cfile, const char *dftext, guint8 **result, guint *p
   result_bits[framenum / 8] = passed_bits;
 
   wtap_rec_cleanup(&rec);
-  ws_buffer_free(&buf);
   epan_dissect_cleanup(&edt);
 
   dfilter_free(dfcode);
@@ -880,8 +863,7 @@ Frame wg_process_frame(capture_file *cfile, guint32 framenum, char **err_ret) {
 
   guint32 ref_frame_num, prev_dis_num;
   guint32 dissect_flags = WG_DISSECT_FLAG_NULL;
-  wtap_rec rec;   /* Record metadata */
-  Buffer rec_buf; /* Record data */
+  wtap_rec rec; /* Record metadata */
   enum dissect_request_status status;
   int err;
   gchar *err_info;
@@ -895,14 +877,13 @@ Frame wg_process_frame(capture_file *cfile, guint32 framenum, char **err_ret) {
   dissect_flags |= WG_DISSECT_FLAG_COLOR;
   cinfo = &cfile->cinfo;
 
-  wtap_rec_init(&rec);
-  ws_buffer_init(&rec_buf, 1514);
+  wtap_rec_init(&rec, 1514);
 
   Frame f;
   f.number = framenum;
 
   status = wg_dissect_request(cfile, framenum, ref_frame_num, prev_dis_num,
-                              &rec, &rec_buf, cinfo, dissect_flags,
+                              &rec, cinfo, dissect_flags,
                               &wg_session_process_frame_cb, &f, &err, &err_info);
   switch (status) {
   case DISSECT_REQUEST_SUCCESS:
@@ -920,7 +901,6 @@ Frame wg_process_frame(capture_file *cfile, guint32 framenum, char **err_ret) {
   }
 
   wtap_rec_cleanup(&rec);
-  ws_buffer_free(&rec_buf);
 
   return f;
 }
@@ -928,8 +908,7 @@ Frame wg_process_frame(capture_file *cfile, guint32 framenum, char **err_ret) {
 FramesResponse wg_process_frames(capture_file *cfile, GHashTable *filter_table, const char *filter, guint32 skip, guint32 limit, char **err_ret) {
   const guint8 *filter_data = NULL;
 
-  wtap_rec rec;   /* Record metadata */
-  Buffer rec_buf; /* Record data */
+  wtap_rec rec; /* Record metadata */
   column_info *cinfo = &cfile->cinfo;
 
   FramesResponse result;
@@ -947,8 +926,7 @@ FramesResponse wg_process_frames(capture_file *cfile, GHashTable *filter_table, 
 
   filter_data = filter_item->filtered;
 
-  wtap_rec_init(&rec);
-  ws_buffer_init(&rec_buf, 1514);
+  wtap_rec_init(&rec, 1514);
 
   for (guint32 framenum = 1; framenum <= cfile->count; framenum++) {
     frame_data *fdata;
@@ -967,7 +945,7 @@ FramesResponse wg_process_frames(capture_file *cfile, GHashTable *filter_table, 
     fdata = wg_get_frame(cfile, framenum);
     status = wg_dissect_request(cfile, framenum,
                                 (framenum != 1) ? 1 : 0, framenum - 1,
-                                &rec, &rec_buf, cinfo,
+                                &rec, cinfo,
                                 (fdata->color_filter == NULL) ? WG_DISSECT_FLAG_COLOR : WG_DISSECT_FLAG_NULL,
                                 &wg_session_process_frames_cb, &res,
                                 &err, &err_info);
@@ -996,7 +974,6 @@ FramesResponse wg_process_frames(capture_file *cfile, GHashTable *filter_table, 
     col_cleanup(cinfo);
 
   wtap_rec_cleanup(&rec);
-  ws_buffer_free(&rec_buf);
 
   result.matched = filter_item->passed;
   result.frames = res;
@@ -1818,7 +1795,8 @@ IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input) {
             graph->hf_index,
             cfile,
             graph->interval,
-            graph->num_items);
+            graph->num_items,
+            false /* asAOT: 4.6 option; false keeps the previous behaviour */);
 
         g.items.push_back(val);
       }

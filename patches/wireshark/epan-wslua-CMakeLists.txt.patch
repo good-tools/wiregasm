@@ -1,7 +1,7 @@
 Why: Install init_wslua.h so wiregasm can (re)load Lua plugins.
 
 diff --git a/epan/wslua/CMakeLists.txt b/epan/wslua/CMakeLists.txt
-index 9f35e1486ab3dde4799ebd2953ddb1d5283b11bf..85180cdf481294b9680729c2de997f8dcaf19436 100644
+index 8e724cecf8771ff8d688e80f4f15c4487c590daa..a63ce15bdfe4230d48629988e3e0920b4be55728 100644
 --- a/epan/wslua/CMakeLists.txt
 +++ b/epan/wslua/CMakeLists.txt
 @@ -9,6 +9,14 @@

@@ -1,4 +1,4 @@
-pcre_VERSION := 10.39
+pcre_VERSION := 10.44
 pcre_URL     := https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$(pcre_VERSION)/pcre2-$(pcre_VERSION).tar.bz2
-pcre_SHA512  := b3d898198f4b5ffc3453d2ba56fe2a7298c01c52e5f67d45f1e046fc0dee62e16a4024fcb65839ac9c367beedb531647affd6f8599fbeb102f19423c150d80d4
+pcre_SHA512  := ee91cc10a2962bc7818b03d368df3dd31f42ea9a7260ae51483ea8cd331b7431e36e63256b0adc213cc6d6741e7c90414fd420622308c0ae3fcb5dd878591be2
 pcre_BUILD   := autotools

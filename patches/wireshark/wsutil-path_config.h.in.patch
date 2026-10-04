@@ -1,7 +1,7 @@
 Why: Force /wireshark as the data directory (preloaded into the Emscripten FS); needed for preferences, profiles and color filters.
 
 diff --git a/wsutil/path_config.h.in b/wsutil/path_config.h.in
-index 59d1f5040e1945077a03f359e2ba8d06f40b2ed3..c13d8b97e2e394b2f2fb31dce72900f345f80f58 100644
+index 83e164adf2b29be99e804d19d971246fa92aa7b7..25692585d7892c3446a5a4cb0a07474d9dab6f1a 100644
 --- a/wsutil/path_config.h.in
 +++ b/wsutil/path_config.h.in
 @@ -1,11 +1,11 @@
@@ -13,12 +13,12 @@ index 59d1f5040e1945077a03f359e2ba8d06f40b2ed3..c13d8b97e2e394b2f2fb31dce72900f3
 -#define DOC_DIR         "@PATH_DOC_DIR@"
 -#define PLUGIN_DIR      "@PATH_PLUGIN_DIR@"
 -#define EXTCAP_DIR      "@PATH_EXTCAP_DIR@"
--#define LOG_EXTCAP_DIR  "@PATH_LOG_EXTCAP_DIR@"
+-#define STRATOSHARK_EXTCAP_DIR  "@PATH_STRATOSHARK_EXTCAP_DIR@"
 +#define INSTALL_PREFIX  "/"
 +#define DATA_DIR        "/wireshark"
 +#define DOC_DIR         "/docs"
 +#define PLUGIN_DIR      "/plugins"
 +#define EXTCAP_DIR      "/extcap"
-+#define LOG_EXTCAP_DIR  "/logextcap"
++#define STRATOSHARK_EXTCAP_DIR  "/stratoshark-extcap"
  
  #endif

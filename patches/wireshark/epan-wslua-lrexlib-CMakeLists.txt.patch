@@ -1,10 +1,10 @@
 Why: Install lrexlib: it is a private dependency of wslua, but must be linked explicitly into the static wasm build.
 
 diff --git a/epan/wslua/lrexlib/CMakeLists.txt b/epan/wslua/lrexlib/CMakeLists.txt
-index e87988bd7cf75f70ba80c1b3e2e9257158028426..bc2bdecda96ebff6015b68bf5b041da94157db86 100644
+index 5f9beb08d9becc918c95a14568a23379b7ade574..0888ac5e1483bb880538745821b77b4ddd3b0d5d 100644
 --- a/epan/wslua/lrexlib/CMakeLists.txt
 +++ b/epan/wslua/lrexlib/CMakeLists.txt
-@@ -28,3 +28,17 @@ add_compile_definitions(
+@@ -29,3 +29,17 @@ add_compile_definitions(
  	VERSION=\"2.9.2\"
  	PCRE2_CODE_UNIT_WIDTH=8
  )

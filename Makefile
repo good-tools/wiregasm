@@ -6,6 +6,9 @@
 #   make update-patches PKG=x
 #                      write edits made in build/src/x back to patches/x and overlay/x
 #                      (new files must be `git add`ed in build/src/x first)
+#   make rebase-patches PKG=x
+#                      after bumping mk/deps/x.mk (with build/src/x still on the old
+#                      version), rebase the patches onto the new version
 #   make check-patches prepare every package from scratch: fails if any patch no longer applies
 #   make clean         remove build outputs (keeps downloaded tarballs)
 #   make distclean     also remove downloaded tarballs
@@ -32,7 +35,7 @@ PACKAGES := $(basename $(notdir $(wildcard mk/deps/*.mk)))
 include $(wildcard mk/deps/*.mk)
 $(foreach p,$(PACKAGES),$(eval $(call package,$(p))))
 
-.PHONY: all deps wiregasm src update-patches check-patches docker clean distclean
+.PHONY: all deps wiregasm src update-patches rebase-patches check-patches docker clean distclean
 
 all: wiregasm
 
@@ -53,6 +56,10 @@ src: guard-PKG $(STAMP)/$(PKG).src
 update-patches: guard-PKG
 	$(NODE) scripts/patches.mjs update $(PKG) $(SRC)/$(PKG)
 	@touch $(STAMP)/$(PKG).src
+
+rebase-patches: guard-PKG
+	$(MAKE) $($(PKG)_TARBALL)
+	$(NODE) scripts/patches.mjs rebase $(PKG) $($(PKG)_TARBALL) $(SRC)/$(PKG)
 
 check-patches: $(foreach p,$(PACKAGES),$(STAMP)/$(p).src)
 

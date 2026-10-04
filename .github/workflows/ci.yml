@@ -52,6 +52,9 @@ jobs:
 
     - run: make -j"$(nproc)" check-patches
 
+    # dependency versions must match the ones Wireshark pins
+    - run: node scripts/dep-versions.mjs
+
   build:
     runs-on: ubuntu-24.04
 

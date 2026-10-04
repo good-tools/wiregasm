@@ -8,6 +8,12 @@
 //     with `git apply`, and commit the result (tag `patched`). Every failing
 //     patch is reported, not just the first one.
 //
+//   patches.mjs rebase <pkg> <new-tarball> <dest>
+//     Move a prepared <dest> to a new upstream version: commit the new tarball
+//     as the new `upstream` and rebase our changes onto it with git. On
+//     conflicts, fix them in <dest>, `git add` them and `git rebase
+//     --continue`, then run `update`.
+//
 //   patches.mjs update <pkg> <dest>
 //     Regenerate patches/<pkg>/ and overlay/<pkg>/ from <dest>: one patch per
 //     file modified since `upstream`, and a copy of every file added since
@@ -193,13 +199,71 @@ function update(pkg, dest) {
   );
 }
 
+function rebase(pkg, tarball, dest) {
+  if (!fs.existsSync(path.join(dest, ".git"))) {
+    die(
+      `${dest} is not prepared; run \`make src PKG=${pkg}\` before bumping the version`
+    );
+  }
+  if (git(dest, "status", "--porcelain", "--untracked-files=no").trim()) {
+    die(
+      `${dest} has unexported changes; run \`make update-patches PKG=${pkg}\` first`
+    );
+  }
+
+  git(dest, "checkout", "-q", "-B", "wiregasm", "patched");
+  git(dest, "checkout", "-q", "--detach", "upstream");
+  for (const entry of fs.readdirSync(dest)) {
+    if (entry !== ".git")
+      fs.rmSync(path.join(dest, entry), { recursive: true, force: true });
+  }
+  execFileSync("tar", ["xf", tarball, "-C", dest, "--strip-components=1"]);
+  git(dest, "add", "-A", "-f");
+  git(
+    dest,
+    "commit",
+    "-q",
+    "--no-verify",
+    "--allow-empty",
+    "-m",
+    "upstream (new)"
+  );
+  const newUpstream = git(dest, "rev-parse", "HEAD").trim();
+  const oldUpstream = git(dest, "rev-parse", "upstream").trim();
+  // From here on, `update` diffs against the new version.
+  git(dest, "tag", "-f", "upstream", newUpstream);
+
+  git(dest, "checkout", "-q", "wiregasm");
+  try {
+    git(dest, "rebase", "-q", "--onto", newUpstream, oldUpstream, "wiregasm");
+  } catch {
+    const conflicts = git(
+      dest,
+      "diff",
+      "--name-only",
+      "--diff-filter=U"
+    ).trim();
+    die(
+      `conflicts rebasing ${pkg} onto the new version:\n  ${conflicts.split("\n").join("\n  ")}\n` +
+        `Fix them in ${dest}, \`git add\` them and run \`git rebase --continue\` there,\n` +
+        `then \`make update-patches PKG=${pkg}\`.`
+    );
+  }
+  git(dest, "tag", "-f", "patched");
+  console.log(
+    `patches: ${pkg} rebased cleanly; now run \`make update-patches PKG=${pkg}\``
+  );
+}
+
 const [cmd, ...args] = process.argv.slice(2);
 if (cmd === "prepare" && args.length === 3) {
   prepare(...args);
+} else if (cmd === "rebase" && args.length === 3) {
+  rebase(...args);
 } else if (cmd === "update" && args.length === 2) {
   update(...args);
 } else {
   die(
-    "usage: patches.mjs prepare <pkg> <tarball> <dest>\n       patches.mjs update <pkg> <dest>"
+    "usage: patches.mjs prepare <pkg> <tarball> <dest>\n       patches.mjs rebase <pkg> <new-tarball> <dest>\n       patches.mjs update <pkg> <dest>"
   );
 }
