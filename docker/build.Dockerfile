@@ -1,5 +1,6 @@
-ARG EMSDK_VERSION=3.1.31
+ARG EMSDK_VERSION=6.0.11
 FROM emscripten/emsdk:${EMSDK_VERSION}
+ARG MESON_VERSION=1.12.1
 
 RUN echo "## Update and install packages" \
     && apt-get -qq -y update \
@@ -8,12 +9,14 @@ RUN echo "## Update and install packages" \
         lemon \
         pkg-config \
         ninja-build \
-        meson \
+        python3-pip \
+        python3-setuptools \
         autoconf \
         automake \
         autopoint \
         libtool \
         libltdl-dev \
+    && pip3 install --no-cache-dir --break-system-packages meson==${MESON_VERSION} \
     && apt-get -y clean \
     && apt-get -y autoclean \
     && apt-get -y autoremove \

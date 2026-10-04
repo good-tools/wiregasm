@@ -42,7 +42,10 @@ link_args = [
 
   '-s', 'MODULARIZE=1',
   '-s', 'EXPORT_NAME="loadWiregasm"',
-  '-s', 'TOTAL_MEMORY=128MB',
+  '-s', 'INITIAL_MEMORY=128MB',
+
+  # supported Node LTS lines (22+); lets emscripten drop code for older runtimes
+  '-s', 'MIN_NODE_VERSION=220000',
 
   # XXX: drastically increases binary size, maybe selectively asyncify functions?
   # '-s', 'ASYNCIFY=1',
@@ -56,14 +59,18 @@ link_args = [
   '-s', 'EMULATE_FUNCTION_POINTER_CASTS=1',
 
   # runtime deps
-  '-s', 'EXPORTED_RUNTIME_METHODS=FS',
+  '-s', 'EXPORTED_RUNTIME_METHODS=FS,HEAPU8',
+
+  # Module properties the loader accepts: emscripten's defaults plus the ones
+  # WiregasmLibOverrides documents (wasmBinary, getPreloadedPackage)
+  '-s', 'INCOMING_MODULE_JS_API=ENVIRONMENT,arguments,canvas,dynamicLibraries,elementPointerLock,instantiateWasm,locateFile,monitorRunDependencies,noExitRuntime,noInitialRun,onAbort,onExit,onRuntimeInitialized,postRun,preInit,preRun,print,printErr,setStatus,statusMessage,stderr,stdin,stdout,thisProgram,wasm,websocket,wasmBinary,getPreloadedPackage',
 
   # exported functions
   '-s', 'EXPORTED_FUNCTIONS=_malloc',
 
   # include our extensions
-  '--pre-js', join_paths(meson.source_root(), 'ext/mod.js'),
-  '--js-library', join_paths(meson.source_root(), 'ext/lib.js'),
+  '--pre-js', join_paths(meson.project_source_root(), 'ext/mod.js'),
+  '--js-library', join_paths(meson.project_source_root(), 'ext/lib.js'),
 
   # put wireshark data at /wireshark
   '--preload-file', wireshark_data_path + '@/wireshark'
