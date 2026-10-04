@@ -1,4 +1,4 @@
-import { PrefSetResult, Vector } from "./types";
+import { PrefSetResult, type Vector } from "./types";
 
 /**
  * Converts a Vector to a JS array
