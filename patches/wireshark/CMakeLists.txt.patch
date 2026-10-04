@@ -1,10 +1,10 @@
-Why: Use an externally supplied Lemon instead of building it (it runs at build time, so it must be a host binary); expose the ui/ helpers wiregasm uses as a wireshark_common library and install their headers.
+Why: expose the ui/ helpers wiregasm uses (summary, io_graph_item) as a wireshark_common library and install their headers.
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index e84dd37890f9cb6145e199f6871ba638b7d2d355..bddede4e4ccb0a2abb1c3f4cb184e150850436f3 100644
+index ecc4265f5c21d41d9db8c7991eb9c9899b00b4fb..3ce25413a52ee01fcb88c7e865a529725d4bb2c7 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -420,7 +420,6 @@ set(LOG_RC_VERSION ${LOG_PROJECT_MAJOR_VERSION},${LOG_PROJECT_MINOR_VERSION},${P
+@@ -427,7 +427,6 @@ set(STRATOSHARK_RC_VERSION ${STRATOSHARK_MAJOR_VERSION},${STRATOSHARK_MINOR_VERS
  
  message(STATUS "V: ${PROJECT_VERSION}, MaV: ${PROJECT_MAJOR_VERSION}, MiV: ${PROJECT_MINOR_VERSION}, PL: ${PROJECT_PATCH_VERSION}, EV: ${PROJECT_VERSION_EXTENSION}.")
  
@@ -12,31 +12,21 @@ index e84dd37890f9cb6145e199f6871ba638b7d2d355..bddede4e4ccb0a2abb1c3f4cb184e150
  include(UseMakePluginReg)
  include(UseMakeTaps)
  include(UseExecutableResources)
-@@ -1276,6 +1275,7 @@ endif ()
- find_package(LEX REQUIRED)
- reset_find_package(PCRE2 PCRE2_DEBUG_LIBRARY)
+@@ -1346,6 +1345,7 @@ reset_find_package(PCRE2 PCRE2_DEBUG_LIBRARY)
  find_package(PCRE2 REQUIRED)
-+find_package(LEMON REQUIRED)
+ reset_find_package(LibXml2)
+ find_package(LibXml2 "2.9.7" REQUIRED)
++include(UseLemon)
  
  if (NOT WIN32)
  	find_package(Gettext)
-@@ -1716,6 +1716,8 @@ set(PLUGIN_INSTALL_FULL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${PLUGIN_INSTALL_LIBDIR}
- set(PLUGIN_INSTALL_VERSION_LIBDIR "${PLUGIN_INSTALL_LIBDIR}/${PLUGIN_PATH_ID}")
- set(PLUGIN_VERSION_DIR "plugins/${PLUGIN_PATH_ID}")
- 
-+# hack to allow lemon to become a dependency
-+add_custom_target( lemon )
- add_subdirectory( capture )
- add_subdirectory( epan )
- add_subdirectory( extcap )
-@@ -2695,6 +2697,34 @@ set_target_properties(shark_common cli_main capture_opts
- 	COMPILE_FLAGS "${WERROR_COMMON_FLAGS}"
+@@ -2791,6 +2791,34 @@ add_library(shark_common OBJECT
  )
+ add_library(cli_main OBJECT cli_main.c)
  
 +set(COMMON_PUBLIC_HEADERS
 +	ui/summary.h
 +	ui/io_graph_item.h
-+	frame_tvbuff.h
 +)
 +
 +install(FILES ${COMMON_PUBLIC_HEADERS}
@@ -61,6 +51,7 @@ index e84dd37890f9cb6145e199f6871ba638b7d2d355..bddede4e4ccb0a2abb1c3f4cb184e150
 +	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +)
- 
++
  if(BUILD_wireshark AND QT_FOUND)
  	set(WIRESHARK_SRC
+ 		file.c

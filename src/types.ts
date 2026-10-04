@@ -53,6 +53,8 @@ export enum PrefType {
   PREF_DECODE_AS_RANGE = 1 << 13, // use and not as a generic protocol preference
   PREF_OPEN_FILENAME = 1 << 14,
   PREF_PASSWORD = 1 << 15, // like string, but never saved to prefs file
+  PREF_PROTO_TCP_SNDAMB_ENUM = 1 << 16,
+  PREF_DISSECTOR = 1 << 17, // like string, but with dissector name syntax check
 }
 
 export interface PrefModule {

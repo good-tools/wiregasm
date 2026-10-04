@@ -16,7 +16,8 @@
     "lint": "biome ci . && npm run lint:cpp",
     "lint:cpp": "git ls-files 'lib/wiregasm/*.cpp' 'lib/wiregasm/*.h' | xargs clang-format --dry-run --Werror",
     "fix": "biome check --write . && git ls-files 'lib/wiregasm/*.cpp' 'lib/wiregasm/*.h' | xargs clang-format -i",
-    "size-check": "node scripts/size-check.mjs"
+    "size-check": "node scripts/size-check.mjs",
+    "dep-versions": "node scripts/dep-versions.mjs"
   },
   "keywords": [
     "pcap",

@@ -40,7 +40,7 @@ describe("Wiregasm Library", () => {
   });
 
   test("version string returned correctly", async () => {
-    expect(lib.wiresharkVersion()).toEqual("4.4.5");
+    expect(lib.wiresharkVersion()).toEqual("4.6.9");
   });
 
   test("columns vector returned correctly", async () => {
@@ -1300,7 +1300,7 @@ describe("Wiregasm Library - Packet list and protocol tree", () => {
 
   test("frame data source holds the frame bytes", () => {
     const ds = wg.frame(1).data_sources.get(0);
-    expect(ds.name).toEqual("Frame (314 bytes)");
+    expect(ds.name).toEqual("Packet (314 bytes)");
     expect(ds.data.length).toBeGreaterThan(0);
   });
 });

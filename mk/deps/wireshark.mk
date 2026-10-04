@@ -1,8 +1,8 @@
-wireshark_VERSION := 4.4.5
+wireshark_VERSION := 4.6.9
 wireshark_URL     := https://www.wireshark.org/download/src/all-versions/wireshark-$(wireshark_VERSION).tar.xz
-wireshark_SHA512  := 09956fadb2ab80df136c6b35a1be2aa72eec20e1f11c94aaaabecff72d450239d09173ef3cc2bcd8c85c194816afb750e1d476538038ff612366a255ae4fece5
+wireshark_SHA512  := dde86fafc38132c834fb28865f66351aa7cdaccaabc7612731fd418014cf8624471a2a20a5b3a6546bf4b1c397f04d35271bd92a6e4680d63caeabee90cab6aa
 wireshark_BUILD   := cmake
-wireshark_DEPS    := c-ares gcrypt glib nghttp2
+wireshark_DEPS    := c-ares gcrypt glib libxml2 nghttp2
 # only libwireshark (epan) is needed: no tools, no C plugins (not loadable in
 # wasm; Lua plugins are separate), and static libraries
 # (newer emscripten supports shared libraries, which would otherwise be the default)
@@ -12,5 +12,5 @@ wireshark_CONF    := \
 		dpauxmon randpktdump wifidump etwdump sdjournal udpdump sharkd mmdbresolve,-DBUILD_$(t)=OFF) \
 	-DFETCH_lua=ON \
 	-DENABLE_CAP=OFF \
-	-DENABLE_STATIC=ON \
+	-DBUILD_SHARED_LIBS=OFF \
 	-DENABLE_PLUGINS=OFF

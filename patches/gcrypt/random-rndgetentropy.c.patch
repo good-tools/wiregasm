@@ -1,10 +1,10 @@
 Why: emscripten declares getrandom() but does not implement it; use getentropy() in the FIPS-mode branch too.
 
 diff --git a/random/rndgetentropy.c b/random/rndgetentropy.c
-index 513da0b95f3d84eaabd5a0b8e52b8168a2057d47..bc16478d16b20f3291584fa00396872a59c15d33 100644
+index a6f3c4ab17b60f90b6612a8fe03fa578754a1c98..8bdde1012b373205166bbee26814b340a49b5abc 100644
 --- a/random/rndgetentropy.c
 +++ b/random/rndgetentropy.c
-@@ -95,7 +95,11 @@ _gcry_rndgetentropy_gather_random (void (*add)(const void*, size_t,
+@@ -96,7 +96,11 @@ _gcry_rndgetentropy_gather_random (void (*add)(const void*, size_t,
                 * RHEL kernel.
                 */
                nbytes = length < 32 ? length : 32;
@@ -15,4 +15,4 @@ index 513da0b95f3d84eaabd5a0b8e52b8168a2057d47..bc16478d16b20f3291584fa00396872a
 +#endif
              }
            else
-             {
+ #endif

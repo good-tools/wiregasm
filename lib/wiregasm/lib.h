@@ -2,7 +2,6 @@
 #define WIREGASM_COMMON_H
 
 #include "wiregasm.h"
-#include <common/frame_tvbuff.h>
 #include <common/io_graph_item.h>
 #include <common/summary.h>
 #include <epan/addr_resolv.h>

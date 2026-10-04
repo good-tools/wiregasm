@@ -78,6 +78,9 @@ void read_failure_message(const char *filename, int err) {
 void write_failure_message(const char *filename, int err) {
 }
 
+void rename_failure_message(const char *old_filename, const char *new_filename, int err) {
+}
+
 void cfile_open_failure_message(const char *filename, int err, char *err_info) {
 }
 
@@ -102,6 +105,7 @@ static const struct report_message_routines wg_report_routines = {
     open_failure_message,
     read_failure_message,
     write_failure_message,
+    rename_failure_message,
     cfile_open_failure_message,
     cfile_dump_open_failure_message,
     cfile_read_failure_message,
@@ -187,7 +191,7 @@ bool wg_init() {
   init_process_policies();
   relinquish_special_privs_perm();
 
-  char *cerr_msg = configuration_init("/wiregasm", NULL);
+  char *cerr_msg = configuration_init("/wiregasm");
   if (cerr_msg != NULL) {
     on_status(ERROR, cerr_msg);
     g_free(cerr_msg);
@@ -252,16 +256,59 @@ void wg_prefs_apply_all() {
   wg_apply_decode_as_defaults();
 }
 
+// Wireshark 4.6 numbers preference types 0, 1, 2, ...; earlier versions used
+// bit flags, which is what wiregasm has always exposed (PrefType in
+// src/types.ts). Keep exposing the bit flags.
+static int wg_pref_type_flag(int type) {
+  switch (type) {
+  case PREF_UINT:
+    return 1 << 0;
+  case PREF_BOOL:
+    return 1 << 1;
+  case PREF_ENUM:
+    return 1 << 2;
+  case PREF_STRING:
+    return 1 << 3;
+  case PREF_RANGE:
+    return 1 << 4;
+  case PREF_STATIC_TEXT:
+    return 1 << 5;
+  case PREF_UAT:
+    return 1 << 6;
+  case PREF_SAVE_FILENAME:
+    return 1 << 7;
+  case PREF_COLOR:
+    return 1 << 8;
+  case PREF_CUSTOM:
+    return 1 << 9;
+  case PREF_DIRNAME:
+    return 1 << 11;
+  case PREF_DECODE_AS_RANGE:
+    return 1 << 13;
+  case PREF_OPEN_FILENAME:
+    return 1 << 14;
+  case PREF_PASSWORD:
+    return 1 << 15;
+  case PREF_PROTO_TCP_SNDAMB_ENUM:
+    return 1 << 16;
+  case PREF_DISSECTOR:
+    return 1 << 17;
+  default:
+    return 0;
+  }
+}
+
 void wg_set_pref_values(pref_t *pref, PrefData *res) {
   res->name = prefs_get_name(pref);
   res->title = prefs_get_title(pref);
   res->description = prefs_get_description(pref);
 
-  res->type = prefs_get_type(pref);
+  int type = prefs_get_type(pref);
+  res->type = wg_pref_type_flag(type);
 
-  switch (res->type) {
+  switch (type) {
   case PREF_UINT:
-    res->uint_value = prefs_get_uint_value_real(pref, pref_current);
+    res->uint_value = prefs_get_uint_value(pref, pref_current);
     if (prefs_get_uint_base(pref) != 10)
       res->uint_base_value = prefs_get_uint_base(pref);
     break;
@@ -308,7 +355,6 @@ void wg_set_pref_values(pref_t *pref, PrefData *res) {
   case PREF_COLOR:
   case PREF_CUSTOM:
   case PREF_STATIC_TEXT:
-  case PREF_OBSOLETE:
     /* TODO */
     break;
   }

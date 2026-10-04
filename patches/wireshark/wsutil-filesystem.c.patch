@@ -1,10 +1,10 @@
 Why: Force /wireshark as the data directory (preloaded into the Emscripten FS); needed for preferences, profiles and color filters.
 
 diff --git a/wsutil/filesystem.c b/wsutil/filesystem.c
-index e5341994fe9656df964c6a10c88cbcb3120eed0e..708f5d108d7ba7445e2c2912c52534b2c9a5c5db 100644
+index f1c7358a97df18a820c4481bd7960a6b1387f4f2..de7ceae8ecfee2ba71fa076cb24737e1abe03de2 100644
 --- a/wsutil/filesystem.c
 +++ b/wsutil/filesystem.c
-@@ -1056,8 +1056,10 @@ get_current_working_dir(void)
+@@ -1010,8 +1010,10 @@ get_current_working_dir(void)
  const char *
  get_datafile_dir(void)
  {
@@ -15,5 +15,5 @@ index e5341994fe9656df964c6a10c88cbcb3120eed0e..708f5d108d7ba7445e2c2912c52534b2
 +    
 +    return datafile_dir;
  
-     const char *data_dir_envar = CONFIGURATION_ENVIRONMENT_VARIABLE("DATA_DIR");
+     char *data_dir_envar = configuration_environment_variable("DATA_DIR");
      if (g_getenv(data_dir_envar) && !started_with_special_privs()) {

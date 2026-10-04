@@ -39,7 +39,16 @@ make src PKG=wireshark             # build/src/wireshark = upstream + overlay + 
 make update-patches PKG=wireshark  # write the edits back to patches/ and overlay/
 ```
 
-`make check-patches` verifies that every patch still applies.
+To move a dependency to a new version:
+
+```sh
+make src PKG=wireshark             # still on the old version
+# bump wireshark_VERSION and wireshark_SHA512 in mk/deps/wireshark.mk
+make rebase-patches PKG=wireshark  # rebase the patches with git; fix any conflicts in build/src/wireshark
+make update-patches PKG=wireshark
+```
+
+Library versions follow the ones Wireshark pins for the release we build (`npm run dep-versions` checks them). `make check-patches` verifies that every patch still applies.
 
 ## Usage
 The Wiregasm `Dissect Session` implementation is effectively a tiny subset of `sharkd` APIs.
