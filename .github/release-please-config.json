@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "67f9f8701fa7302b657d71109f8871b091689851",
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "@goodtools/wiregasm",
+      "include-component-in-tag": false,
+      "changelog-path": "CHANGELOG.md"
+    }
+  }
+}
