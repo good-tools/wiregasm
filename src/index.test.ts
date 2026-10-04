@@ -110,6 +110,14 @@ describe("Wiregasm Library Wrapper", () => {
     expect(() => wg.download("token")).toThrow(msg);
   });
 
+  test("a failed load() leaves no session behind", () => {
+    const ret = wg.load("not-a-capture.txt", "hello world");
+    expect(ret.code).not.toEqual(0);
+    expect(() => wg.frames("")).toThrow(
+      "No capture file loaded, call load() first."
+    );
+  });
+
   test("tap() lists the allowed tap keys for unknown keys", () => {
     expect(() => wg.tap({ tap0: "conv:TCP", graph0: "x" })).toThrow(
       /Allowed keys are: tap0, .*filter14\./

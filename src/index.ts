@@ -240,7 +240,13 @@ export class Wiregasm {
 
     this.session = new this.lib.DissectSession(path);
 
-    return this.session.load();
+    const response = this.session.load();
+    if (response.code !== 0) {
+      // Don't keep a session for a file that failed to open.
+      this.session.delete();
+      this.session = null;
+    }
+    return response;
   }
 
   /**
