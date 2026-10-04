@@ -299,7 +299,11 @@ export class Wiregasm {
    */
   list_protocols(): ProtocolInfo[] {
     const vec = this.lib.listProtocols();
-    return vectorToArray(vec);
+    try {
+      return vectorToArray(vec);
+    } finally {
+      (vec as unknown as { delete(): void }).delete();
+    }
   }
 
   /**
@@ -333,7 +337,11 @@ export class Wiregasm {
    */
   list_heuristic_dissectors(): HeuristicInfo[] {
     const vec = this.lib.listHeuristicDissectors();
-    return vectorToArray(vec);
+    try {
+      return vectorToArray(vec);
+    } finally {
+      (vec as unknown as { delete(): void }).delete();
+    }
   }
 
   /**
