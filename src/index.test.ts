@@ -168,6 +168,62 @@ describe("Wiregasm Library Wrapper", () => {
     });
     expect(wg.complete_filter("txx").fields.length).toBe(0);
   });
+
+  test("extract_fields returns per-frame values", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+
+    const result = wg.extract_fields(["http.host"], "http.host", 10);
+    expect(result.error).toBe("");
+    expect(result.matched).toBeGreaterThan(0);
+    expect(result.total_rows).toBeGreaterThan(0);
+    expect(result.rows[0].values[0].field).toBe("http.host");
+  });
+
+  test("extract_fields supports invalid filter and truncation", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+
+    const invalid = wg.extract_fields(["http.host"], "http && &&", 0);
+    expect(invalid.error).not.toBe("");
+
+    const truncated = wg.extract_fields(["http.host"], "http.host", 1);
+    expect(truncated.error).toBe("");
+    expect(truncated.total_rows).toBe(1);
+    expect(truncated.truncated).toBe(true);
+  });
+
+  test("list_present_fields and protocol_hierarchy work", async () => {
+    const data = await fs.readFile("samples/http.cap");
+    const ret = wg.load("http.cap", data);
+    expect(ret.code).toEqual(0);
+
+    const fields = wg.list_present_fields("(?i)http");
+    expect(fields.length).toBeGreaterThan(0);
+    expect(fields.some((field) => field.field === "http.host")).toBe(true);
+
+    const hierarchy = wg.protocol_hierarchy();
+    expect(hierarchy.length).toBeGreaterThan(0);
+
+    const hasProtocol = (
+      nodes: Array<{ filter: string; children: Array<any> }>,
+      target: string
+    ): boolean => {
+      for (const node of nodes) {
+        if (node.filter === target) {
+          return true;
+        }
+        if (hasProtocol(node.children, target)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    expect(hasProtocol(hierarchy, "ip")).toBe(true);
+  });
 });
 
 describe("Wiregasm Library - Export Objects", () => {
@@ -794,6 +850,12 @@ describe("Wiregasm Library - Set Preferences", () => {
     expect(pref2.range_value).toContain("8001");
     // defaults should still be present
     expect(pref2.range_value).toContain("80");
+
+    // setting it again should still preserve defaults
+    wg.set_pref("http", "tcp.port", "8002");
+    const pref3 = wg.get_pref("http", "tcp.port");
+    expect(pref3.range_value).toContain("8002");
+    expect(pref3.range_value).toContain("80");
   });
 
   test("set preferences works for diameter", async () => {

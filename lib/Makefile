@@ -243,6 +243,8 @@ glib: glib-$(GLIB_MINOR_VERSION).tar.xz .sum-glib
 	$(CLEANUP)
 	tar xJfo $<
 	$(APPLY) $(PATCHES)/glib/emscripten.2.75.0.patch
+	sed -i 's/source_hash = c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1/source_hash = 03045dcf24b343324e1da0290722725628a403defb87d3bec1b6e2e5f6326ee2/' $(EXTRACT_DIR)/subprojects/zlib.wrap
+	sed -i '/^source_hash/a source_fallback_url = https://github.com/madler/zlib/releases/download/v1.2.11/zlib-1.2.11.tar.gz' $(EXTRACT_DIR)/subprojects/zlib.wrap
 	$(MOVE)
 
 .glib: glib .pcre .ffi crossfile.meson

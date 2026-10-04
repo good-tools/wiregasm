@@ -73,6 +73,9 @@ bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, cha
 DownloadResponse wg_session_process_download(capture_file *cfile, const char *token);
 TapResponse wg_session_process_tap(capture_file *cfile, MapInput taps);
 IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input);
+ExtractFieldsResponse wg_session_process_extract_fields(capture_file *cfile, const vector<string> &fields, const char *filter, guint32 limit);
+PresentFieldsResponse wg_session_process_present_fields(capture_file *cfile);
+ProtocolHierarchyResponse wg_session_process_protocol_hierarchy(capture_file *cfile);
 vector<CompleteField> wg_session_process_complete(const char *field);
 void cf_close(capture_file *cf);
 

@@ -4,14 +4,17 @@ import {
   CompleteField,
   DissectSession,
   DownloadResponse,
+  FieldValue,
   Follow,
   Frame,
   FramesResponse,
   LoadResponse,
   MapInput,
+  PresentField,
   Pref,
   PrefModule,
   PrefSetResult,
+  ProtocolNode,
   TapConvResponse,
   TapExportObjectResponse,
   TapResponse,
@@ -94,9 +97,9 @@ export class Wiregasm {
   set_pref(module: string, key: string, value: string) {
     const ret = this.lib.setPref(module, key, value);
 
-    if (ret.code != PrefSetResult.PREFS_SET_OK) {
+    if (ret.code !== PrefSetResult.PREFS_SET_OK) {
       const message =
-        ret.error != "" ? ret.error : preferenceSetCodeToError(ret.code);
+        ret.error !== "" ? ret.error : preferenceSetCodeToError(ret.code);
       throw new Error(
         `Failed to set preference (${module}.${key}): ${message}`
       );
@@ -105,7 +108,7 @@ export class Wiregasm {
 
   get_pref(module: string, key: string): Pref {
     const response = this.lib.getPref(module, key);
-    if (response.code != 0) {
+    if (response.code !== 0) {
       throw new Error(`Failed to get preference (${module}.${key})`);
     }
     return response.data;
@@ -141,13 +144,29 @@ export class Wiregasm {
     }
 
     const args = new this.lib.MapInput();
-    Object.entries(taps).forEach(([k, v]) => args.set(k, v));
+    Object.entries(taps).forEach(([k, v]) => {
+      args.set(k, v);
+    });
 
     const response = this.session.tap(args);
     return {
       error: response.error,
       taps: vectorToArray(response.taps).map((tap) => {
-        let res;
+        let res:
+          | {
+              proto: string;
+              tap: string;
+              type: string;
+              geoip: boolean;
+              convs: unknown[];
+              hosts: unknown[];
+            }
+          | {
+              proto: string;
+              tap: string;
+              type: string;
+              objects: unknown[];
+            };
         if (this.is_conv_tap(tap)) {
           res = {
             proto: tap.proto,
@@ -192,7 +211,9 @@ export class Wiregasm {
     }
 
     const args = new this.lib.MapInput();
-    Object.entries(input).forEach(([k, v]) => args.set(k, v));
+    Object.entries(input).forEach(([k, v]) => {
+      args.set(k, v);
+    });
 
     const out = this.session.iograph(args);
     return {
@@ -201,6 +222,75 @@ export class Wiregasm {
         items: vectorToArray(t.items),
       })),
     };
+  }
+
+  extract_fields(
+    fields: string[],
+    filter = "",
+    limit = 0
+  ): {
+    error: string;
+    matched: number;
+    total_rows: number;
+    truncated: boolean;
+    rows: Array<{ framenum: number; values: FieldValue[] }>;
+  } {
+    const fieldVec = new this.lib.VectorString();
+    fields.forEach((f) => {
+      fieldVec.push_back(f);
+    });
+
+    const response = this.session.extractFields(
+      fieldVec as unknown as Vector<string>,
+      filter,
+      limit
+    );
+    return {
+      error: response.error,
+      matched: response.matched,
+      total_rows: response.total_rows,
+      truncated: response.truncated,
+      rows: vectorToArray(response.rows).map((row) => ({
+        framenum: row.framenum,
+        values: vectorToArray(row.values),
+      })),
+    };
+  }
+
+  list_present_fields(query = ""): PresentField[] {
+    const response = this.session.listPresentFields();
+    if (response.error) {
+      throw new Error(response.error);
+    }
+
+    const fields = vectorToArray(response.fields);
+    if (!query) {
+      return fields;
+    }
+
+    // Use safe substring matching instead of compiling user input as RegExp.
+    // Accept a leading "(?i)" marker for compatibility with Wireshark-style queries.
+    const normalizedQuery = query.replace(/^\(\?i\)/i, "").toLowerCase();
+    return fields.filter(
+      (field) =>
+        field.field.toLowerCase().includes(normalizedQuery) ||
+        field.name.toLowerCase().includes(normalizedQuery)
+    );
+  }
+
+  protocol_hierarchy(): ProtocolHierarchyNode[] {
+    const response = this.session.protocolHierarchy();
+    if (response.error) {
+      throw new Error(response.error);
+    }
+
+    const convert = (nodes: Vector<ProtocolNode>): ProtocolHierarchyNode[] =>
+      vectorToArray(nodes).map((node) => ({
+        ...node,
+        children: convert(node.children),
+      }));
+
+    return convert(response.protocols);
   }
 
   reload_lua_plugins() {
@@ -288,6 +378,10 @@ export class Wiregasm {
     return tap instanceof this.lib.TapConvResponse;
   }
 }
+
+type ProtocolHierarchyNode = Omit<ProtocolNode, "children"> & {
+  children: ProtocolHierarchyNode[];
+};
 
 export * from "./types";
 export * from "./utils";

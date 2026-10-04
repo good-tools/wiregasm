@@ -103,6 +103,50 @@ struct IoGraphResult {
   vector<IoGraph> iograph;
 };
 
+struct FieldValue {
+  string field;
+  string value;
+  string raw;
+};
+
+struct ExtractedRow {
+  int framenum;
+  vector<FieldValue> values;
+};
+
+struct ExtractFieldsResponse {
+  string error;
+  unsigned int matched;
+  unsigned int total_rows;
+  bool truncated;
+  vector<ExtractedRow> rows;
+};
+
+struct PresentField {
+  string field;
+  string name;
+  int type;
+  int occurrences;
+};
+
+struct PresentFieldsResponse {
+  string error;
+  vector<PresentField> fields;
+};
+
+struct ProtocolNode {
+  string filter;
+  string name;
+  unsigned int frames;
+  unsigned int bytes;
+  vector<ProtocolNode> children;
+};
+
+struct ProtocolHierarchyResponse {
+  string error;
+  vector<ProtocolNode> protocols;
+};
+
 // base struct
 struct TapValue {
   string tap;
@@ -273,6 +317,9 @@ public:
   Follow follow(string follow, string filter);
   TapResponse tap(MapInput taps);
   IoGraphResult iograph(MapInput args);
+  ExtractFieldsResponse extractFields(vector<string> fields, string filter, int limit);
+  PresentFieldsResponse listPresentFields();
+  ProtocolHierarchyResponse protocolHierarchy();
   DownloadResponse download(string token);
   ~DissectSession();
 };
