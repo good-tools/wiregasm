@@ -8,6 +8,7 @@ import {
 } from ".";
 
 import loadWiregasm from "../built/bin/wiregasm.js";
+import { vectorToArray } from "./utils";
 import pako from "pako";
 
 // overrides need to be copied over to every instance
@@ -1246,5 +1247,119 @@ describe("Wiregasm Library - IoGraph", () => {
         iograph: [],
       });
     });
+  });
+});
+
+describe("Wiregasm Library - Packet list and protocol tree", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(async () => {
+    await wg.init(loadWiregasm, buildTestOverrides());
+    const ret = wg.load("dhcp.pcap", await fs.readFile("samples/dhcp.pcap"));
+    expect(ret.code).toEqual(0);
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("packet list columns are populated", () => {
+    const frames = wg.frames("", 0, 0);
+    expect(vectorToArray(frames.frames.get(0).columns)).toEqual([
+      "1",
+      "0.000000",
+      "0.0.0.0",
+      "255.255.255.255",
+      "DHCP",
+      "314",
+      "DHCP Discover - Transaction ID 0x3d1d",
+    ]);
+  });
+
+  test("display filters select frames", () => {
+    expect(wg.frames("dhcp", 0, 0).matched).toEqual(4);
+    expect(wg.frames("dhcp.option.dhcp == 1", 0, 0).matched).toEqual(1);
+  });
+
+  test("protocol tree has every layer with nested fields", () => {
+    const tree = vectorToArray(wg.frame(1).tree);
+    expect(tree.map((t) => t.filter)).toEqual([
+      "frame",
+      "eth",
+      "ip",
+      "udp",
+      "dhcp",
+    ]);
+    expect(tree[4].label).toEqual(
+      "Dynamic Host Configuration Protocol (Discover)"
+    );
+    for (const layer of tree) {
+      expect(layer.tree.size()).toBeGreaterThan(0);
+    }
+  });
+
+  test("frame data source holds the frame bytes", () => {
+    const ds = wg.frame(1).data_sources.get(0);
+    expect(ds.name).toEqual("Frame (314 bytes)");
+    expect(ds.data.length).toBeGreaterThan(0);
+  });
+});
+
+describe("Wiregasm Library - Enabled protocols", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(() => {
+    return wg.init(loadWiregasm, buildTestOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  const dhcpLayers = async (name: string) => {
+    const ret = wg.load(name, await fs.readFile("samples/dhcp.pcap"));
+    expect(ret.code).toEqual(0);
+    return vectorToArray(wg.frame(1).tree).map((t) => t.filter);
+  };
+
+  test("disabling a protocol by name stops it from dissecting", async () => {
+    expect(wg.set_protocol_enabled_by_name("dhcp", false)).toBe(true);
+    expect(wg.list_protocols().find((p) => p.name === "dhcp")?.enabled).toBe(
+      false
+    );
+    expect(await dhcpLayers("disabled.pcap")).not.toContain("dhcp");
+  });
+
+  test("enabling a protocol by id restores it", async () => {
+    const dhcp = wg.list_protocols().find((p) => p.name === "dhcp");
+    expect(dhcp).toBeDefined();
+    expect(wg.set_protocol_enabled(dhcp?.id ?? -1, true)).toBe(true);
+    expect(await dhcpLayers("enabled.pcap")).toContain("dhcp");
+  });
+
+  test("unknown protocols are rejected", () => {
+    expect(wg.set_protocol_enabled_by_name("not_a_protocol", false)).toBe(
+      false
+    );
+    expect(wg.set_protocol_enabled(-1, false)).toBe(false);
+  });
+});
+
+describe("Wiregasm Library - Apply preferences", () => {
+  const wg = new Wiregasm();
+
+  beforeAll(() => {
+    return wg.init(loadWiregasm, buildTestOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("apply_prefs keeps preferences that were set", () => {
+    wg.set_pref("http", "tcp.port", "8123");
+    wg.apply_prefs();
+    const ports = wg.get_pref("http", "tcp.port").range_value.split(",");
+    expect(ports).toEqual(expect.arrayContaining(["80", "8123"]));
   });
 });
