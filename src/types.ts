@@ -5,8 +5,8 @@ export interface EmscriptenFileSystem {
     opts?: { flags?: string | undefined }
   ): void;
   readdir(path: string): string[];
-  mkdirTree(path: string, mode?: number);
-  mkdir(path: string, mode?: number);
+  mkdirTree(path: string, mode?: number): void;
+  mkdir(path: string, mode?: number): void;
 }
 
 export interface EmscriptenHeap {

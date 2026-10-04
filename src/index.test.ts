@@ -5,11 +5,14 @@ import {
   Wiregasm,
   type WiregasmLib,
   type WiregasmLibOverrides,
+  type WiregasmLoader,
 } from ".";
 
-import loadWiregasm from "../built/bin/wiregasm.js";
 import { vectorToArray } from "./utils";
 import pako from "pako";
+
+// The emscripten output has no type declarations; it is a WiregasmLoader.
+const loadWiregasm: WiregasmLoader = require("../built/bin/wiregasm.js");
 
 // overrides need to be copied over to every instance
 const buildTestOverrides = (): WiregasmLibOverrides => {

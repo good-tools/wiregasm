@@ -40,11 +40,12 @@ const ALLOWED_GRAPH_KEYS = new Set([
  * Wraps the WiregasmLib lib functionality and manages a single DissectSession
  */
 export class Wiregasm {
-  lib: WiregasmLib;
+  // Set by init(); using the wrapper before init() is a programming error.
+  lib!: WiregasmLib;
   initialized: boolean;
   session: DissectSession | null;
-  uploadDir: string;
-  pluginsDir: string;
+  uploadDir!: string;
+  pluginsDir!: string;
 
   constructor() {
     this.initialized = false;
@@ -60,7 +61,7 @@ export class Wiregasm {
   async init(
     loader: WiregasmLoader,
     overrides: WiregasmLibOverrides = {},
-    beforeInit: BeforeInitCallback = null
+    beforeInit: BeforeInitCallback | null = null
   ) {
     if (this.initialized) {
       return;
