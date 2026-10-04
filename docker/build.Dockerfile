@@ -10,6 +10,7 @@ RUN echo "## Update and install packages" \
         pkg-config \
         ninja-build \
         python3-pip \
+        python3-setuptools \
         autoconf \
         automake \
         autopoint \

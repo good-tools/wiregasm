@@ -90,7 +90,8 @@ jobs:
           automake \
           autopoint \
           libtool \
-          libltdl-dev
+          libltdl-dev \
+          python3-setuptools
 
     # Caches the installed dependencies (glib, wireshark, ...) only. The key
     # covers everything that changes them; lib/wiregasm is always rebuilt.
