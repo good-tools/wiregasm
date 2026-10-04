@@ -25,9 +25,27 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      sha: ${{ steps.release.outputs.sha }}
     steps:
+      # release-please always acts on the current master tip, so only run it for
+      # the CI run of that tip. A late-finishing run for an older commit would
+      # otherwise publish its own checkout and artifact under the new tag.
+      - name: Check run is for master tip
+        id: tip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          tip=$(gh api "repos/${GITHUB_REPOSITORY}/commits/master" --jq .sha)
+          if [ "$tip" = "$HEAD_SHA" ]; then
+            echo "latest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Skipping: run is for $HEAD_SHA, master is at $tip"
+          fi
+
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: release
+        if: steps.tip.outputs.latest == 'true'
         with:
           # PAT so the release PR triggers Build & Test (GITHUB_TOKEN events don't).
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
@@ -43,9 +61,20 @@ jobs:
       actions: read # download the artifact from the CI run
       id-token: write # npm trusted publishing
     steps:
+      - name: Check release commit matches CI run
+        env:
+          RELEASE_SHA: ${{ needs.release-please.outputs.sha }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ "$RELEASE_SHA" != "$HEAD_SHA" ]; then
+            echo "::error::Release commit $RELEASE_SHA != CI run commit $HEAD_SHA; publish manually from the release commit's CI artifact."
+            exit 1
+          fi
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
