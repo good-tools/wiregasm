@@ -1,0 +1,26 @@
+Why: Downgrade Autoconf requirement to version 2.68
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips), based on https://github.com/brion/libffi/commits/emscripten-work and https://github.com/hoodmane/libffi-emscripten
+
+diff --git a/configure.ac b/configure.ac
+index 7e8cd98a4ce893dd653eafaa031fa9779214dfdf..bb0bc45c249f3e0f08cec72127434cecfca9128c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1,6 +1,6 @@
+ dnl Process this with autoconf to create configure
+ 
+-AC_PREREQ([2.71])
++AC_PREREQ([2.68])
+ 
+ AC_INIT([libffi],[3.4.4],[http://github.com/libffi/libffi/issues])
+ AC_CONFIG_HEADERS([fficonfig.h])
+@@ -93,10 +93,6 @@ m4_warn([obsolete],
+ [The preprocessor macro `STDC_HEADERS' is obsolete.
+   Except in unusual embedded environments, you can safely include all
+   ISO C90 headers unconditionally.])dnl
+-# Autoupdate added the next two lines to ensure that your configure
+-# script's behavior did not change.  They are probably safe to remove.
+-AC_CHECK_INCLUDES_DEFAULT
+-AC_PROG_EGREP
+ 
+ AC_CHECK_FUNCS(memcpy)
+ AC_FUNC_ALLOCA

@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/win32/gwinhttpfile.c b/gio/win32/gwinhttpfile.c
+index e73c87658b4e0f3e316e2b0304a3aa36ed5c919e..c9c2d0336a23ad000eb7c2883f17faefb19ad79c 100644
+--- a/gio/win32/gwinhttpfile.c
++++ b/gio/win32/gwinhttpfile.c
+@@ -37,7 +37,8 @@
+ 
+ #include "glibintl.h"
+ 
+-static void g_winhttp_file_file_iface_init (GFileIface *iface);
++static void g_winhttp_file_file_iface_init (GFileIface *iface,
++                                            gpointer    iface_data);
+ 
+ #define g_winhttp_file_get_type _g_winhttp_file_get_type
+ G_DEFINE_TYPE_WITH_CODE (GWinHttpFile, g_winhttp_file, G_TYPE_OBJECT,
+@@ -757,7 +758,8 @@ g_winhttp_file_move (GFile                  *source,
+ #endif
+ 
+ static void
+-g_winhttp_file_file_iface_init (GFileIface *iface)
++g_winhttp_file_file_iface_init (GFileIface *iface,
++                                gpointer    iface_data)
+ {
+   iface->dup = g_winhttp_file_dup;
+   iface->hash = g_winhttp_file_hash;

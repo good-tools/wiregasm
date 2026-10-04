@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gthemedicon.c b/gio/gthemedicon.c
+index 8551bd27d3be60376f52aab0c5ecb55b1cf82458..63866e905e8abe1a636b27ad24bb01ab73c9c697 100644
+--- a/gio/gthemedicon.c
++++ b/gio/gthemedicon.c
+@@ -45,7 +45,8 @@
+  * themes that inherit other themes.
+  **/
+ 
+-static void g_themed_icon_icon_iface_init (GIconIface *iface);
++static void g_themed_icon_icon_iface_init (GIconIface *iface,
++                                           gpointer    iface_data);
+ 
+ struct _GThemedIcon
+ {
+@@ -620,7 +621,8 @@ g_themed_icon_serialize (GIcon *icon)
+ }
+ 
+ static void
+-g_themed_icon_icon_iface_init (GIconIface *iface)
++g_themed_icon_icon_iface_init (GIconIface *iface,
++                               gpointer    iface_data)
+ {
+   iface->hash = g_themed_icon_hash;
+   iface->equal = g_themed_icon_equal;

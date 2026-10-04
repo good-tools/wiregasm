@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gwin32registrykey.c b/gio/gwin32registrykey.c
+index df20db1023cecdc4f3cae093b1f150064615194b..e468cf578f7af58ad1257c1391eafe7d77843f9f 100644
+--- a/gio/gwin32registrykey.c
++++ b/gio/gwin32registrykey.c
+@@ -434,7 +434,8 @@ struct _GWin32RegistryKeyPrivate {
+   gpointer user_data;
+ };
+ 
+-static void     g_win32_registry_key_initable_iface_init (GInitableIface  *iface);
++static void     g_win32_registry_key_initable_iface_init (GInitableIface  *iface,
++                                                          gpointer         iface_data);
+ static gboolean g_win32_registry_key_initable_init       (GInitable       *initable,
+                                                           GCancellable    *cancellable,
+                                                           GError         **error);
+@@ -541,7 +542,8 @@ g_win32_registry_key_new_w (const gunichar2  *path,
+ }
+ 
+ static void
+-g_win32_registry_key_initable_iface_init (GInitableIface *iface)
++g_win32_registry_key_initable_iface_init (GInitableIface *iface,
++                                          gpointer        iface_data)
+ {
+   iface->init = g_win32_registry_key_initable_init;
+ }

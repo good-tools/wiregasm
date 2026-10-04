@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gsocks5proxy.c b/gio/gsocks5proxy.c
+index 6f256727a6ca3ce6fbc7723333d8ebd8955980a2..ce2e9cef51dbd083d94f6713456ed6eec98aeddc 100644
+--- a/gio/gsocks5proxy.c
++++ b/gio/gsocks5proxy.c
+@@ -82,7 +82,8 @@ struct _GSocks5ProxyClass
+   GObjectClass parent_class;
+ };
+ 
+-static void g_socks5_proxy_iface_init (GProxyInterface *proxy_iface);
++static void g_socks5_proxy_iface_init (GProxyInterface *proxy_iface,
++                                       gpointer         iface_data);
+ 
+ #define g_socks5_proxy_get_type _g_socks5_proxy_get_type
+ G_DEFINE_TYPE_WITH_CODE (GSocks5Proxy, g_socks5_proxy, G_TYPE_OBJECT,
+@@ -1101,7 +1102,8 @@ g_socks5_proxy_class_init (GSocks5ProxyClass *class)
+ }
+ 
+ static void
+-g_socks5_proxy_iface_init (GProxyInterface *proxy_iface)
++g_socks5_proxy_iface_init (GProxyInterface *proxy_iface,
++                           gpointer         iface_data)
+ {
+   proxy_iface->connect  = g_socks5_proxy_connect;
+   proxy_iface->connect_async = g_socks5_proxy_connect_async;

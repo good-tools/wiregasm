@@ -1,0 +1,16 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gfile.c b/gio/gfile.c
+index e78b5e1857416f0a886431c66593309cd82a3a2d..4484ab62297343f06d0969e3185f9257d8b1a880 100644
+--- a/gio/gfile.c
++++ b/gio/gfile.c
+@@ -58,7 +58,7 @@
+ 
+ #include "gfile.h"
+ #include "glib/gstdio.h"
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ #include "glib-unix.h"
+ #endif
+ #include "gvfs.h"

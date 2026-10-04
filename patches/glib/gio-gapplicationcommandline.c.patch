@@ -1,0 +1,18 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gapplicationcommandline.c b/gio/gapplicationcommandline.c
+index 9fe52da5dd413108914c95d56fa8a8d731ece7a1..51e7986ff72b7125e6bc604cf86277803d32925d 100644
+--- a/gio/gapplicationcommandline.c
++++ b/gio/gapplicationcommandline.c
+@@ -297,7 +297,9 @@ g_application_command_line_real_printerr_literal (GApplicationCommandLine *cmdli
+ static GInputStream *
+ g_application_command_line_real_get_stdin (GApplicationCommandLine *cmdline)
+ {
+-#ifdef G_OS_UNIX
++#ifdef G_PLATFORM_WASM
++  return NULL;
++#elif defined(G_OS_UNIX)
+   return g_unix_input_stream_new (0, FALSE);
+ #else
+   return g_win32_input_stream_new (GetStdHandle (STD_INPUT_HANDLE), FALSE);

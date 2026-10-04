@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/ghttpproxy.c b/gio/ghttpproxy.c
+index 605a7299415fef182666723928c62ec3bd75133c..28e367471387cb6d71a0da6dea8ad5332b943642 100644
+--- a/gio/ghttpproxy.c
++++ b/gio/ghttpproxy.c
+@@ -53,7 +53,8 @@ struct _GHttpProxyClass
+   GObjectClass parent_class;
+ };
+ 
+-static void g_http_proxy_iface_init (GProxyInterface *proxy_iface);
++static void g_http_proxy_iface_init (GProxyInterface *proxy_iface,
++                                     gpointer         iface_data);
+ 
+ #define g_http_proxy_get_type _g_http_proxy_get_type
+ G_DEFINE_TYPE_WITH_CODE (GHttpProxy, g_http_proxy, G_TYPE_OBJECT,
+@@ -379,7 +380,8 @@ g_http_proxy_class_init (GHttpProxyClass *class)
+ }
+ 
+ static void
+-g_http_proxy_iface_init (GProxyInterface *proxy_iface)
++g_http_proxy_iface_init (GProxyInterface *proxy_iface,
++                         gpointer         iface_data)
+ {
+   proxy_iface->connect = g_http_proxy_connect;
+   proxy_iface->connect_async = g_http_proxy_connect_async;

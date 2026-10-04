@@ -3,6 +3,10 @@
 #   make               build built/bin/wiregasm.{js,wasm,data}
 #   make docker        same, inside the builder image (no local toolchain needed)
 #   make src PKG=x     prepare build/src/x (upstream + overlay/ + patches/) for editing
+#   make update-patches PKG=x
+#                      write edits made in build/src/x back to patches/x and overlay/x
+#                      (new files must be `git add`ed in build/src/x first)
+#   make check-patches prepare every package from scratch: fails if any patch no longer applies
 #   make clean         remove build outputs (keeps downloaded tarballs)
 #   make distclean     also remove downloaded tarballs
 #
@@ -24,7 +28,7 @@ PACKAGES := $(basename $(notdir $(wildcard mk/deps/*.mk)))
 include $(wildcard mk/deps/*.mk)
 $(foreach p,$(PACKAGES),$(eval $(call package,$(p))))
 
-.PHONY: all deps wiregasm src docker clean distclean
+.PHONY: all deps wiregasm src update-patches check-patches docker clean distclean
 
 all: wiregasm
 
@@ -39,6 +43,14 @@ wiregasm: $(STAMP)/wireshark.built
 	meson install -C $(OBJ)/wiregasm
 
 src: guard-PKG $(STAMP)/$(PKG).src
+
+# The tree already matches the regenerated patches, so mark it prepared
+# instead of re-extracting it (and rebuilding everything) on the next make.
+update-patches: guard-PKG
+	$(NODE) scripts/patches.mjs update $(PKG) $(SRC)/$(PKG)
+	@touch $(STAMP)/$(PKG).src
+
+check-patches: $(foreach p,$(PACKAGES),$(STAMP)/$(p).src)
 
 docker:
 	docker build -t wiregasm-builder:$(EMSDK_VERSION) --build-arg EMSDK_VERSION=$(EMSDK_VERSION) \

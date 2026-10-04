@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gunixsocketaddress.c b/gio/gunixsocketaddress.c
+index 3ccb2cbf16f0466326b44588a12251c6099d8d45..9c6167f8a3eff889d35f19ea55b3df4f304f39ff 100644
+--- a/gio/gunixsocketaddress.c
++++ b/gio/gunixsocketaddress.c
+@@ -88,7 +88,8 @@ struct _GUnixSocketAddressPrivate
+   GUnixSocketAddressType address_type;
+ };
+ 
+-static void   g_unix_socket_address_connectable_iface_init (GSocketConnectableIface *iface);
++static void   g_unix_socket_address_connectable_iface_init (GSocketConnectableIface *iface,
++                                                            gpointer                 iface_data);
+ static gchar *g_unix_socket_address_connectable_to_string  (GSocketConnectable      *connectable);
+ 
+ G_DEFINE_TYPE_WITH_CODE (GUnixSocketAddress, g_unix_socket_address, G_TYPE_SOCKET_ADDRESS,
+@@ -321,7 +322,8 @@ g_unix_socket_address_class_init (GUnixSocketAddressClass *klass)
+ }
+ 
+ static void
+-g_unix_socket_address_connectable_iface_init (GSocketConnectableIface *iface)
++g_unix_socket_address_connectable_iface_init (GSocketConnectableIface *iface,
++                                              gpointer                 iface_data)
+ {
+   GSocketConnectableIface *parent_iface = g_type_interface_peek_parent (iface);
+ 

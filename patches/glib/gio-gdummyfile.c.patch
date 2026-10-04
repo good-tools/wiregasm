@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gdummyfile.c b/gio/gdummyfile.c
+index 4ec352c6e4145973c55138bcc6cd07816130e9c0..36d55ceeaf22ef566d7376d11e89456c0d136ed9 100644
+--- a/gio/gdummyfile.c
++++ b/gio/gdummyfile.c
+@@ -33,7 +33,8 @@
+ #include "gfile.h"
+ 
+ 
+-static void g_dummy_file_file_iface_init (GFileIface *iface);
++static void g_dummy_file_file_iface_init (GFileIface *iface,
++                                          gpointer    iface_data);
+ 
+ typedef struct {
+   char *scheme;
+@@ -398,7 +399,8 @@ g_dummy_file_get_uri_scheme (GFile *file)
+ 
+ 
+ static void
+-g_dummy_file_file_iface_init (GFileIface *iface)
++g_dummy_file_file_iface_init (GFileIface *iface,
++                              gpointer    iface_data)
+ {
+   iface->dup = g_dummy_file_dup;
+   iface->hash = g_dummy_file_hash;

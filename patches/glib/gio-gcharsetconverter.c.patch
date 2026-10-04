@@ -1,0 +1,40 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gcharsetconverter.c b/gio/gcharsetconverter.c
+index 499319999da3df9d79b03d8bba6a4d4c6341ffea..ab22439a74c370d45b85636d8745507493680067 100644
+--- a/gio/gcharsetconverter.c
++++ b/gio/gcharsetconverter.c
+@@ -47,8 +47,10 @@ enum {
+  * GIConv.
+  */
+ 
+-static void g_charset_converter_iface_init          (GConverterIface *iface);
+-static void g_charset_converter_initable_iface_init (GInitableIface  *iface);
++static void g_charset_converter_iface_init          (GConverterIface *iface,
++                                                     gpointer         iface_data);
++static void g_charset_converter_initable_iface_init (GInitableIface  *iface,
++                                                     gpointer         iface_data);
+ 
+ /**
+  * GCharsetConverter:
+@@ -423,7 +425,8 @@ g_charset_converter_get_num_fallbacks (GCharsetConverter *converter)
+ }
+ 
+ static void
+-g_charset_converter_iface_init (GConverterIface *iface)
++g_charset_converter_iface_init (GConverterIface *iface,
++                                gpointer         iface_data)
+ {
+   iface->convert = g_charset_converter_convert;
+   iface->reset = g_charset_converter_reset;
+@@ -468,7 +471,8 @@ g_charset_converter_initable_init (GInitable     *initable,
+ }
+ 
+ static void
+-g_charset_converter_initable_iface_init (GInitableIface *iface)
++g_charset_converter_initable_iface_init (GInitableIface *iface,
++                                         gpointer        iface_data)
+ {
+   iface->init = g_charset_converter_initable_init;
+ }

@@ -1,0 +1,25 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gtestdbus.c b/gio/gtestdbus.c
+index cf7d1a4b8ed9e305aca62a7279abadf79df2a298..c06597c825756327b6f53d248d2c29c46c5c68bf 100644
+--- a/gio/gtestdbus.c
++++ b/gio/gtestdbus.c
+@@ -48,7 +48,7 @@
+ 
+ #include "glibintl.h"
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ #include "glib-unix.h"
+ #endif
+ 
+@@ -603,7 +603,7 @@ static gboolean
+ make_pipe (gint     pipe_fds[2],
+            GError **error)
+ {
+-#if defined(G_OS_UNIX)
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+   return g_unix_open_pipe (pipe_fds, FD_CLOEXEC, error);
+ #elif defined(G_OS_WIN32)
+   if (_pipe (pipe_fds, 4096, _O_BINARY) < 0)

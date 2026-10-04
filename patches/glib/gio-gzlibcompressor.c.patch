@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gzlibcompressor.c b/gio/gzlibcompressor.c
+index a1c018a01ca7776c6aa43e9daf7a42518dfb00b5..59d9a7822c9dd306d8c467d3316814f74b1091e4 100644
+--- a/gio/gzlibcompressor.c
++++ b/gio/gzlibcompressor.c
+@@ -51,7 +51,8 @@ enum {
+  * compresses data using zlib.
+  */
+ 
+-static void g_zlib_compressor_iface_init          (GConverterIface *iface);
++static void g_zlib_compressor_iface_init          (GConverterIface *iface,
++                                                   gpointer         iface_data);
+ 
+ /**
+  * GZlibCompressor:
+@@ -431,7 +432,8 @@ g_zlib_compressor_convert (GConverter *converter,
+ }
+ 
+ static void
+-g_zlib_compressor_iface_init (GConverterIface *iface)
++g_zlib_compressor_iface_init (GConverterIface *iface,
++                              gpointer         iface_data)
+ {
+   iface->convert = g_zlib_compressor_convert;
+   iface->reset = g_zlib_compressor_reset;

@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gunixmount.c b/gio/gunixmount.c
+index 7055d8eddc2f193cad5949f7d0d322387d5077c0..a5d4127fea04e5ea6b0812b4aa53c09d9b935b79 100644
+--- a/gio/gunixmount.c
++++ b/gio/gunixmount.c
+@@ -63,7 +63,8 @@ struct _GUnixMount {
+   gboolean can_eject;
+ };
+ 
+-static void g_unix_mount_mount_iface_init (GMountIface *iface);
++static void g_unix_mount_mount_iface_init (GMountIface *iface,
++                                           gpointer     iface_data);
+ 
+ #define g_unix_mount_get_type _g_unix_mount_get_type
+ G_DEFINE_TYPE_WITH_CODE (GUnixMount, g_unix_mount, G_TYPE_OBJECT,
+@@ -379,7 +380,8 @@ g_unix_mount_eject_finish (GMount       *mount,
+ }
+ 
+ static void
+-g_unix_mount_mount_iface_init (GMountIface *iface)
++g_unix_mount_mount_iface_init (GMountIface *iface,
++                               gpointer     iface_data)
+ {
+   iface->get_root = g_unix_mount_get_root;
+   iface->get_name = g_unix_mount_get_name;

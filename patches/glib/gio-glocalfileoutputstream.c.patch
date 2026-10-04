@@ -1,0 +1,96 @@
+Why: Add support for WebAssembly
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/glocalfileoutputstream.c b/gio/glocalfileoutputstream.c
+index 3ce987fba8dca7aa37e055e22a9ad00ba846007a..288ef111432bb386d1215ebfc0bb57cf2f70afcf 100644
+--- a/gio/glocalfileoutputstream.c
++++ b/gio/glocalfileoutputstream.c
+@@ -44,9 +44,11 @@
+ 
+ #ifdef G_OS_UNIX
+ #include <unistd.h>
++#ifndef G_PLATFORM_WASM
+ #include "gfiledescriptorbased.h"
+ #include <sys/uio.h>
+-#endif
++#endif /*!G_PLATFORM_WASM*/
++#endif /*G_OS_UNIX*/
+ 
+ #include "glib-private.h"
+ #include "gioprivate.h"
+@@ -81,12 +83,13 @@ struct _GLocalFileOutputStreamPrivate {
+   int fd;
+ };
+ 
+-#ifdef G_OS_UNIX
+-static void       g_file_descriptor_based_iface_init   (GFileDescriptorBasedIface *iface);
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
++static void       g_file_descriptor_based_iface_init   (GFileDescriptorBasedIface *iface,
++                                                        gpointer                   iface_data);
+ #endif
+ 
+ #define g_local_file_output_stream_get_type _g_local_file_output_stream_get_type
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ G_DEFINE_TYPE_WITH_CODE (GLocalFileOutputStream, g_local_file_output_stream, G_TYPE_FILE_OUTPUT_STREAM,
+                          G_ADD_PRIVATE (GLocalFileOutputStream)
+ 			 G_IMPLEMENT_INTERFACE (G_TYPE_FILE_DESCRIPTOR_BASED,
+@@ -108,7 +111,7 @@ static gssize     g_local_file_output_stream_write        (GOutputStream      *s
+ 							   gsize               count,
+ 							   GCancellable       *cancellable,
+ 							   GError            **error);
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ static gboolean   g_local_file_output_stream_writev       (GOutputStream       *stream,
+ 							   const GOutputVector *vectors,
+ 							   gsize                n_vectors,
+@@ -136,7 +139,7 @@ static gboolean   g_local_file_output_stream_truncate     (GFileOutputStream  *s
+ 							   goffset             size,
+ 							   GCancellable       *cancellable,
+ 							   GError            **error);
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ static int        g_local_file_output_stream_get_fd       (GFileDescriptorBased *stream);
+ #endif
+ 
+@@ -165,7 +168,7 @@ g_local_file_output_stream_class_init (GLocalFileOutputStreamClass *klass)
+   gobject_class->finalize = g_local_file_output_stream_finalize;
+ 
+   stream_class->write_fn = g_local_file_output_stream_write;
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+   stream_class->writev_fn = g_local_file_output_stream_writev;
+ #endif
+   stream_class->close_fn = g_local_file_output_stream_close;
+@@ -178,9 +181,10 @@ g_local_file_output_stream_class_init (GLocalFileOutputStreamClass *klass)
+   file_stream_class->truncate_fn = g_local_file_output_stream_truncate;
+ }
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ static void
+-g_file_descriptor_based_iface_init (GFileDescriptorBasedIface *iface)
++g_file_descriptor_based_iface_init (GFileDescriptorBasedIface *iface,
++                                    gpointer                   iface_data)
+ {
+   iface->get_fd = g_local_file_output_stream_get_fd;
+ }
+@@ -234,7 +238,7 @@ g_local_file_output_stream_write (GOutputStream  *stream,
+  * things, that each chunk is the size of a whole page and in memory aligned
+  * to a page. We can't possibly guarantee that in GLib.
+  */
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ /* Macro to check if struct iovec and GOutputVector have the same ABI */
+ #define G_OUTPUT_VECTOR_IS_IOVEC (sizeof (struct iovec) == sizeof (GOutputVector) && \
+       G_SIZEOF_MEMBER (struct iovec, iov_base) == G_SIZEOF_MEMBER (GOutputVector, buffer) && \
+@@ -1333,7 +1337,7 @@ _g_local_file_output_stream_get_fd (GLocalFileOutputStream *stream)
+   return stream->priv->fd;
+ }
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ static int
+ g_local_file_output_stream_get_fd (GFileDescriptorBased *fd_based)
+ {

@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gemblemedicon.c b/gio/gemblemedicon.c
+index 8b72f12f9e075904feae8a80339fae0649fb65ef..84070224eeef670d1f91466c610833ff762204ee 100644
+--- a/gio/gemblemedicon.c
++++ b/gio/gemblemedicon.c
+@@ -58,7 +58,8 @@ struct _GEmblemedIconPrivate {
+ 
+ static GParamSpec *properties[NUM_PROPERTIES] = { NULL, };
+ 
+-static void g_emblemed_icon_icon_iface_init (GIconIface *iface);
++static void g_emblemed_icon_icon_iface_init (GIconIface *iface,
++                                             gpointer    iface_data);
+ 
+ G_DEFINE_TYPE_WITH_CODE (GEmblemedIcon, g_emblemed_icon, G_TYPE_OBJECT,
+                          G_ADD_PRIVATE (GEmblemedIcon)
+@@ -459,7 +460,8 @@ g_emblemed_icon_serialize (GIcon *icon)
+ }
+ 
+ static void
+-g_emblemed_icon_icon_iface_init (GIconIface *iface)
++g_emblemed_icon_icon_iface_init (GIconIface *iface,
++                                 gpointer    iface_data)
+ {
+   iface->hash = g_emblemed_icon_hash;
+   iface->equal = g_emblemed_icon_equal;

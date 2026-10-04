@@ -1,0 +1,30 @@
+Why: Disable NLS
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/glib/gi18n-lib.h b/glib/gi18n-lib.h
+index fe9e79dbd96052b9c9b6ed85f7e55c920b94c4c2..8597f90d1de9fff9ef2c3665ff067259910ae280 100644
+--- a/glib/gi18n-lib.h
++++ b/glib/gi18n-lib.h
+@@ -20,19 +20,10 @@
+ #ifndef __G_I18N_LIB_H__
+ #define __G_I18N_LIB_H__
+ 
+-#include <glib.h>
+-
+-#include <libintl.h>
+-#include <string.h>
+-
+-#ifndef GETTEXT_PACKAGE
+-#error You must define GETTEXT_PACKAGE before including gi18n-lib.h.  Did you forget to include config.h?
+-#endif
+-
+-#define  _(String) ((char *) g_dgettext (GETTEXT_PACKAGE, String))
+-#define Q_(String) g_dpgettext (GETTEXT_PACKAGE, String, 0)
++#define  _(String) (String)
++#define Q_(String) (String)
+ #define N_(String) (String)
+-#define C_(Context,String) g_dpgettext (GETTEXT_PACKAGE, Context "\004" String, strlen (Context) + 1)
++#define C_(Context,String) (String)
+ #define NC_(Context, String) (String)
+ 
+ #endif  /* __G_I18N_LIB_H__ */

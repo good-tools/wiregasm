@@ -1,0 +1,25 @@
+Why: Install lrexlib: it is a private dependency of wslua, but must be linked explicitly into the static wasm build.
+
+diff --git a/epan/wslua/lrexlib/CMakeLists.txt b/epan/wslua/lrexlib/CMakeLists.txt
+index e87988bd7cf75f70ba80c1b3e2e9257158028426..bc2bdecda96ebff6015b68bf5b041da94157db86 100644
+--- a/epan/wslua/lrexlib/CMakeLists.txt
++++ b/epan/wslua/lrexlib/CMakeLists.txt
+@@ -28,3 +28,17 @@ add_compile_definitions(
+ 	VERSION=\"2.9.2\"
+ 	PCRE2_CODE_UNIT_WIDTH=8
+ )
++
++set_target_properties(lrexlib PROPERTIES
++	PREFIX "lib"
++	LINK_FLAGS "${WS_LINK_FLAGS}"
++	FOLDER "DLLs"
++	INSTALL_RPATH "${LIBRARY_INSTALL_RPATH}"
++)
++
++install(TARGETS lrexlib
++	EXPORT WiresharkTargets
++	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
++	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
++	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
++)
+\ No newline at end of file

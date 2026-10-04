@@ -16,22 +16,20 @@ After the WASM library is built, the wrapper lib can be built using `npm run bui
 See the [Makefile](Makefile) and [mk/](mk) for how dependencies are built: each one is described in `mk/deps/<pkg>.mk`.
 
 ### Patches
-Cross-compiling Wireshark for emscripten/WASM isn't straightforward as it also depends on several other libraries to make it work, and those libraries also need to be ported to emscripten.
+Cross-compiling Wireshark for Emscripten/WASM needs changes to Wireshark and to some of its dependencies (glib and libffi were ported by [kleisauke](https://github.com/kleisauke) for wasm-vips). They are kept Brave-style:
 
-* libffi
-  * https://github.com/libffi/libffi/compare/v3.4.4...kleisauke:wasm-vips.patch by [kleisauke](https://github.com/kleisauke)
-* glib
-  * https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0.patch by [kleisauke](https://github.com/kleisauke)
-* wireshark
-  * `0001-dont-build-radiotap-lemon.patch`
-    * Disables building `Lemon` - Wireshark builds the tool and uses it to process files within the build process. Instead of building it, we provide it externally.
-    * Disables building `radiotap` subdir - It has a dependency on `libpcap`
-  * `0002-fix-cpu-name-unknown.patch` - Fix compilation error for undefined `model_name` variable
-  * `0003-disable-snort-emscripten.patch` - Disable the Snort dissector
-  * `0004-export-wireshark-common.patch` - Expose some headers and objects that are not part of `epan`
-  * `0005-force-data-dir.patch` - Force `/wireshark` as the data directory. It is needed for loading preferences, profiles and color filters
-  * `0006-threadless-registration.patch` - Makes dissector registrations threadless
-  * `0007-export-lrexlib.patch` - Expose `lrexlib`, which is really a private dependency, but which isn't linked properly if not exported.
+* `patches/<pkg>/<path-with-dashes>.patch`: one patch per modified upstream file, starting with a `Why:` line
+* `overlay/<pkg>/<path>`: new files, copied into the source tree as-is
+
+To change a dependency:
+
+```sh
+make src PKG=wireshark             # build/src/wireshark = upstream + overlay + patches, in git
+# edit files under build/src/wireshark (git add any new files), then rebuild with make
+make update-patches PKG=wireshark  # write the edits back to patches/ and overlay/
+```
+
+`make check-patches` verifies that every patch still applies.
 
 ## Usage
 The Wiregasm `Dissect Session` implementation is effectively a tiny subset of `sharkd` APIs.

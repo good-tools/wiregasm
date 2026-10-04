@@ -1,0 +1,60 @@
+Why: Add support for WebAssembly
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gsocketinputstream.c b/gio/gsocketinputstream.c
+index 5307fcdada43ce3a2f7e9e4bc1e70366db00a2da..1c4a6421ae74655d050c7ba62af9672c866a2a40 100644
+--- a/gio/gsocketinputstream.c
++++ b/gio/gsocketinputstream.c
+@@ -41,14 +41,16 @@ struct _GSocketInputStreamPrivate
+   gsize count;
+ };
+ 
+-static void g_socket_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface);
+-#ifdef G_OS_UNIX
+-static void g_socket_input_stream_file_descriptor_based_iface_init (GFileDescriptorBasedIface *iface);
++static void g_socket_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface,
++                                                       gpointer                       iface_data);
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
++static void g_socket_input_stream_file_descriptor_based_iface_init (GFileDescriptorBasedIface *iface,
++                                                                    gpointer                   iface_data);
+ #endif
+ 
+ #define g_socket_input_stream_get_type _g_socket_input_stream_get_type
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ G_DEFINE_TYPE_WITH_CODE (GSocketInputStream, g_socket_input_stream, G_TYPE_INPUT_STREAM,
+                          G_ADD_PRIVATE (GSocketInputStream)
+ 			 G_IMPLEMENT_INTERFACE (G_TYPE_POLLABLE_INPUT_STREAM, g_socket_input_stream_pollable_iface_init)
+@@ -168,7 +170,7 @@ g_socket_input_stream_pollable_read_nonblocking (GPollableInputStream  *pollable
+ 					 NULL, error);
+ }
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ static int
+ g_socket_input_stream_get_fd (GFileDescriptorBased *fd_based)
+ {
+@@ -198,16 +200,18 @@ g_socket_input_stream_class_init (GSocketInputStreamClass *klass)
+ 							G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+ }
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ static void
+-g_socket_input_stream_file_descriptor_based_iface_init (GFileDescriptorBasedIface *iface)
++g_socket_input_stream_file_descriptor_based_iface_init (GFileDescriptorBasedIface *iface,
++                                                        gpointer                   iface_data)
+ {
+   iface->get_fd = g_socket_input_stream_get_fd;
+ }
+ #endif
+ 
+ static void
+-g_socket_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface)
++g_socket_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface,
++                                           gpointer                       iface_data)
+ {
+   iface->is_readable = g_socket_input_stream_pollable_is_readable;
+   iface->create_source = g_socket_input_stream_pollable_create_source;

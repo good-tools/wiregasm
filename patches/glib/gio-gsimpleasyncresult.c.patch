@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gsimpleasyncresult.c b/gio/gsimpleasyncresult.c
+index d0de309735aa21a7b5e46b2440d8adf684cff387..fa677e5db424997d99024cf026ca847017062dbf 100644
+--- a/gio/gsimpleasyncresult.c
++++ b/gio/gsimpleasyncresult.c
+@@ -207,7 +207,8 @@
+ 
+ G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+ 
+-static void g_simple_async_result_async_result_iface_init (GAsyncResultIface       *iface);
++static void g_simple_async_result_async_result_iface_init (GAsyncResultIface       *iface,
++                                                           gpointer                 iface_data);
+ 
+ struct _GSimpleAsyncResult
+ {
+@@ -466,7 +467,8 @@ g_simple_async_result_is_tagged (GAsyncResult *res,
+ }
+ 
+ static void
+-g_simple_async_result_async_result_iface_init (GAsyncResultIface *iface)
++g_simple_async_result_async_result_iface_init (GAsyncResultIface *iface,
++                                               gpointer           iface_data)
+ {
+   iface->get_user_data = g_simple_async_result_get_user_data;
+   iface->get_source_object = g_simple_async_result_get_source_object;

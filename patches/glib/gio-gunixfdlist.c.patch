@@ -1,0 +1,18 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gunixfdlist.c b/gio/gunixfdlist.c
+index e0617141422c8b0885d408dd01c3a319f63ea1ea..d7ced32fe3fbf99a4f463320c83699f3561c29bf 100644
+--- a/gio/gunixfdlist.c
++++ b/gio/gunixfdlist.c
+@@ -54,6 +54,10 @@
+ #include "glib/glib-private.h"
+ #include "glib/gstdio.h"
+ 
++#ifdef G_OS_UNIX
++#include <unistd.h>  /* dup() */
++#endif
++
+ #ifdef G_OS_WIN32
+ #include <io.h>
+ #endif

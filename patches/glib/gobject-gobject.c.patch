@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gobject/gobject.c b/gobject/gobject.c
+index d0e2e877f34e27d3a5c8475b79e48eca2e97a89a..a3c5f4b01bb9cb0f4ff333101231c0651c285ffd 100644
+--- a/gobject/gobject.c
++++ b/gobject/gobject.c
+@@ -203,7 +203,8 @@ G_STATIC_ASSERT(G_STRUCT_OFFSET(GObject, qdata) == G_STRUCT_OFFSET(GObjectReal,
+ /* --- prototypes --- */
+ static void	g_object_base_class_init		(GObjectClass	*class);
+ static void	g_object_base_class_finalize		(GObjectClass	*class);
+-static void	g_object_do_class_init			(GObjectClass	*class);
++static void	g_object_do_class_init			(GObjectClass	*class,
++							 gpointer	 class_data);
+ static void	g_object_init				(GObject	*object,
+ 							 GObjectClass	*class);
+ static GObject*	g_object_constructor			(GType                  type,
+@@ -518,7 +519,8 @@ g_object_base_class_finalize (GObjectClass *class)
+ }
+ 
+ static void
+-g_object_do_class_init (GObjectClass *class)
++g_object_do_class_init (GObjectClass *class,
++                        gpointer      class_data)
+ {
+   /* read the comment about typedef struct CArray; on why not to change this quark */
+   quark_closure_array = g_quark_from_static_string ("GObject-closure-array");

@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gfileoutputstream.c b/gio/gfileoutputstream.c
+index d767c53a183b5751cb178c30953c438f077100c5..495bfa893b2291f079b55e47d25e6f8961de3dc4 100644
+--- a/gio/gfileoutputstream.c
++++ b/gio/gfileoutputstream.c
+@@ -54,7 +54,8 @@
+  * stream, use g_seekable_truncate().
+  **/
+ 
+-static void       g_file_output_stream_seekable_iface_init    (GSeekableIface       *iface);
++static void       g_file_output_stream_seekable_iface_init    (GSeekableIface       *iface,
++                                                               gpointer              iface_data);
+ static goffset    g_file_output_stream_seekable_tell          (GSeekable            *seekable);
+ static gboolean   g_file_output_stream_seekable_can_seek      (GSeekable            *seekable);
+ static gboolean   g_file_output_stream_seekable_seek          (GSeekable            *seekable,
+@@ -94,7 +95,8 @@ g_file_output_stream_class_init (GFileOutputStreamClass *klass)
+ }
+ 
+ static void
+-g_file_output_stream_seekable_iface_init (GSeekableIface *iface)
++g_file_output_stream_seekable_iface_init (GSeekableIface *iface,
++                                          gpointer        iface_data)
+ {
+   iface->tell = g_file_output_stream_seekable_tell;
+   iface->can_seek = g_file_output_stream_seekable_can_seek;

@@ -1,0 +1,53 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gdbusproxy.c b/gio/gdbusproxy.c
+index 292c7b5e1697043ee3e0e4b653ecf67e188be300..b40ee81c1f878b06dabaf72af0bfcc1d6619d5e1 100644
+--- a/gio/gdbusproxy.c
++++ b/gio/gdbusproxy.c
+@@ -177,9 +177,12 @@ enum
+ 
+ static guint signals[LAST_SIGNAL] = {0};
+ 
+-static void dbus_interface_iface_init (GDBusInterfaceIface *dbus_interface_iface);
+-static void initable_iface_init       (GInitableIface *initable_iface);
+-static void async_initable_iface_init (GAsyncInitableIface *async_initable_iface);
++static void dbus_interface_iface_init (GDBusInterfaceIface *dbus_interface_iface,
++                                       gpointer             iface_data);
++static void initable_iface_init       (GInitableIface *initable_iface,
++                                       gpointer        iface_data);
++static void async_initable_iface_init (GAsyncInitableIface *async_initable_iface,
++                                       gpointer             iface_data);
+ 
+ G_DEFINE_TYPE_WITH_CODE (GDBusProxy, g_dbus_proxy, G_TYPE_OBJECT,
+                          G_ADD_PRIVATE (GDBusProxy)
+@@ -1849,7 +1852,8 @@ async_initable_init_finish (GAsyncInitable  *initable,
+ }
+ 
+ static void
+-async_initable_iface_init (GAsyncInitableIface *async_initable_iface)
++async_initable_iface_init (GAsyncInitableIface *async_initable_iface,
++                           gpointer            iface_data)
+ {
+   async_initable_iface->init_async = async_initable_init_async;
+   async_initable_iface->init_finish = async_initable_init_finish;
+@@ -1936,7 +1940,8 @@ initable_init (GInitable     *initable,
+ }
+ 
+ static void
+-initable_iface_init (GInitableIface *initable_iface)
++initable_iface_init (GInitableIface *initable_iface,
++                     gpointer        iface_data)
+ {
+   initable_iface->init = initable_init;
+ }
+@@ -3191,7 +3196,8 @@ _g_dbus_proxy_set_object (GDBusInterface *interface,
+ }
+ 
+ static void
+-dbus_interface_iface_init (GDBusInterfaceIface *dbus_interface_iface)
++dbus_interface_iface_init (GDBusInterfaceIface *dbus_interface_iface,
++                           gpointer             iface_data)
+ {
+   dbus_interface_iface->get_info   = _g_dbus_proxy_get_info;
+   dbus_interface_iface->get_object = _g_dbus_proxy_get_object;

@@ -1,0 +1,120 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gdummytlsbackend.c b/gio/gdummytlsbackend.c
+index 1ec00c99e8b2d42b3a75b186b5e5e31485679cf5..d2f73c5f3a358dcdde1de1d6f96635a75ab43d56 100644
+--- a/gio/gdummytlsbackend.c
++++ b/gio/gdummytlsbackend.c
+@@ -53,7 +53,8 @@ struct _GDummyTlsBackend {
+   GTlsDatabase *database;
+ };
+ 
+-static void g_dummy_tls_backend_iface_init (GTlsBackendInterface *iface);
++static void g_dummy_tls_backend_iface_init (GTlsBackendInterface *iface,
++                                            gpointer              iface_data);
+ 
+ #define g_dummy_tls_backend_get_type _g_dummy_tls_backend_get_type
+ G_DEFINE_TYPE_WITH_CODE (GDummyTlsBackend, g_dummy_tls_backend, G_TYPE_OBJECT,
+@@ -105,7 +106,8 @@ g_dummy_tls_backend_get_default_database (GTlsBackend *backend)
+ }
+ 
+ static void
+-g_dummy_tls_backend_iface_init (GTlsBackendInterface *iface)
++g_dummy_tls_backend_iface_init (GTlsBackendInterface *iface,
++                                gpointer              iface_data)
+ {
+   iface->get_certificate_type = _g_dummy_tls_certificate_get_type;
+   iface->get_client_connection_type = _g_dummy_tls_connection_get_type;
+@@ -140,7 +142,8 @@ enum
+   PROP_CERT_ISSUER
+ };
+ 
+-static void g_dummy_tls_certificate_initable_iface_init (GInitableIface *iface);
++static void g_dummy_tls_certificate_initable_iface_init (GInitableIface *iface,
++                                                         gpointer        iface_data);
+ 
+ #define g_dummy_tls_certificate_get_type _g_dummy_tls_certificate_get_type
+ G_DEFINE_TYPE_WITH_CODE (GDummyTlsCertificate, g_dummy_tls_certificate, G_TYPE_TLS_CERTIFICATE,
+@@ -199,7 +202,8 @@ g_dummy_tls_certificate_initable_init (GInitable       *initable,
+ }
+ 
+ static void
+-g_dummy_tls_certificate_initable_iface_init (GInitableIface  *iface)
++g_dummy_tls_certificate_initable_iface_init (GInitableIface  *iface,
++                                             gpointer         iface_data)
+ {
+   iface->init = g_dummy_tls_certificate_initable_init;
+ }
+@@ -242,7 +246,8 @@ enum
+   PROP_CONN_NEGOTIATED_PROTOCOL,
+ };
+ 
+-static void g_dummy_tls_connection_initable_iface_init (GInitableIface *iface);
++static void g_dummy_tls_connection_initable_iface_init (GInitableIface *iface,
++                                                        gpointer        iface_data);
+ 
+ #define g_dummy_tls_connection_get_type _g_dummy_tls_connection_get_type
+ G_DEFINE_TYPE_WITH_CODE (GDummyTlsConnection, g_dummy_tls_connection, G_TYPE_TLS_CONNECTION,
+@@ -325,7 +330,8 @@ g_dummy_tls_connection_initable_init (GInitable       *initable,
+ }
+ 
+ static void
+-g_dummy_tls_connection_initable_iface_init (GInitableIface  *iface)
++g_dummy_tls_connection_initable_iface_init (GInitableIface  *iface,
++                                            gpointer         iface_data)
+ {
+   iface->init = g_dummy_tls_connection_initable_init;
+ }
+@@ -363,7 +369,8 @@ enum
+   PROP_DTLS_CONN_AUTHENTICATION_MODE,
+ };
+ 
+-static void g_dummy_dtls_connection_initable_iface_init (GInitableIface *iface);
++static void g_dummy_dtls_connection_initable_iface_init (GInitableIface *iface,
++                                                         gpointer        iface_data);
+ 
+ #define g_dummy_dtls_connection_get_type _g_dummy_dtls_connection_get_type
+ G_DEFINE_TYPE_WITH_CODE (GDummyDtlsConnection, g_dummy_dtls_connection, G_TYPE_OBJECT,
+@@ -427,7 +434,8 @@ g_dummy_dtls_connection_initable_init (GInitable       *initable,
+ }
+ 
+ static void
+-g_dummy_dtls_connection_initable_iface_init (GInitableIface  *iface)
++g_dummy_dtls_connection_initable_iface_init (GInitableIface  *iface,
++                                             gpointer         iface_data)
+ {
+   iface->init = g_dummy_dtls_connection_initable_init;
+ }
+@@ -453,8 +461,10 @@ enum
+   PROP_ANCHORS,
+ };
+ 
+-static void g_dummy_tls_database_file_database_iface_init (GTlsFileDatabaseInterface *iface);
+-static void g_dummy_tls_database_initable_iface_init (GInitableIface *iface);
++static void g_dummy_tls_database_file_database_iface_init (GTlsFileDatabaseInterface *iface,
++                                                           gpointer                   iface_data);
++static void g_dummy_tls_database_initable_iface_init (GInitableIface *iface,
++                                                      gpointer        iface_data);
+ 
+ #define g_dummy_tls_database_get_type _g_dummy_tls_database_get_type
+ G_DEFINE_TYPE_WITH_CODE (GDummyTlsDatabase, g_dummy_tls_database, G_TYPE_TLS_DATABASE,
+@@ -502,7 +512,8 @@ g_dummy_tls_database_init (GDummyTlsDatabase *database)
+ }
+ 
+ static void
+-g_dummy_tls_database_file_database_iface_init (GTlsFileDatabaseInterface  *iface)
++g_dummy_tls_database_file_database_iface_init (GTlsFileDatabaseInterface  *iface,
++                                               gpointer                    iface_data)
+ {
+ }
+ 
+@@ -517,7 +528,8 @@ g_dummy_tls_database_initable_init (GInitable       *initable,
+ }
+ 
+ static void
+-g_dummy_tls_database_initable_iface_init (GInitableIface  *iface)
++g_dummy_tls_database_initable_iface_init (GInitableIface  *iface,
++                                          gpointer         iface_data)
+ {
+   iface->init = g_dummy_tls_database_initable_init;
+ }

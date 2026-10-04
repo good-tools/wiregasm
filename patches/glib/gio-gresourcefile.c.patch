@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gresourcefile.c b/gio/gresourcefile.c
+index 24f20f2903d24ae660c37a1f95e1d9f05f3d1594..a52dbbca513777ff10255f89d188e793bf3802db 100644
+--- a/gio/gresourcefile.c
++++ b/gio/gresourcefile.c
+@@ -68,7 +68,8 @@ struct _GResourceFileEnumeratorClass
+ typedef struct _GResourceFileEnumerator        GResourceFileEnumerator;
+ typedef struct _GResourceFileEnumeratorClass   GResourceFileEnumeratorClass;
+ 
+-static void g_resource_file_file_iface_init (GFileIface *iface);
++static void g_resource_file_file_iface_init (GFileIface *iface,
++                                             gpointer    iface_data);
+ 
+ static GFileAttributeInfoList *resource_writable_attributes = NULL;
+ static GFileAttributeInfoList *resource_writable_namespaces = NULL;
+@@ -660,7 +661,8 @@ g_resource_file_set_display_name (GFile         *file,
+ }
+ 
+ static void
+-g_resource_file_file_iface_init (GFileIface *iface)
++g_resource_file_file_iface_init (GFileIface *iface,
++                                 gpointer    iface_data)
+ {
+   iface->dup = g_resource_file_dup;
+   iface->hash = g_resource_file_hash;
