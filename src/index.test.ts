@@ -791,7 +791,9 @@ describe("Wiregasm Library - Set Preferences", () => {
 
     const pref2 = wg.get_pref("http", "tcp.port");
     expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
-    expect(pref2.range_value).toBe("8001");
+    expect(pref2.range_value).toContain("8001");
+    // defaults should still be present
+    expect(pref2.range_value).toContain("80");
   });
 
   test("set preferences works for diameter", async () => {
@@ -803,7 +805,9 @@ describe("Wiregasm Library - Set Preferences", () => {
 
     const pref2 = wg.get_pref("diameter", "tcp.port");
     expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
-    expect(pref2.range_value).toBe("3871");
+    expect(pref2.range_value).toContain("3871");
+    // default should still be present
+    expect(pref2.range_value).toContain("3868");
 
     const data = await fs.readFile("samples/diameter_non_standard.pcap");
     const ret = wg.load("diameter_non_standard.pcap", data);
@@ -825,7 +829,9 @@ describe("Wiregasm Library - Set Preferences", () => {
 
     const pref2 = wg.get_pref("sip", "tcp.port");
     expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
-    expect(pref2.range_value).toBe("8001");
+    expect(pref2.range_value).toContain("8001");
+    // default should still be present
+    expect(pref2.range_value).toContain("5060");
   });
 });
 

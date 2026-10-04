@@ -195,7 +195,7 @@ gpg-error: libgpg-error-$(GPGERROR_VERSION).tar.bz2 .sum-gpg-error
 # GCRYPT
 #
 GCRYPT_VERSION := 1.10.1
-GCRYPT_URL := http://www.gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-$(GCRYPT_VERSION).tar.bz2
+GCRYPT_URL := https://www.gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-$(GCRYPT_VERSION).tar.bz2
 GCRYPT_CHECKSUM := e5ca7966624fff16c3013795836a2c4377f0193dbb4ac5ad2b79654b1fa8992e17d83816569a402212dc8367a7980d4141f5d6ac282bae6b9f02186365b61f13
 GCRYPT_CONF = \
 	--enable-ciphers=aes,des,rfc2268,arcfour,chacha20 \

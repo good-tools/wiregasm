@@ -4,27 +4,46 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - '**.md'
   pull_request:
     branches:
       - master
+    paths-ignore:
+      - '**.md'
+
+# A new push to a PR cancels its outdated run. Runs on master always finish,
+# because the Release workflow is triggered by them.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  EMSDK_VERSION: 3.1.31
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    if: |
-      !contains(github.event.head_commit.message, 'skip-ci')
 
     steps:
-    - uses: actions/checkout@v3
-    
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+    - name: Configure Node.js
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: 22
+        cache: 'npm'
+
     - name: Stash old path
       run: echo "OLD_PATH=$PATH" >> "${GITHUB_ENV}"
 
     - name: Setup emsdk
       uses: mymindstorm/setup-emsdk@v11
       with:
-        version: 3.1.31
-        # actions-cache-folder: 'emsdk-cache'
+        version: ${{ env.EMSDK_VERSION }}
 
     - name: Verify EMSDK
       run: emcc -v
@@ -44,24 +63,32 @@ jobs:
           libtool \
           libltdl-dev
 
-    - uses: actions/cache@v3
+    # Caches the installed dependencies (glib, wireshark, ...) only. The key
+    # covers everything that changes them; lib/wiregasm is always rebuilt.
+    - name: Cache dependencies
+      id: deps-cache
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |
-          built/*
-          !built/bin/wiregasm.js
-          !built/bin/wiregasm.wasm
-          !built/share/wiregasm/wiregasm.data
-          lib/*
-          !lib/wiregasm
-          !lib/crossfile.meson
-          !lib/Makefile
-        key: lib-${{ hashFiles('patches/**', 'lib/Makefile', 'lib/crossfile.meson') }}
+          built
+          !built/bin/wiregasm.*
+          !built/share/wiregasm
+        key: deps-emsdk-${{ env.EMSDK_VERSION }}-${{ hashFiles('patches/**', 'lib/Makefile', 'lib/crossfile.meson') }}
 
+    # On a cache hit, `-o .wireshark` tells make to treat the dependency chain
+    # as built and only compile lib/wiregasm against the restored prefix.
     - name: Build WASM lib
-      run: npm run build:emscripten-local
+      env:
+        CACHE_HIT: ${{ steps.deps-cache.outputs.cache-hit }}
+      run: |
+        if [ "$CACHE_HIT" = "true" ]; then
+          make -C lib -j"$(nproc)" -o .wireshark
+        else
+          make -C lib -j"$(nproc)"
+        fi
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: lib
         path: |
