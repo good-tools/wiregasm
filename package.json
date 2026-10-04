@@ -15,7 +15,8 @@
     "test": "jest --coverage",
     "lint": "biome ci . && npm run lint:cpp",
     "lint:cpp": "git ls-files 'lib/wiregasm/*.cpp' 'lib/wiregasm/*.h' | xargs clang-format --dry-run --Werror",
-    "fix": "biome check --write . && git ls-files 'lib/wiregasm/*.cpp' 'lib/wiregasm/*.h' | xargs clang-format -i"
+    "fix": "biome check --write . && git ls-files 'lib/wiregasm/*.cpp' 'lib/wiregasm/*.h' | xargs clang-format -i",
+    "size-check": "node scripts/size-check.mjs"
   },
   "keywords": [
     "pcap",

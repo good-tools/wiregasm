@@ -117,3 +117,7 @@ jobs:
 
     - name: Run Tests
       run: npm test
+
+    # gzipped wasm + data must stay within +10% of the latest npm release
+    - name: Size check
+      run: npm run size-check
