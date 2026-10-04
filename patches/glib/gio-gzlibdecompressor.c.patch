@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gzlibdecompressor.c b/gio/gzlibdecompressor.c
+index f7045093e681ac4c4662ea9fe046556c15b740d5..1133d5e5e2a7e20de28a096b5228232d0750d8c3 100644
+--- a/gio/gzlibdecompressor.c
++++ b/gio/gzlibdecompressor.c
+@@ -50,7 +50,8 @@ enum {
+  * decompresses data compressed with zlib.
+  */
+ 
+-static void g_zlib_decompressor_iface_init          (GConverterIface *iface);
++static void g_zlib_decompressor_iface_init          (GConverterIface *iface,
++                                                     gpointer         iface_data);
+ 
+ typedef struct {
+   gz_header gzheader;
+@@ -411,7 +412,8 @@ g_zlib_decompressor_convert (GConverter *converter,
+ }
+ 
+ static void
+-g_zlib_decompressor_iface_init (GConverterIface *iface)
++g_zlib_decompressor_iface_init (GConverterIface *iface,
++                                gpointer         iface_data)
+ {
+   iface->convert = g_zlib_decompressor_convert;
+   iface->reset = g_zlib_decompressor_reset;

@@ -1,0 +1,53 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gportalsupport.c b/gio/gportalsupport.c
+index 7d0e3226c4c8179b033a57f28dbd8cf22e7bc22d..b471d32ac4c1942db79f6e2c53935ffc45afd61a 100644
+--- a/gio/gportalsupport.c
++++ b/gio/gportalsupport.c
+@@ -27,6 +27,7 @@ static gboolean use_portal;
+ static gboolean network_available;
+ static gboolean dconf_access;
+ 
++#ifndef G_PLATFORM_WASM
+ static void
+ read_flatpak_info (void)
+ {
+@@ -88,24 +89,37 @@ read_flatpak_info (void)
+ 
+   g_once_init_leave (&flatpak_info_read, 1);
+ }
++#endif
+ 
+ gboolean
+ glib_should_use_portal (void)
+ {
++#ifdef G_PLATFORM_WASM
++  return FALSE;
++#else
+   read_flatpak_info ();
+   return use_portal;
++#endif
+ }
+ 
+ gboolean
+ glib_network_available_in_sandbox (void)
+ {
++#ifdef G_PLATFORM_WASM
++  return FALSE;
++#else
+   read_flatpak_info ();
+   return network_available;
++#endif
+ }
+ 
+ gboolean
+ glib_has_dconf_access_in_sandbox (void)
+ {
++#ifdef G_PLATFORM_WASM
++  return FALSE;
++#else
+   read_flatpak_info ();
+   return dconf_access;
++#endif
+ }

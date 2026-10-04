@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gproxyresolverportal.c b/gio/gproxyresolverportal.c
+index ec803b9c4120e051184dad15173972d4b1b387e3..a25e6e8ccb100386e4f73b6af4548428f6c2e6f0 100644
+--- a/gio/gproxyresolverportal.c
++++ b/gio/gproxyresolverportal.c
+@@ -33,7 +33,8 @@ struct _GProxyResolverPortal {
+   gboolean network_available;
+ };
+ 
+-static void g_proxy_resolver_portal_iface_init (GProxyResolverInterface *iface);
++static void g_proxy_resolver_portal_iface_init (GProxyResolverInterface *iface,
++                                                gpointer                 iface_data);
+ 
+ G_DEFINE_TYPE_WITH_CODE (GProxyResolverPortal, g_proxy_resolver_portal, G_TYPE_OBJECT,
+                          G_IMPLEMENT_INTERFACE (G_TYPE_PROXY_RESOLVER,
+@@ -201,7 +202,8 @@ g_proxy_resolver_portal_class_init (GProxyResolverPortalClass *resolver_class)
+ }
+ 
+ static void
+-g_proxy_resolver_portal_iface_init (GProxyResolverInterface *iface)
++g_proxy_resolver_portal_iface_init (GProxyResolverInterface *iface,
++                                    gpointer                 iface_data)
+ {
+   iface->is_supported = g_proxy_resolver_portal_is_supported;
+   iface->lookup = g_proxy_resolver_portal_lookup;

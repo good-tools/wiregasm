@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gdbusserver.c b/gio/gdbusserver.c
+index db0c9ab50a822501be62419794f0173489aed16e..cd40a20bd44b9723203cf3186199a8bae0cedc39 100644
+--- a/gio/gdbusserver.c
++++ b/gio/gdbusserver.c
+@@ -165,7 +165,8 @@ enum
+ 
+ static guint _signals[LAST_SIGNAL] = {0};
+ 
+-static void initable_iface_init       (GInitableIface *initable_iface);
++static void initable_iface_init       (GInitableIface *initable_iface,
++                                       gpointer        iface_data);
+ 
+ G_DEFINE_TYPE_WITH_CODE (GDBusServer, g_dbus_server, G_TYPE_OBJECT,
+                          G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
+@@ -1182,7 +1183,8 @@ initable_init (GInitable     *initable,
+ 
+ 
+ static void
+-initable_iface_init (GInitableIface *initable_iface)
++initable_iface_init (GInitableIface *initable_iface,
++                     gpointer        iface_data)
+ {
+   initable_iface->init = initable_init;
+ }

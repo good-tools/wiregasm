@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gemblem.c b/gio/gemblem.c
+index af1ba000609031af012b6133fa822d84d55d34af..7f926f2b68dc42e71a552d3f3daf1fd3a9c4d7fe 100644
+--- a/gio/gemblem.c
++++ b/gio/gemblem.c
+@@ -44,7 +44,8 @@
+  * supported. More may be added in the future.
+  */
+ 
+-static void g_emblem_iface_init (GIconIface *iface);
++static void g_emblem_iface_init (GIconIface *iface,
++                                 gpointer    iface_data);
+ 
+ struct _GEmblem
+ {
+@@ -371,7 +372,8 @@ g_emblem_serialize (GIcon *icon)
+ }
+ 
+ static void
+-g_emblem_iface_init (GIconIface *iface)
++g_emblem_iface_init (GIconIface *iface,
++                     gpointer    iface_data)
+ {
+   iface->hash  = g_emblem_hash;
+   iface->equal = g_emblem_equal;

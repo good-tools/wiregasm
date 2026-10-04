@@ -1,0 +1,47 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gmemoryoutputstream.c b/gio/gmemoryoutputstream.c
+index 0339a7ad7de174895dcb98659627eb9cf9098a4c..119554ee6d24c49809d47b04e7edc89d87aefaf7 100644
+--- a/gio/gmemoryoutputstream.c
++++ b/gio/gmemoryoutputstream.c
+@@ -99,7 +99,8 @@ static gboolean g_memory_output_stream_close_finish (GOutputStream        *strea
+                                                      GAsyncResult         *result,
+                                                      GError              **error);
+ 
+-static void     g_memory_output_stream_seekable_iface_init (GSeekableIface  *iface);
++static void     g_memory_output_stream_seekable_iface_init (GSeekableIface  *iface,
++                                                            gpointer         iface_data);
+ static goffset  g_memory_output_stream_tell                (GSeekable       *seekable);
+ static gboolean g_memory_output_stream_can_seek            (GSeekable       *seekable);
+ static gboolean g_memory_output_stream_seek                (GSeekable       *seekable,
+@@ -117,7 +118,8 @@ static gboolean g_memory_output_stream_is_writable       (GPollableOutputStream
+ static GSource *g_memory_output_stream_create_source     (GPollableOutputStream *stream,
+                                                           GCancellable          *cancellable);
+ 
+-static void g_memory_output_stream_pollable_iface_init (GPollableOutputStreamInterface *iface);
++static void g_memory_output_stream_pollable_iface_init (GPollableOutputStreamInterface *iface,
++                                                        gpointer                        iface_data);
+ 
+ G_DEFINE_TYPE_WITH_CODE (GMemoryOutputStream, g_memory_output_stream, G_TYPE_OUTPUT_STREAM,
+                          G_ADD_PRIVATE (GMemoryOutputStream)
+@@ -224,7 +226,8 @@ g_memory_output_stream_class_init (GMemoryOutputStreamClass *klass)
+ }
+ 
+ static void
+-g_memory_output_stream_pollable_iface_init (GPollableOutputStreamInterface *iface)
++g_memory_output_stream_pollable_iface_init (GPollableOutputStreamInterface *iface,
++                                            gpointer                        iface_data)
+ {
+   iface->is_writable = g_memory_output_stream_is_writable;
+   iface->create_source = g_memory_output_stream_create_source;
+@@ -313,7 +316,8 @@ g_memory_output_stream_finalize (GObject *object)
+ }
+ 
+ static void
+-g_memory_output_stream_seekable_iface_init (GSeekableIface *iface)
++g_memory_output_stream_seekable_iface_init (GSeekableIface *iface,
++                                            gpointer        iface_data)
+ {
+   iface->tell         = g_memory_output_stream_tell;
+   iface->can_seek     = g_memory_output_stream_can_seek;

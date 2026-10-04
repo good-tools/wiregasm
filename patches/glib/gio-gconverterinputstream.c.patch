@@ -1,0 +1,28 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gconverterinputstream.c b/gio/gconverterinputstream.c
+index 59277bf833fe53b9b531ae4d75b0c027cbea0690..306d1235f645014c6a504bb9cdc6acd22a58e4d7 100644
+--- a/gio/gconverterinputstream.c
++++ b/gio/gconverterinputstream.c
+@@ -93,8 +93,8 @@ static gssize   g_converter_input_stream_read_nonblocking (GPollableInputStream
+ static GSource *g_converter_input_stream_create_source    (GPollableInputStream *stream,
+ 							   GCancellable          *cancellable);
+ 
+-static void g_converter_input_stream_pollable_iface_init  (GPollableInputStreamInterface *iface);
+-
++static void g_converter_input_stream_pollable_iface_init  (GPollableInputStreamInterface *iface,
++                                                           gpointer                       iface_data);
+ G_DEFINE_TYPE_WITH_CODE (GConverterInputStream,
+ 			 g_converter_input_stream,
+ 			 G_TYPE_FILTER_INPUT_STREAM,
+@@ -129,7 +129,8 @@ g_converter_input_stream_class_init (GConverterInputStreamClass *klass)
+ }
+ 
+ static void
+-g_converter_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface)
++g_converter_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface,
++                                              gpointer                       iface_data)
+ {
+   iface->can_poll = g_converter_input_stream_can_poll;
+   iface->is_readable = g_converter_input_stream_is_readable;

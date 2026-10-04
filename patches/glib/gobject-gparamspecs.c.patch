@@ -1,0 +1,227 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gobject/gparamspecs.c b/gobject/gparamspecs.c
+index 17b8606572385dca8453e7d5a6194db0706dad08..7d3f77984e722002718581ab97e7e4b33cea80d6 100644
+--- a/gobject/gparamspecs.c
++++ b/gobject/gparamspecs.c
+@@ -66,7 +66,8 @@
+ 
+ /* --- param spec functions --- */
+ static void
+-param_char_init (GParamSpec *pspec)
++param_char_init (GParamSpec *pspec,
++                 gpointer    class_data)
+ {
+   GParamSpecChar *cspec = G_PARAM_SPEC_CHAR (pspec);
+   
+@@ -105,7 +106,8 @@ param_char_validate (GParamSpec *pspec,
+ }
+ 
+ static void
+-param_uchar_init (GParamSpec *pspec)
++param_uchar_init (GParamSpec *pspec,
++                  gpointer    class_data)
+ {
+   GParamSpecUChar *uspec = G_PARAM_SPEC_UCHAR (pspec);
+   
+@@ -171,7 +173,8 @@ param_boolean_validate (GParamSpec *pspec,
+ }
+ 
+ static void
+-param_int_init (GParamSpec *pspec)
++param_int_init (GParamSpec *pspec,
++                gpointer    class_data)
+ {
+   GParamSpecInt *ispec = G_PARAM_SPEC_INT (pspec);
+   
+@@ -221,7 +224,8 @@ param_int_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_uint_init (GParamSpec *pspec)
++param_uint_init (GParamSpec *pspec,
++                 gpointer    class_data)
+ {
+   GParamSpecUInt *uspec = G_PARAM_SPEC_UINT (pspec);
+   
+@@ -271,7 +275,8 @@ param_uint_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_long_init (GParamSpec *pspec)
++param_long_init (GParamSpec *pspec,
++                 gpointer    class_data)
+ {
+   GParamSpecLong *lspec = G_PARAM_SPEC_LONG (pspec);
+   
+@@ -326,7 +331,8 @@ param_long_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_ulong_init (GParamSpec *pspec)
++param_ulong_init (GParamSpec *pspec,
++                  gpointer    class_data)
+ {
+   GParamSpecULong *uspec = G_PARAM_SPEC_ULONG (pspec);
+   
+@@ -380,7 +386,8 @@ param_ulong_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_int64_init (GParamSpec *pspec)
++param_int64_init (GParamSpec *pspec,
++                  gpointer    class_data)
+ {
+   GParamSpecInt64 *lspec = G_PARAM_SPEC_INT64 (pspec);
+   
+@@ -430,7 +437,8 @@ param_int64_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_uint64_init (GParamSpec *pspec)
++param_uint64_init (GParamSpec *pspec,
++                   gpointer    class_data)
+ {
+   GParamSpecUInt64 *uspec = G_PARAM_SPEC_UINT64 (pspec);
+   
+@@ -480,7 +488,8 @@ param_uint64_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_unichar_init (GParamSpec *pspec)
++param_unichar_init (GParamSpec *pspec,
++                    gpointer    class_data)
+ {
+   GParamSpecUnichar *uspec = G_PARAM_SPEC_UNICHAR (pspec);
+   
+@@ -529,7 +538,8 @@ param_unichar_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_enum_init (GParamSpec *pspec)
++param_enum_init (GParamSpec *pspec,
++                 gpointer    class_data)
+ {
+   GParamSpecEnum *espec = G_PARAM_SPEC_ENUM (pspec);
+   
+@@ -584,7 +594,8 @@ param_enum_validate (GParamSpec *pspec,
+ }
+ 
+ static void
+-param_flags_init (GParamSpec *pspec)
++param_flags_init (GParamSpec *pspec,
++                  gpointer    class_data)
+ {
+   GParamSpecFlags *fspec = G_PARAM_SPEC_FLAGS (pspec);
+   
+@@ -639,7 +650,8 @@ param_flags_validate (GParamSpec *pspec,
+ }
+ 
+ static void
+-param_float_init (GParamSpec *pspec)
++param_float_init (GParamSpec *pspec,
++                  gpointer    class_data)
+ {
+   GParamSpecFloat *fspec = G_PARAM_SPEC_FLOAT (pspec);
+   
+@@ -692,7 +704,8 @@ param_float_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_double_init (GParamSpec *pspec)
++param_double_init (GParamSpec *pspec,
++                   gpointer    class_data)
+ {
+   GParamSpecDouble *dspec = G_PARAM_SPEC_DOUBLE (pspec);
+   
+@@ -745,7 +758,8 @@ param_double_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_string_init (GParamSpec *pspec)
++param_string_init (GParamSpec *pspec,
++                   gpointer    class_data)
+ {
+   GParamSpecString *sspec = G_PARAM_SPEC_STRING (pspec);
+   
+@@ -876,7 +890,8 @@ param_string_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_param_init (GParamSpec *pspec)
++param_param_init (GParamSpec *pspec,
++                  gpointer    class_data)
+ {
+   /* GParamSpecParam *spec = G_PARAM_SPEC_PARAM (pspec); */
+ }
+@@ -919,7 +934,8 @@ param_param_validate (GParamSpec *pspec,
+ }
+ 
+ static void
+-param_boxed_init (GParamSpec *pspec)
++param_boxed_init (GParamSpec *pspec,
++                  gpointer    class_data)
+ {
+   /* GParamSpecBoxed *bspec = G_PARAM_SPEC_BOXED (pspec); */
+ }
+@@ -945,7 +961,8 @@ param_boxed_values_cmp (GParamSpec    *pspec,
+ }
+ 
+ static void
+-param_pointer_init (GParamSpec *pspec)
++param_pointer_init (GParamSpec *pspec,
++                    gpointer    class_data)
+ {
+   /* GParamSpecPointer *spec = G_PARAM_SPEC_POINTER (pspec); */
+ }
+@@ -971,7 +988,8 @@ param_pointer_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_value_array_init (GParamSpec *pspec)
++param_value_array_init (GParamSpec *pspec,
++                        gpointer    class_data)
+ {
+   GParamSpecValueArray *aspec = G_PARAM_SPEC_VALUE_ARRAY (pspec);
+ 
+@@ -1122,7 +1140,8 @@ param_value_array_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_object_init (GParamSpec *pspec)
++param_object_init (GParamSpec *pspec,
++                   gpointer    class_data)
+ {
+   /* GParamSpecObject *ospec = G_PARAM_SPEC_OBJECT (pspec); */
+ }
+@@ -1177,7 +1196,8 @@ param_object_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_override_init (GParamSpec *pspec)
++param_override_init (GParamSpec *pspec,
++                     gpointer    class_data)
+ {
+   /* GParamSpecOverride *ospec = G_PARAM_SPEC_OVERRIDE (pspec); */
+ }
+@@ -1235,7 +1255,8 @@ param_override_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_gtype_init (GParamSpec *pspec)
++param_gtype_init (GParamSpec *pspec,
++                  gpointer    class_data)
+ {
+ }
+ 
+@@ -1290,7 +1311,8 @@ param_gtype_values_cmp (GParamSpec   *pspec,
+ }
+ 
+ static void
+-param_variant_init (GParamSpec *pspec)
++param_variant_init (GParamSpec *pspec,
++                    gpointer    class_data)
+ {
+   GParamSpecVariant *vspec = G_PARAM_SPEC_VARIANT (pspec);
+ 

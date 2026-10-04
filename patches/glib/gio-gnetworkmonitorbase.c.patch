@@ -1,0 +1,40 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gnetworkmonitorbase.c b/gio/gnetworkmonitorbase.c
+index 4654d22e316469af3093bf6b591adb22c3190191..51ceaf7dfa9089c87c8e15be78bbf38c1951330e 100644
+--- a/gio/gnetworkmonitorbase.c
++++ b/gio/gnetworkmonitorbase.c
+@@ -33,8 +33,10 @@
+ #include "gtask.h"
+ #include "glibintl.h"
+ 
+-static void g_network_monitor_base_iface_init (GNetworkMonitorInterface *iface);
+-static void g_network_monitor_base_initable_iface_init (GInitableIface *iface);
++static void g_network_monitor_base_iface_init (GNetworkMonitorInterface *iface,
++                                               gpointer                  iface_data);
++static void g_network_monitor_base_initable_iface_init (GInitableIface *iface,
++                                                        gpointer        iface_data);
+ 
+ enum
+ {
+@@ -344,7 +346,8 @@ g_network_monitor_base_can_reach_finish (GNetworkMonitor  *monitor,
+ }
+ 
+ static void
+-g_network_monitor_base_iface_init (GNetworkMonitorInterface *monitor_iface)
++g_network_monitor_base_iface_init (GNetworkMonitorInterface *monitor_iface,
++                                   gpointer                  iface_data)
+ {
+   monitor_iface->can_reach = g_network_monitor_base_can_reach;
+   monitor_iface->can_reach_async = g_network_monitor_base_can_reach_async;
+@@ -366,7 +369,8 @@ g_network_monitor_base_initable_init (GInitable     *initable,
+ }
+ 
+ static void
+-g_network_monitor_base_initable_iface_init (GInitableIface *iface)
++g_network_monitor_base_initable_iface_init (GInitableIface *iface,
++                                            gpointer        iface_data)
+ {
+   iface->init = g_network_monitor_base_initable_init;
+ }

@@ -1,0 +1,32 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gobject/gtypemodule.h b/gobject/gtypemodule.h
+index e386b50dff51c0190b7b4acfc851a96a1ed043f7..f3096a939bfabd2b4c85594c430a887736c7b5ef 100644
+--- a/gobject/gtypemodule.h
++++ b/gobject/gtypemodule.h
+@@ -209,12 +209,12 @@ type_name##_register_type (GTypeModule *type_module) \
+     sizeof (TypeName##Class), \
+     (GBaseInitFunc) NULL, \
+     (GBaseFinalizeFunc) NULL, \
+-    (GClassInitFunc)(void (*)(void)) type_name##_class_intern_init, \
+-    (GClassFinalizeFunc)(void (*)(void)) type_name##_class_finalize, \
++    (GClassInitFunc) type_name##_class_intern_init, \
++    (GClassFinalizeFunc) type_name##_class_finalize, \
+     NULL,   /* class_data */ \
+     sizeof (TypeName), \
+     0,      /* n_preallocs */ \
+-    (GInstanceInitFunc)(void (*)(void)) type_name##_init, \
++    (GInstanceInitFunc) type_name##_init_adapter, \
+     NULL    /* value_table */ \
+   }; \
+   type_name##_type_id = g_type_module_register_type (type_module, \
+@@ -244,7 +244,7 @@ type_name##_register_type (GTypeModule *type_module) \
+  */
+ #define G_IMPLEMENT_INTERFACE_DYNAMIC(TYPE_IFACE, iface_init)       { \
+   const GInterfaceInfo g_implement_interface_info = { \
+-    (GInterfaceInitFunc)(void (*)(void)) iface_init, NULL, NULL      \
++    (GInterfaceInitFunc) iface_init, NULL, NULL      \
+   }; \
+   g_type_module_add_interface (type_module, g_define_type_id, TYPE_IFACE, &g_implement_interface_info); \
+ }

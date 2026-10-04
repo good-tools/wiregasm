@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gosxappinfo.m b/gio/gosxappinfo.m
+index 60b088641bdc862ecb5625d16d7b61f04d48739a..671baa0645cbfe719864f5dcad183945787a923a 100644
+--- a/gio/gosxappinfo.m
++++ b/gio/gosxappinfo.m
+@@ -43,7 +43,8 @@
+  * Note that `<gio/gosxappinfo.h>` is unique to OSX.
+  */
+ 
+-static void        g_osx_app_info_iface_init (GAppInfoIface *iface);
++static void        g_osx_app_info_iface_init (GAppInfoIface *iface,
++                                              gpointer       iface_data);
+ static const char *g_osx_app_info_get_id     (GAppInfo      *appinfo);
+ 
+ /**
+@@ -557,7 +558,8 @@ g_osx_app_info_can_delete (GAppInfo *appinfo)
+ }
+ 
+ static void
+-g_osx_app_info_iface_init (GAppInfoIface *iface)
++g_osx_app_info_iface_init (GAppInfoIface *iface,
++                           gpointer       iface_data)
+ {
+   iface->dup = g_osx_app_info_dup;
+   iface->equal = g_osx_app_info_equal;

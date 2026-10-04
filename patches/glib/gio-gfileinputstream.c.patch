@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gfileinputstream.c b/gio/gfileinputstream.c
+index 44eb07c68edddcf294c36a9785814dd3e782c8ad..f5c19c80edf21511c1a10333e0c771f9061a992c 100644
+--- a/gio/gfileinputstream.c
++++ b/gio/gfileinputstream.c
+@@ -49,7 +49,8 @@
+  * To position a file input stream, use g_seekable_seek().
+  **/
+ 
+-static void       g_file_input_stream_seekable_iface_init    (GSeekableIface       *iface);
++static void       g_file_input_stream_seekable_iface_init    (GSeekableIface       *iface,
++                                                              gpointer              iface_data);
+ static goffset    g_file_input_stream_seekable_tell          (GSeekable            *seekable);
+ static gboolean   g_file_input_stream_seekable_can_seek      (GSeekable            *seekable);
+ static gboolean   g_file_input_stream_seekable_seek          (GSeekable            *seekable,
+@@ -90,7 +91,8 @@ g_file_input_stream_class_init (GFileInputStreamClass *klass)
+ }
+ 
+ static void
+-g_file_input_stream_seekable_iface_init (GSeekableIface *iface)
++g_file_input_stream_seekable_iface_init (GSeekableIface *iface,
++                                         gpointer        iface_data)
+ {
+   iface->tell = g_file_input_stream_seekable_tell;
+   iface->can_seek = g_file_input_stream_seekable_can_seek;

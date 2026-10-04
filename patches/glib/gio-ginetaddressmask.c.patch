@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/ginetaddressmask.c b/gio/ginetaddressmask.c
+index c0704db14a002de31ce7f27d8b152bcad14b932c..e9a19061862f0cf516033cd21b736aa1fea168f3 100644
+--- a/gio/ginetaddressmask.c
++++ b/gio/ginetaddressmask.c
+@@ -56,7 +56,8 @@ struct _GInetAddressMaskPrivate
+   guint         length;
+ };
+ 
+-static void     g_inet_address_mask_initable_iface_init (GInitableIface  *iface);
++static void     g_inet_address_mask_initable_iface_init (GInitableIface  *iface,
++                                                         gpointer         iface_data);
+ 
+ G_DEFINE_TYPE_WITH_CODE (GInetAddressMask, g_inet_address_mask, G_TYPE_OBJECT,
+                          G_ADD_PRIVATE (GInetAddressMask)
+@@ -230,7 +231,8 @@ g_inet_address_mask_initable_init (GInitable     *initable,
+ }
+ 
+ static void
+-g_inet_address_mask_initable_iface_init (GInitableIface  *iface)
++g_inet_address_mask_initable_iface_init (GInitableIface  *iface,
++                                         gpointer         iface_data)
+ {
+   iface->init = g_inet_address_mask_initable_init;
+ }

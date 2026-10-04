@@ -1,0 +1,19 @@
+Why: Disable the Snort dissector: it spawns a process, which WebAssembly cannot do.
+
+diff --git a/epan/dissectors/packet-snort.c b/epan/dissectors/packet-snort.c
+index 33556957bd4026ef15c2d4a57bdc048dc1e3beef..679dceeab193f0f584c173062e39d9af31801d03 100644
+--- a/epan/dissectors/packet-snort.c
++++ b/epan/dissectors/packet-snort.c
+@@ -1323,6 +1323,12 @@ static void snort_start(void)
+     return;
+ #endif
+ 
++#ifdef __EMSCRIPTEN__
++    report_failure("Snort dissector: not yet able to launch Snort process under WebAssembly");
++    current_session.working = FALSE;
++    return;
++#endif
++
+     /* Create snort process and set up pipes */
+     snort_debug_printf("\nRunning %s with config file %s\n", pref_snort_binary_filename, pref_snort_config_filename);
+     if (!g_spawn_async_with_pipes(NULL,          /* working_directory */

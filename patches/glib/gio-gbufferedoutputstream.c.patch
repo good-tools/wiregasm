@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gbufferedoutputstream.c b/gio/gbufferedoutputstream.c
+index 4999a7d69b247b625ab2cf814a4b5c24e221a4d5..af5581c5592dc665197903667e63c32f27a9ad9d 100644
+--- a/gio/gbufferedoutputstream.c
++++ b/gio/gbufferedoutputstream.c
+@@ -107,7 +107,8 @@ static gboolean g_buffered_output_stream_close_finish (GOutputStream        *str
+                                                        GAsyncResult         *result,
+                                                        GError              **error);
+ 
+-static void     g_buffered_output_stream_seekable_iface_init (GSeekableIface  *iface);
++static void     g_buffered_output_stream_seekable_iface_init (GSeekableIface  *iface,
++                                                              gpointer         iface_data);
+ static goffset  g_buffered_output_stream_tell                (GSeekable       *seekable);
+ static gboolean g_buffered_output_stream_can_seek            (GSeekable       *seekable);
+ static gboolean g_buffered_output_stream_seek                (GSeekable       *seekable,
+@@ -348,7 +349,8 @@ g_buffered_output_stream_init (GBufferedOutputStream *stream)
+ }
+ 
+ static void
+-g_buffered_output_stream_seekable_iface_init (GSeekableIface *iface)
++g_buffered_output_stream_seekable_iface_init (GSeekableIface *iface,
++                                              gpointer        iface_data)
+ {
+   iface->tell         = g_buffered_output_stream_tell;
+   iface->can_seek     = g_buffered_output_stream_can_seek;

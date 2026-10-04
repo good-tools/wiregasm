@@ -1,0 +1,37 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gpowerprofilemonitorportal.c b/gio/gpowerprofilemonitorportal.c
+index 0c69ed9b5228ceff8ad027d5a7ba5cd2d7d2d4af..3ba794aeeed8e0041c7dc16cc9cbd9aceb8bca08 100644
+--- a/gio/gpowerprofilemonitorportal.c
++++ b/gio/gpowerprofilemonitorportal.c
+@@ -31,8 +31,10 @@
+ 
+ #define G_POWER_PROFILE_MONITOR_PORTAL_GET_INITABLE_IFACE(o) (G_TYPE_INSTANCE_GET_INTERFACE ((o), G_TYPE_INITABLE, GInitable))
+ 
+-static void g_power_profile_monitor_portal_iface_init (GPowerProfileMonitorInterface *iface);
+-static void g_power_profile_monitor_portal_initable_iface_init (GInitableIface *iface);
++static void g_power_profile_monitor_portal_iface_init (GPowerProfileMonitorInterface *iface,
++                                                       gpointer                       iface_data);
++static void g_power_profile_monitor_portal_initable_iface_init (GInitableIface *iface,
++                                                                gpointer        iface_data);
+ 
+ typedef enum
+ {
+@@ -180,12 +182,14 @@ g_power_profile_monitor_portal_class_init (GPowerProfileMonitorPortalClass *nl_c
+ }
+ 
+ static void
+-g_power_profile_monitor_portal_iface_init (GPowerProfileMonitorInterface *monitor_iface)
++g_power_profile_monitor_portal_iface_init (GPowerProfileMonitorInterface *monitor_iface,
++                                           gpointer                       iface_data)
+ {
+ }
+ 
+ static void
+-g_power_profile_monitor_portal_initable_iface_init (GInitableIface *iface)
++g_power_profile_monitor_portal_initable_iface_init (GInitableIface *iface,
++                                                    gpointer        iface_data)
+ {
+   iface->init = g_power_profile_monitor_portal_initable_init;
+ }

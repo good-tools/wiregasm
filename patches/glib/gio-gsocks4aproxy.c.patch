@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gsocks4aproxy.c b/gio/gsocks4aproxy.c
+index 3dad118eb784f873d56b17c201b057b497068449..e4a1306e689673de83705dba8c88ee50007ff989 100644
+--- a/gio/gsocks4aproxy.c
++++ b/gio/gsocks4aproxy.c
+@@ -50,7 +50,8 @@
+ #define SOCKS4_REP_NO_IDENT       92
+ #define SOCKS4_REP_BAD_IDENT      93
+ 
+-static void g_socks4a_proxy_iface_init (GProxyInterface *proxy_iface);
++static void g_socks4a_proxy_iface_init (GProxyInterface *proxy_iface,
++                                        gpointer         iface_data);
+ 
+ #define g_socks4a_proxy_get_type _g_socks4a_proxy_get_type
+ G_DEFINE_TYPE_WITH_CODE (GSocks4aProxy, g_socks4a_proxy, G_TYPE_OBJECT,
+@@ -451,7 +452,8 @@ g_socks4a_proxy_class_init (GSocks4aProxyClass *class)
+ }
+ 
+ static void
+-g_socks4a_proxy_iface_init (GProxyInterface *proxy_iface)
++g_socks4a_proxy_iface_init (GProxyInterface *proxy_iface,
++                            gpointer         iface_data)
+ {
+   proxy_iface->connect  = g_socks4a_proxy_connect;
+   proxy_iface->connect_async = g_socks4a_proxy_connect_async;

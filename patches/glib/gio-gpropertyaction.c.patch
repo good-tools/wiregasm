@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gpropertyaction.c b/gio/gpropertyaction.c
+index 8df765e985a92f9291010c17d36ae42ab30551da..285c242101d94945072b703b085e05aad8754571 100644
+--- a/gio/gpropertyaction.c
++++ b/gio/gpropertyaction.c
+@@ -108,7 +108,8 @@ struct _GPropertyAction
+ 
+ typedef GObjectClass GPropertyActionClass;
+ 
+-static void g_property_action_iface_init (GActionInterface *iface);
++static void g_property_action_iface_init (GActionInterface *iface,
++                                          gpointer          iface_data);
+ G_DEFINE_TYPE_WITH_CODE (GPropertyAction, g_property_action, G_TYPE_OBJECT,
+   G_IMPLEMENT_INTERFACE (G_TYPE_ACTION, g_property_action_iface_init))
+ 
+@@ -426,7 +427,8 @@ g_property_action_init (GPropertyAction *property)
+ }
+ 
+ void
+-g_property_action_iface_init (GActionInterface *iface)
++g_property_action_iface_init (GActionInterface *iface,
++                              gpointer          iface_data)
+ {
+   iface->get_name = g_property_action_get_name;
+   iface->get_parameter_type = g_property_action_get_parameter_type;

@@ -1,0 +1,28 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/glib/gbacktrace.c b/glib/gbacktrace.c
+index 9c52a7d295a87b2473b98180effc51c6afe08a8c..38c0b473e144567577de12ebc9debdefac03bba3 100644
+--- a/glib/gbacktrace.c
++++ b/glib/gbacktrace.c
+@@ -259,7 +259,7 @@ g_on_error_query (const gchar *prg_name)
+ void
+ g_on_error_stack_trace (const gchar *prg_name)
+ {
+-#if defined(G_OS_UNIX)
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+   pid_t pid;
+   gchar buf[16];
+   const gchar *args[5] = { DEBUGGER, NULL, NULL, NULL, NULL };
+@@ -301,9 +301,11 @@ g_on_error_stack_trace (const gchar *prg_name)
+         break;
+     }
+ #else
++#ifdef G_OS_WIN32
+   if (IsDebuggerPresent ())
+     G_BREAKPOINT ();
+   else
++#endif
+     g_abort ();
+ #endif
+ }

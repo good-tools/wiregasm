@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gnetworkaddress.c b/gio/gnetworkaddress.c
+index 598917de2acab51d2dc0ebce61bc8bb683a9a315..68f607a2208a18931b500845b8769919277d6407 100644
+--- a/gio/gnetworkaddress.c
++++ b/gio/gnetworkaddress.c
+@@ -94,7 +94,8 @@ static void g_network_address_get_property (GObject      *object,
+                                             GValue       *value,
+                                             GParamSpec   *pspec);
+ 
+-static void                      g_network_address_connectable_iface_init       (GSocketConnectableIface *iface);
++static void                      g_network_address_connectable_iface_init       (GSocketConnectableIface *iface,
++                                                                                 gpointer                 iface_data);
+ static GSocketAddressEnumerator *g_network_address_connectable_enumerate        (GSocketConnectable      *connectable);
+ static GSocketAddressEnumerator	*g_network_address_connectable_proxy_enumerate  (GSocketConnectable      *connectable);
+ static gchar                    *g_network_address_connectable_to_string        (GSocketConnectable      *connectable);
+@@ -153,7 +154,8 @@ g_network_address_class_init (GNetworkAddressClass *klass)
+ }
+ 
+ static void
+-g_network_address_connectable_iface_init (GSocketConnectableIface *connectable_iface)
++g_network_address_connectable_iface_init (GSocketConnectableIface *connectable_iface,
++                                          gpointer                 iface_data)
+ {
+   connectable_iface->enumerate  = g_network_address_connectable_enumerate;
+   connectable_iface->proxy_enumerate = g_network_address_connectable_proxy_enumerate;

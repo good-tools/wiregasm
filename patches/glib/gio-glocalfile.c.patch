@@ -1,0 +1,66 @@
+Why: Add support for WebAssembly
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/glocalfile.c b/gio/glocalfile.c
+index 4f8df369bb9401f1a2b7fb8daf059c4014356672..c1628c7d4167fc294fee4d6bd5d90dbba82a7dc0 100644
+--- a/gio/glocalfile.c
++++ b/gio/glocalfile.c
+@@ -27,7 +27,7 @@
+ #include <string.h>
+ #include <errno.h>
+ #include <fcntl.h>
+-#if G_OS_UNIX
++#ifdef G_OS_UNIX
+ #include <dirent.h>
+ #include <unistd.h>
+ #endif
+@@ -65,7 +65,7 @@
+ #include <glib/gstdio.h>
+ #include <glib/gstdioprivate.h>
+ #include "glibintl.h"
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ #include "glib-unix.h"
+ #include "gportalsupport.h"
+ #include "gtrashportal.h"
+@@ -95,7 +95,8 @@
+ #endif
+ 
+ 
+-static void g_local_file_file_iface_init (GFileIface *iface);
++static void g_local_file_file_iface_init (GFileIface *iface,
++                                          gpointer    iface_data);
+ 
+ static GFileAttributeInfoList *local_writable_attributes = NULL;
+ static /* GFileAttributeInfoList * */ gsize local_writable_namespaces = 0;
+@@ -1925,7 +1926,7 @@ _g_local_file_has_trash_dir (const char *dirname, dev_t dir_dev)
+   return res;
+ }
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ gboolean
+ _g_local_file_is_lost_found_dir (const char *path, dev_t path_dev)
+ {
+@@ -1989,8 +1990,10 @@ g_local_file_trash (GFile         *file,
+   GVfs *vfs;
+   int errsv;
+ 
++#ifndef G_PLATFORM_WASM
+   if (glib_should_use_portal ())
+     return g_trash_portal_trash_file (file, error);
++#endif
+ 
+   if (g_lstat (local->filename, &file_stat) != 0)
+     {
+@@ -2991,7 +2994,8 @@ g_local_file_measure_disk_usage (GFile                         *file,
+ }
+ 
+ static void
+-g_local_file_file_iface_init (GFileIface *iface)
++g_local_file_file_iface_init (GFileIface *iface,
++                              gpointer    iface_data)
+ {
+   iface->dup = g_local_file_dup;
+   iface->hash = g_local_file_hash;

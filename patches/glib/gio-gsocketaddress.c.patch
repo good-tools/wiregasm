@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gsocketaddress.c b/gio/gsocketaddress.c
+index 994037c0596caadb21e40b4e0ce0857fa2a12789..03afad81b1bf2378e335a0a0d52a7d20b284264b 100644
+--- a/gio/gsocketaddress.c
++++ b/gio/gsocketaddress.c
+@@ -68,7 +68,8 @@ enum
+   PROP_FAMILY
+ };
+ 
+-static void                      g_socket_address_connectable_iface_init       (GSocketConnectableIface *iface);
++static void                      g_socket_address_connectable_iface_init       (GSocketConnectableIface *iface,
++                                                                                gpointer                 iface_data);
+ static GSocketAddressEnumerator *g_socket_address_connectable_enumerate	       (GSocketConnectable      *connectable);
+ static GSocketAddressEnumerator *g_socket_address_connectable_proxy_enumerate  (GSocketConnectable      *connectable);
+ 
+@@ -129,7 +130,8 @@ g_socket_address_class_init (GSocketAddressClass *klass)
+ }
+ 
+ static void
+-g_socket_address_connectable_iface_init (GSocketConnectableIface *connectable_iface)
++g_socket_address_connectable_iface_init (GSocketConnectableIface *connectable_iface,
++                                         gpointer                 iface_data)
+ {
+   connectable_iface->enumerate  = g_socket_address_connectable_enumerate;
+   connectable_iface->proxy_enumerate  = g_socket_address_connectable_proxy_enumerate;

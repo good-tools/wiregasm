@@ -1,0 +1,37 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gdebugcontrollerdbus.c b/gio/gdebugcontrollerdbus.c
+index 84d2e6499214c495b865917d828ddad9a773cfb2..97cf3c5793baca052685e10ed09ac7d18942afb8 100644
+--- a/gio/gdebugcontrollerdbus.c
++++ b/gio/gdebugcontrollerdbus.c
+@@ -160,8 +160,10 @@ static GDBusInterfaceInfo *org_gtk_Debugging;
+ 
+ #define G_DEBUG_CONTROLLER_DBUS_GET_INITABLE_IFACE(o) (G_TYPE_INSTANCE_GET_INTERFACE ((o), G_TYPE_INITABLE, GInitable))
+ 
+-static void g_debug_controller_dbus_iface_init (GDebugControllerInterface *iface);
+-static void g_debug_controller_dbus_initable_iface_init (GInitableIface *iface);
++static void g_debug_controller_dbus_iface_init (GDebugControllerInterface *iface,
++                                                gpointer                   iface_data);
++static void g_debug_controller_dbus_initable_iface_init (GInitableIface *iface,
++                                                         gpointer        iface_data);
+ static gboolean g_debug_controller_dbus_authorize_default (GDebugControllerDBus  *self,
+                                                            GDBusMethodInvocation *invocation);
+ 
+@@ -615,12 +617,14 @@ g_debug_controller_dbus_class_init (GDebugControllerDBusClass *klass)
+ }
+ 
+ static void
+-g_debug_controller_dbus_iface_init (GDebugControllerInterface *iface)
++g_debug_controller_dbus_iface_init (GDebugControllerInterface *iface,
++                                    gpointer                   iface_data)
+ {
+ }
+ 
+ static void
+-g_debug_controller_dbus_initable_iface_init (GInitableIface *iface)
++g_debug_controller_dbus_initable_iface_init (GInitableIface *iface,
++                                             gpointer        iface_data)
+ {
+   iface->init = g_debug_controller_dbus_initable_init;
+ }

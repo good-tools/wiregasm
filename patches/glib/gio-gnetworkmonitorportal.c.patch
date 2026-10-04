@@ -1,0 +1,40 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gnetworkmonitorportal.c b/gio/gnetworkmonitorportal.c
+index bc51178b119fe5050e8fd167f3e8d8f0d567e9b6..cc170dd217f1baddcc958877388c596d31dfb45a 100644
+--- a/gio/gnetworkmonitorportal.c
++++ b/gio/gnetworkmonitorportal.c
+@@ -27,8 +27,10 @@
+ #include "gportalsupport.h"
+ 
+ static GInitableIface *initable_parent_iface;
+-static void g_network_monitor_portal_iface_init (GNetworkMonitorInterface *iface);
+-static void g_network_monitor_portal_initable_iface_init (GInitableIface *iface);
++static void g_network_monitor_portal_iface_init (GNetworkMonitorInterface *iface,
++                                                 gpointer                  iface_data);
++static void g_network_monitor_portal_initable_iface_init (GInitableIface *iface,
++                                                          gpointer        iface_data);
+ 
+ enum
+ {
+@@ -613,7 +615,8 @@ g_network_monitor_portal_can_reach_finish (GNetworkMonitor  *monitor,
+ }
+ 
+ static void
+-g_network_monitor_portal_iface_init (GNetworkMonitorInterface *monitor_iface)
++g_network_monitor_portal_iface_init (GNetworkMonitorInterface *monitor_iface,
++                                     gpointer                  iface_data)
+ {
+   monitor_iface->can_reach = g_network_monitor_portal_can_reach;
+   monitor_iface->can_reach_async = g_network_monitor_portal_can_reach_async;
+@@ -621,7 +624,8 @@ g_network_monitor_portal_iface_init (GNetworkMonitorInterface *monitor_iface)
+ }
+ 
+ static void
+-g_network_monitor_portal_initable_iface_init (GInitableIface *iface)
++g_network_monitor_portal_initable_iface_init (GInitableIface *iface,
++                                              gpointer        iface_data)
+ {
+   initable_parent_iface = g_type_interface_peek_parent (iface);
+ 

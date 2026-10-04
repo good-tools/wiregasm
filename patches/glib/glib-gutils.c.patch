@@ -1,0 +1,28 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/glib/gutils.c b/glib/gutils.c
+index 78ccd612145aa693a77366620ff7a0b122cdafaf..16fd528b377fbf6e5edd27bc0610c6f58f16d32c 100644
+--- a/glib/gutils.c
++++ b/glib/gutils.c
+@@ -1414,7 +1414,7 @@ get_windows_version (gboolean with_windows)
+ }
+ #endif
+ 
+-#if defined (G_OS_UNIX) && !defined (__APPLE__)
++#if defined (G_OS_UNIX) && !defined (__APPLE__) && !defined (G_PLATFORM_WASM)
+ static gchar *
+ get_os_info_from_os_release (const gchar *key_name,
+                              const gchar *buffer)
+@@ -1571,6 +1571,11 @@ g_get_os_info (const gchar *key_name)
+     return g_strdup ("macOS");
+   else
+     return NULL;
++#elif defined (G_PLATFORM_WASM)
++  if (g_strcmp0 (key_name, G_OS_INFO_KEY_NAME) == 0)
++    return g_strdup ("wasm");
++  else
++    return NULL;
+ #elif defined (G_OS_UNIX)
+   const gchar * const os_release_files[] = { "/etc/os-release", "/usr/lib/os-release" };
+   gsize i;

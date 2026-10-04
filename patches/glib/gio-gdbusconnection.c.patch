@@ -1,0 +1,40 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gdbusconnection.c b/gio/gdbusconnection.c
+index d9887f768e1bf0e21ba7ffccb11693eb76cb9b08..39ed39e3ee111aa4fb831e09ee22ae1ea16a0bfd 100644
+--- a/gio/gdbusconnection.c
++++ b/gio/gdbusconnection.c
+@@ -510,8 +510,10 @@ static void schedule_method_call (GDBusConnection            *connection,
+ 
+ static guint signals[LAST_SIGNAL] = { 0 };
+ 
+-static void initable_iface_init       (GInitableIface      *initable_iface);
+-static void async_initable_iface_init (GAsyncInitableIface *async_initable_iface);
++static void initable_iface_init       (GInitableIface      *initable_iface,
++                                       gpointer             iface_data);
++static void async_initable_iface_init (GAsyncInitableIface *async_initable_iface,
++                                       gpointer             iface_data);
+ 
+ G_DEFINE_TYPE_WITH_CODE (GDBusConnection, g_dbus_connection, G_TYPE_OBJECT,
+                          G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init)
+@@ -2662,7 +2664,8 @@ initable_init (GInitable     *initable,
+ }
+ 
+ static void
+-initable_iface_init (GInitableIface *initable_iface)
++initable_iface_init (GInitableIface *initable_iface,
++                     gpointer        iface_data)
+ {
+   initable_iface->init = initable_init;
+ }
+@@ -2670,7 +2673,8 @@ initable_iface_init (GInitableIface *initable_iface)
+ /* ---------------------------------------------------------------------------------------------------- */
+ 
+ static void
+-async_initable_iface_init (GAsyncInitableIface *async_initable_iface)
++async_initable_iface_init (GAsyncInitableIface *async_initable_iface,
++                           gpointer             iface_data)
+ {
+   /* Use default */
+ }

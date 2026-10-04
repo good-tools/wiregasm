@@ -1,0 +1,69 @@
+Why: Add support for WebAssembly
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/glocalfileinputstream.c b/gio/glocalfileinputstream.c
+index 933f317147ece1b797d171e6af92040dcaa210e1..c370eba84e598c0b60276852571a1b184f31f452 100644
+--- a/gio/glocalfileinputstream.c
++++ b/gio/glocalfileinputstream.c
+@@ -37,9 +37,11 @@
+ 
+ #ifdef G_OS_UNIX
+ #include <unistd.h>
++#ifndef G_PLATFORM_WASM
+ #include "glib-unix.h"
+ #include "gfiledescriptorbased.h"
+-#endif
++#endif /*!G_PLATFORM_WASM*/
++#endif /*G_OS_UNIX*/
+ 
+ #ifdef G_OS_WIN32
+ #include <io.h>
+@@ -50,12 +52,13 @@ struct _GLocalFileInputStreamPrivate {
+   guint do_close : 1;
+ };
+ 
+-#ifdef G_OS_UNIX
+-static void       g_file_descriptor_based_iface_init   (GFileDescriptorBasedIface *iface);
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
++static void       g_file_descriptor_based_iface_init   (GFileDescriptorBasedIface *iface,
++                                                        gpointer                   iface_data);
+ #endif
+ 
+ #define g_local_file_input_stream_get_type _g_local_file_input_stream_get_type
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ G_DEFINE_TYPE_WITH_CODE (GLocalFileInputStream, g_local_file_input_stream, G_TYPE_FILE_INPUT_STREAM,
+                          G_ADD_PRIVATE (GLocalFileInputStream)
+ 			 G_IMPLEMENT_INTERFACE (G_TYPE_FILE_DESCRIPTOR_BASED,
+@@ -84,7 +87,7 @@ static GFileInfo *g_local_file_input_stream_query_info (GFileInputStream  *strea
+ 							const char        *attributes,
+ 							GCancellable      *cancellable,
+ 							GError           **error);
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ static int        g_local_file_input_stream_get_fd     (GFileDescriptorBased *stream);
+ #endif
+ 
+@@ -109,9 +112,10 @@ g_local_file_input_stream_class_init (GLocalFileInputStreamClass *klass)
+   file_stream_class->query_info = g_local_file_input_stream_query_info;
+ }
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ static void
+-g_file_descriptor_based_iface_init (GFileDescriptorBasedIface *iface)
++g_file_descriptor_based_iface_init (GFileDescriptorBasedIface *iface,
++                                    gpointer                   iface_data)
+ {
+   iface->get_fd = g_local_file_input_stream_get_fd;
+ }
+@@ -297,7 +301,7 @@ g_local_file_input_stream_query_info (GFileInputStream  *stream,
+ 					 error);
+ }
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ static int
+ g_local_file_input_stream_get_fd (GFileDescriptorBased *fd_based)
+ {

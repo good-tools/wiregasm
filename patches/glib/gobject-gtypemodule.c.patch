@@ -1,0 +1,17 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gobject/gtypemodule.c b/gobject/gtypemodule.c
+index ec951109022d8547d7633e845bc8786ce9767f53..ce6b02dae8c26888a2bb7d422d0e204cb9f12f3c 100644
+--- a/gobject/gtypemodule.c
++++ b/gobject/gtypemodule.c
+@@ -131,7 +131,8 @@ g_type_module_class_init (GTypeModuleClass *class)
+ }
+ 
+ static void
+-g_type_module_iface_init (GTypePluginClass *iface)
++g_type_module_iface_init (GTypePluginClass *iface,
++                          gpointer          iface_data)
+ {
+   iface->use_plugin = g_type_module_use_plugin;
+   iface->unuse_plugin = (void (*) (GTypePlugin *))g_type_module_unuse;

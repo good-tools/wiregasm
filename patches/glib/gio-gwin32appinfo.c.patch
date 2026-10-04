@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gwin32appinfo.c b/gio/gwin32appinfo.c
+index dec82954f1646c495c099312603f4f494cc92631..760fc72b30ec68b733fc97dd0fbdfe1d3990b824 100644
+--- a/gio/gwin32appinfo.c
++++ b/gio/gwin32appinfo.c
+@@ -4045,7 +4045,8 @@ gio_win32_appinfo_init (gboolean do_wait)
+ }
+ 
+ 
+-static void g_win32_app_info_iface_init (GAppInfoIface *iface);
++static void g_win32_app_info_iface_init (GAppInfoIface *iface,
++                                         gpointer       iface_data);
+ 
+ struct _GWin32AppInfo
+ {
+@@ -5594,7 +5595,8 @@ g_app_info_create_from_commandline (const char           *commandline,
+ /* GAppInfo interface init */
+ 
+ static void
+-g_win32_app_info_iface_init (GAppInfoIface *iface)
++g_win32_app_info_iface_init (GAppInfoIface *iface,
++                             gpointer       iface_data)
+ {
+   iface->dup = g_win32_app_info_dup;
+   iface->equal = g_win32_app_info_equal;

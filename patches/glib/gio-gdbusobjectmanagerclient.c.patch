@@ -1,0 +1,51 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gdbusobjectmanagerclient.c b/gio/gdbusobjectmanagerclient.c
+index fa5e73041e2da6fcbb8b6730a8e33d4cb4d26165..f7951c3435d4aa8a20f2c0d3accde20816e83e6b 100644
+--- a/gio/gdbusobjectmanagerclient.c
++++ b/gio/gdbusobjectmanagerclient.c
+@@ -174,9 +174,12 @@ enum
+ 
+ static guint signals[LAST_SIGNAL] = { 0 };
+ 
+-static void initable_iface_init       (GInitableIface *initable_iface);
+-static void async_initable_iface_init (GAsyncInitableIface *async_initable_iface);
+-static void dbus_object_manager_interface_init (GDBusObjectManagerIface *iface);
++static void initable_iface_init       (GInitableIface *initable_iface,
++                                       gpointer        iface_data);
++static void async_initable_iface_init (GAsyncInitableIface *async_initable_iface,
++                                       gpointer             iface_data);
++static void dbus_object_manager_interface_init (GDBusObjectManagerIface *iface,
++                                                gpointer                 iface_data);
+ 
+ G_DEFINE_TYPE_WITH_CODE (GDBusObjectManagerClient, g_dbus_object_manager_client, G_TYPE_OBJECT,
+                          G_ADD_PRIVATE (GDBusObjectManagerClient)
+@@ -1516,13 +1519,15 @@ initable_init (GInitable     *initable,
+ }
+ 
+ static void
+-initable_iface_init (GInitableIface *initable_iface)
++initable_iface_init (GInitableIface *initable_iface,
++                     gpointer        iface_data)
+ {
+   initable_iface->init = initable_init;
+ }
+ 
+ static void
+-async_initable_iface_init (GAsyncInitableIface *async_initable_iface)
++async_initable_iface_init (GAsyncInitableIface *async_initable_iface,
++                           gpointer             iface_data)
+ {
+   /* for now, just use default: run GInitable code in thread */
+ }
+@@ -1863,7 +1868,8 @@ g_dbus_object_manager_client_get_objects (GDBusObjectManager *_manager)
+ 
+ 
+ static void
+-dbus_object_manager_interface_init (GDBusObjectManagerIface *iface)
++dbus_object_manager_interface_init (GDBusObjectManagerIface *iface,
++                                    gpointer                 iface_data)
+ {
+   iface->get_object_path = g_dbus_object_manager_client_get_object_path;
+   iface->get_objects     = g_dbus_object_manager_client_get_objects;

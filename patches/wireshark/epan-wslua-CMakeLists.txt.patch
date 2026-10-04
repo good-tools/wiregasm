@@ -1,0 +1,21 @@
+Why: Install init_wslua.h so wiregasm can (re)load Lua plugins.
+
+diff --git a/epan/wslua/CMakeLists.txt b/epan/wslua/CMakeLists.txt
+index 9f35e1486ab3dde4799ebd2953ddb1d5283b11bf..85180cdf481294b9680729c2de997f8dcaf19436 100644
+--- a/epan/wslua/CMakeLists.txt
++++ b/epan/wslua/CMakeLists.txt
+@@ -9,6 +9,14 @@
+ 
+ add_subdirectory(lrexlib)
+ 
++set(WSLUA_PUBLIC_HEADERS
++	init_wslua.h
++)
++
++install(FILES ${WSLUA_PUBLIC_HEADERS}
++	DESTINATION "${PROJECT_INSTALL_INCLUDEDIR}/epan/wslua"
++)
++
+ set(WSLUA_MODULES
+ 	${CMAKE_CURRENT_SOURCE_DIR}/lua_bitop.c
+ 	${CMAKE_CURRENT_SOURCE_DIR}/wslua_address.c

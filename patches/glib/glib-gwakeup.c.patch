@@ -1,0 +1,114 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/glib/gwakeup.c b/glib/gwakeup.c
+index 0f76be62bd5ad2bd8826835d0c5de511f583d1c4..354d03d0c1a74fa015b5aa31f5fd479459b63cad 100644
+--- a/glib/gwakeup.c
++++ b/glib/gwakeup.c
+@@ -111,16 +111,24 @@ g_wakeup_free (GWakeup *wakeup)
+ 
+ #else
+ 
++#ifdef G_PLATFORM_WASM
++#ifdef GLIB_COMPILATION
++#include "gmessages.h"
++#endif
++#else /*!G_PLATFORM_WASM*/
+ #include "glib-unix.h"
+ #include <fcntl.h>
+ 
+ #if defined (HAVE_EVENTFD)
+ #include <sys/eventfd.h>
+ #endif
++#endif /*G_PLATFORM_WASM*/
+ 
+ struct _GWakeup
+ {
++#ifndef G_PLATFORM_WASM
+   gint fds[2];
++#endif
+ };
+ 
+ /**
+@@ -137,6 +145,10 @@ struct _GWakeup
+ GWakeup *
+ g_wakeup_new (void)
+ {
++#ifdef G_PLATFORM_WASM
++  g_error ("g_wakeup_new is no-op on WebAssembly");
++  return NULL;
++#else
+   GError *error = NULL;
+   GWakeup *wakeup;
+ 
+@@ -167,6 +179,7 @@ g_wakeup_new (void)
+     g_error ("Set pipes non-blocking for GWakeup: %s", error->message);
+ 
+   return wakeup;
++#endif
+ }
+ 
+ /**
+@@ -185,8 +198,12 @@ void
+ g_wakeup_get_pollfd (GWakeup *wakeup,
+                      GPollFD *poll_fd)
+ {
++#ifdef G_PLATFORM_WASM
++  g_error ("g_wakeup_get_pollfd is no-op on WebAssembly");
++#else
+   poll_fd->fd = wakeup->fds[0];
+   poll_fd->events = G_IO_IN;
++#endif
+ }
+ 
+ /**
+@@ -206,10 +223,14 @@ g_wakeup_get_pollfd (GWakeup *wakeup,
+ void
+ g_wakeup_acknowledge (GWakeup *wakeup)
+ {
++#ifdef G_PLATFORM_WASM
++  g_error ("g_wakeup_acknowledge is no-op on WebAssembly");
++#else
+   char buffer[16];
+ 
+   /* read until it is empty */
+   while (read (wakeup->fds[0], buffer, sizeof buffer) == sizeof buffer);
++#endif
+ }
+ 
+ /**
+@@ -229,6 +250,9 @@ g_wakeup_acknowledge (GWakeup *wakeup)
+ void
+ g_wakeup_signal (GWakeup *wakeup)
+ {
++#ifdef G_PLATFORM_WASM
++  g_error ("g_wakeup_signal is no-op on WebAssembly");
++#else
+   int res;
+ 
+   if (wakeup->fds[1] == -1)
+@@ -251,6 +275,7 @@ g_wakeup_signal (GWakeup *wakeup)
+         res = write (wakeup->fds[1], &one, sizeof one);
+       while (G_UNLIKELY (res == -1 && errno == EINTR));
+     }
++#endif
+ }
+ 
+ /**
+@@ -265,12 +290,16 @@ g_wakeup_signal (GWakeup *wakeup)
+ void
+ g_wakeup_free (GWakeup *wakeup)
+ {
++#ifdef G_PLATFORM_WASM
++  g_error ("g_wakeup_free is no-op on WebAssembly");
++#else
+   close (wakeup->fds[0]);
+ 
+   if (wakeup->fds[1] != -1)
+     close (wakeup->fds[1]);
+ 
+   g_slice_free (GWakeup, wakeup);
++#endif
+ }
+ 
+ #endif /* !_WIN32 */

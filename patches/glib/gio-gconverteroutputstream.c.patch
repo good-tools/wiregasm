@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gconverteroutputstream.c b/gio/gconverteroutputstream.c
+index b26f645d4d76a8a5417fda79065ebcd671ca99e0..4e563c0ffa0cc2a5d884380b6dba84328a15e1a1 100644
+--- a/gio/gconverteroutputstream.c
++++ b/gio/gconverteroutputstream.c
+@@ -108,7 +108,8 @@ static gssize   g_converter_output_stream_write_nonblocking (GPollableOutputStre
+ static GSource *g_converter_output_stream_create_source     (GPollableOutputStream *stream,
+ 							     GCancellable          *cancellable);
+ 
+-static void g_converter_output_stream_pollable_iface_init (GPollableOutputStreamInterface *iface);
++static void g_converter_output_stream_pollable_iface_init (GPollableOutputStreamInterface *iface,
++                                                           gpointer                        iface_data);
+ 
+ G_DEFINE_TYPE_WITH_CODE (GConverterOutputStream,
+ 			 g_converter_output_stream,
+@@ -145,7 +146,8 @@ g_converter_output_stream_class_init (GConverterOutputStreamClass *klass)
+ }
+ 
+ static void
+-g_converter_output_stream_pollable_iface_init (GPollableOutputStreamInterface *iface)
++g_converter_output_stream_pollable_iface_init (GPollableOutputStreamInterface *iface,
++                                               gpointer                        iface_data)
+ {
+   iface->can_poll = g_converter_output_stream_can_poll;
+   iface->is_writable = g_converter_output_stream_is_writable;

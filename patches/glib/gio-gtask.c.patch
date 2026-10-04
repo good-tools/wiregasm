@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gtask.c b/gio/gtask.c
+index 1d5b37e85dd7490c826e52c59d0599f05792291c..bbeac35296d6cc896ff95c217199e65ae9fb730a 100644
+--- a/gio/gtask.c
++++ b/gio/gtask.c
+@@ -611,7 +611,8 @@ typedef enum
+   PROP_COMPLETED = 1,
+ } GTaskProperty;
+ 
+-static void g_task_async_result_iface_init (GAsyncResultIface *iface);
++static void g_task_async_result_iface_init (GAsyncResultIface *iface,
++                                            gpointer           iface_data);
+ static void g_task_thread_pool_init (void);
+ 
+ G_DEFINE_TYPE_WITH_CODE (GTask, g_task, G_TYPE_OBJECT,
+@@ -2308,7 +2309,8 @@ g_task_is_tagged (GAsyncResult *res,
+ }
+ 
+ static void
+-g_task_async_result_iface_init (GAsyncResultIface *iface)
++g_task_async_result_iface_init (GAsyncResultIface *iface,
++                                gpointer           iface_data)
+ {
+   iface->get_user_data = g_task_get_user_data;
+   iface->get_source_object = g_task_ref_source_object;

@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gsettings.c b/gio/gsettings.c
+index 12b987050e7f46788cbedd0d9a8cc004e7404d9c..4ff6fd67afe3976f2d2cd483c310ba34badea9f7 100644
+--- a/gio/gsettings.c
++++ b/gio/gsettings.c
+@@ -3163,7 +3163,8 @@ typedef struct
+ typedef GObjectClass GSettingsActionClass;
+ 
+ static GType g_settings_action_get_type (void);
+-static void g_settings_action_iface_init (GActionInterface *iface);
++static void g_settings_action_iface_init (GActionInterface *iface,
++                                          gpointer          iface_data);
+ G_DEFINE_TYPE_WITH_CODE (GSettingsAction, g_settings_action, G_TYPE_OBJECT,
+                          G_IMPLEMENT_INTERFACE (G_TYPE_ACTION, g_settings_action_iface_init))
+ 
+@@ -3323,7 +3324,8 @@ g_settings_action_init (GSettingsAction *gsa)
+ }
+ 
+ static void
+-g_settings_action_iface_init (GActionInterface *iface)
++g_settings_action_iface_init (GActionInterface *iface,
++                              gpointer          iface_data)
+ {
+   iface->get_name = g_settings_action_get_name;
+   iface->get_parameter_type = g_settings_action_get_parameter_type;

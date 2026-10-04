@@ -1,0 +1,40 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gunixinputstream.c b/gio/gunixinputstream.c
+index 2180ce8dcaf032a628efbe206317f9492a02953a..8596bfe79d79c0d0ac182ff1725739720f1c07df 100644
+--- a/gio/gunixinputstream.c
++++ b/gio/gunixinputstream.c
+@@ -67,8 +67,10 @@ struct _GUnixInputStreamPrivate {
+   guint can_poll : 1;
+ };
+ 
+-static void g_unix_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface);
+-static void g_unix_input_stream_file_descriptor_based_iface_init (GFileDescriptorBasedIface *iface);
++static void g_unix_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface,
++                                                     gpointer                       iface_data);
++static void g_unix_input_stream_file_descriptor_based_iface_init (GFileDescriptorBasedIface *iface,
++                                                                  gpointer                   iface_data);
+ 
+ G_DEFINE_TYPE_WITH_CODE (GUnixInputStream, g_unix_input_stream, G_TYPE_INPUT_STREAM,
+                          G_ADD_PRIVATE (GUnixInputStream)
+@@ -159,7 +161,8 @@ g_unix_input_stream_class_init (GUnixInputStreamClass *klass)
+ }
+ 
+ static void
+-g_unix_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface)
++g_unix_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface,
++                                         gpointer                       iface_data)
+ {
+   iface->can_poll = g_unix_input_stream_pollable_can_poll;
+   iface->is_readable = g_unix_input_stream_pollable_is_readable;
+@@ -167,7 +170,8 @@ g_unix_input_stream_pollable_iface_init (GPollableInputStreamInterface *iface)
+ }
+ 
+ static void
+-g_unix_input_stream_file_descriptor_based_iface_init (GFileDescriptorBasedIface *iface)
++g_unix_input_stream_file_descriptor_based_iface_init (GFileDescriptorBasedIface *iface,
++                                                      gpointer                   iface_data)
+ {
+   iface->get_fd = (int (*) (GFileDescriptorBased *))g_unix_input_stream_get_fd;
+ }

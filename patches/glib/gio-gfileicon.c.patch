@@ -1,0 +1,40 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gfileicon.c b/gio/gfileicon.c
+index bd727cd7a68e0688e366ada823808d65e6d765cb..2abe576aaf1babe37a99c6af2dcabb483c9e0321 100644
+--- a/gio/gfileicon.c
++++ b/gio/gfileicon.c
+@@ -43,8 +43,10 @@
+  * 
+  **/
+ 
+-static void g_file_icon_icon_iface_init          (GIconIface          *iface);
+-static void g_file_icon_loadable_icon_iface_init (GLoadableIconIface  *iface);
++static void g_file_icon_icon_iface_init          (GIconIface          *iface,
++                                                  gpointer             iface_data);
++static void g_file_icon_loadable_icon_iface_init (GLoadableIconIface  *iface,
++                                                  gpointer             iface_data);
+ static void g_file_icon_load_async               (GLoadableIcon       *icon,
+ 						  int                  size,
+ 						  GCancellable        *cancellable,
+@@ -280,7 +282,8 @@ g_file_icon_serialize (GIcon *icon)
+ }
+ 
+ static void
+-g_file_icon_icon_iface_init (GIconIface *iface)
++g_file_icon_icon_iface_init (GIconIface *iface,
++                             gpointer    iface_data)
+ {
+   iface->hash = g_file_icon_hash;
+   iface->equal = g_file_icon_equal;
+@@ -360,7 +363,8 @@ g_file_icon_load_finish (GLoadableIcon  *icon,
+ }
+ 
+ static void
+-g_file_icon_loadable_icon_iface_init (GLoadableIconIface *iface)
++g_file_icon_loadable_icon_iface_init (GLoadableIconIface *iface,
++                                      gpointer            iface_data)
+ {
+   iface->load = g_file_icon_load;
+   iface->load_async = g_file_icon_load_async;

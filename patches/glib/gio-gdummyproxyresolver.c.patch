@@ -1,0 +1,27 @@
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gdummyproxyresolver.c b/gio/gdummyproxyresolver.c
+index 1cac1db746fcb96864cf8daac8d820bf9416ba6f..fe354166f081aec04b98110a1392d2be5fb25aa3 100644
+--- a/gio/gdummyproxyresolver.c
++++ b/gio/gdummyproxyresolver.c
+@@ -38,7 +38,8 @@ struct _GDummyProxyResolver {
+   GObject parent_instance;
+ };
+ 
+-static void g_dummy_proxy_resolver_iface_init (GProxyResolverInterface *iface);
++static void g_dummy_proxy_resolver_iface_init (GProxyResolverInterface *iface,
++                                               gpointer                 iface_data);
+ 
+ #define g_dummy_proxy_resolver_get_type _g_dummy_proxy_resolver_get_type
+ G_DEFINE_TYPE_WITH_CODE (GDummyProxyResolver, g_dummy_proxy_resolver, G_TYPE_OBJECT,
+@@ -127,7 +128,8 @@ g_dummy_proxy_resolver_class_init (GDummyProxyResolverClass *resolver_class)
+ }
+ 
+ static void
+-g_dummy_proxy_resolver_iface_init (GProxyResolverInterface *iface)
++g_dummy_proxy_resolver_iface_init (GProxyResolverInterface *iface,
++                                   gpointer                 iface_data)
+ {
+   iface->is_supported = g_dummy_proxy_resolver_is_supported;
+   iface->lookup = g_dummy_proxy_resolver_lookup;

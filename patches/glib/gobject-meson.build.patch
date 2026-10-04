@@ -1,0 +1,19 @@
+Why: Do not build tools
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gobject/meson.build b/gobject/meson.build
+index dafc44b095bc01fe0ba4134b5ab2d07a4758ce2a..d6d079eaa71f7649d1c109b2c72e847652106925 100644
+--- a/gobject/meson.build
++++ b/gobject/meson.build
+@@ -170,11 +170,6 @@ libgobject_dep = declare_dependency(link_with : libgobject,
+ )
+ meson.override_dependency('gobject-2.0', libgobject_dep)
+ 
+-gobject_query = executable('gobject-query', 'gobject-query.c',
+-  install : true,
+-  install_tag : 'bin-devel',
+-  dependencies : [libglib_dep, libgobject_dep])
+-
+ install_data('gobject_gdb.py',
+   install_dir : glib_pkgdatadir / 'gdb',
+   install_tag : 'devel',

@@ -1,0 +1,55 @@
+Why: Add support for WebAssembly
+Why: Fix function pointer cast issues
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/gdesktopappinfo.c b/gio/gdesktopappinfo.c
+index d0cdef51a936f845a43207546c37e4b56c5eb2e8..be082b86e9c44da3677c24d08869f4b179603d41 100644
+--- a/gio/gdesktopappinfo.c
++++ b/gio/gdesktopappinfo.c
+@@ -42,7 +42,7 @@
+ 
+ #include "gcontenttypeprivate.h"
+ #include "gdesktopappinfo.h"
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ #include "glib-unix.h"
+ #endif
+ #include "gfile.h"
+@@ -57,7 +57,7 @@
+ #include "gappinfoprivate.h"
+ #include "glocalfilemonitor.h"
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ #include "gdocumentportal.h"
+ #endif
+ 
+@@ -89,7 +89,8 @@ enum {
+   PROP_FILENAME
+ };
+ 
+-static void     g_desktop_app_info_iface_init         (GAppInfoIface    *iface);
++static void     g_desktop_app_info_iface_init         (GAppInfoIface    *iface,
++                                                       gpointer          iface_data);
+ static gboolean g_desktop_app_info_ensure_saved       (GDesktopAppInfo  *info,
+                                                        GError          **error);
+ static gboolean g_desktop_app_info_load_file (GDesktopAppInfo *self);
+@@ -3168,7 +3169,7 @@ g_desktop_app_info_launch_uris_with_dbus (GDesktopAppInfo    *info,
+ 
+   g_return_val_if_fail (info != NULL, FALSE);
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+   app_id = g_desktop_app_info_get_string (info, "X-Flatpak");
+   if (app_id && *app_id)
+     {
+@@ -4271,7 +4272,8 @@ g_app_info_create_from_commandline (const char           *commandline,
+ /* GAppInfo interface init */
+ 
+ static void
+-g_desktop_app_info_iface_init (GAppInfoIface *iface)
++g_desktop_app_info_iface_init (GAppInfoIface *iface,
++                               gpointer       iface_data)
+ {
+   iface->dup = g_desktop_app_info_dup;
+   iface->equal = g_desktop_app_info_equal;

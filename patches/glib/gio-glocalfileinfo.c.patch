@@ -1,0 +1,28 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/gio/glocalfileinfo.c b/gio/glocalfileinfo.c
+index b63f7826c6d8661589d40189a91029c956c18447..32cc2c38eb8f03091499a5aefb8c538281ddfc13 100644
+--- a/gio/glocalfileinfo.c
++++ b/gio/glocalfileinfo.c
+@@ -62,8 +62,10 @@
+ 
+ #ifdef G_OS_UNIX
+ #include <unistd.h>
++#ifndef G_PLATFORM_WASM
+ #include "glib-unix.h"
+-#endif
++#endif /*!G_PLATFORM_WASM*/
++#endif /*G_OS_UNIX*/
+ 
+ #include "glib-private.h"
+ 
+@@ -1944,7 +1946,7 @@ _g_local_file_info_get (const char             *basename,
+   if (stat_ok)
+     set_info_from_stat (info, &statbuf, attribute_matcher);
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+   if (stat_ok && _g_local_file_is_lost_found_dir (path, _g_stat_dev (&statbuf)))
+     g_file_info_set_is_hidden (info, TRUE);
+ #endif

@@ -1,0 +1,54 @@
+Why: Add support for WebAssembly
+Source: Ported by Kleis Auke Wolthuizen (wasm-vips): https://github.com/GNOME/glib/compare/2.75.0...kleisauke:wasm-vips-2.75.0
+
+diff --git a/glib/gtimezone.c b/glib/gtimezone.c
+index 00492995c85c2daa73d39facab57c22f065639c2..a8623ae7678f28f9b4f9639df941d45e37bbd72a 100644
+--- a/glib/gtimezone.c
++++ b/glib/gtimezone.c
+@@ -211,7 +211,7 @@ static GTimeZone *tz_local = NULL;
+                            there's no point in getting carried
+                            away. */
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ static GTimeZone *parse_footertz (const gchar *, size_t);
+ #endif
+ 
+@@ -445,7 +445,7 @@ zone_for_constant_offset (GTimeZone *gtz, const gchar *name)
+   gtz->transitions = NULL;
+ }
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ 
+ #if defined(__sun) && defined(__SVR4)
+ /*
+@@ -1704,7 +1704,7 @@ rules_from_identifier (const gchar   *identifier,
+   return create_ruleset_from_rule (rules, &tzr);
+ }
+ 
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+ static GTimeZone *
+ parse_footertz (const gchar *footer, size_t footerlen)
+ {
+@@ -1863,7 +1863,9 @@ g_time_zone_new_identifier (const gchar *identifier)
+   else
+     {
+       G_LOCK (tz_default);
+-#ifdef G_OS_UNIX
++#ifdef G_PLATFORM_WASM
++      resolved_identifier = g_strdup ("UTC0");
++#elif defined (G_OS_UNIX)
+       resolved_identifier = zone_identifier_unix ();
+ #elif defined (G_OS_WIN32)
+       resolved_identifier = windows_default_tzname ();
+@@ -1903,7 +1905,7 @@ g_time_zone_new_identifier (const gchar *identifier)
+ 
+   if (tz->t_info == NULL)
+     {
+-#ifdef G_OS_UNIX
++#if defined(G_OS_UNIX) && !defined(G_PLATFORM_WASM)
+       GBytes *zoneinfo = zone_info_unix (identifier, resolved_identifier);
+       if (zoneinfo != NULL)
+         {
