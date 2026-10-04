@@ -1,0 +1,5 @@
+# Mechanical reformat commits, skipped by `git blame`.
+# Enable locally: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# ci: shared lint and format with Biome and clang-format (#36)
+c01491d8d4ab922b205cfd7c327968c6999e46ec
