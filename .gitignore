@@ -9,3 +9,8 @@ coverage
 # make: downloaded tarballs live in .cache/tarballs
 build/
 built/
+
+# e2e: the packed package and Playwright output
+e2e/.pkg/
+test-results/
+playwright-report/
