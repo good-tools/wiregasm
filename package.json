@@ -8,8 +8,8 @@
   "module": "dist/module.js",
   "scripts": {
     "dev": "parcel watch",
-    "build:emscripten": "docker run -it --rm -v $(pwd):/src okhalid/wiregasm-builder:latest ./build-lib.sh",
-    "build:emscripten-local": "./build-lib.sh",
+    "build:emscripten": "make docker",
+    "build:emscripten-local": "make -j\"$(nproc)\"",
     "build": "parcel build && npm run copy-assets",
     "copy-assets": "cp built/bin/wiregasm.* dist/",
     "test": "jest --coverage",

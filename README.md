@@ -13,7 +13,7 @@ The library can be built in two ways:
 
 After the WASM library is built, the wrapper lib can be built using `npm run build`. The `wiregasm.js` output file produced by the emscripten compiler is not processed by `packer` in the build step and gets added directly to `dist`. This is intentional as it provides consumers to use it for any enviornment they wish, be it nodejs or a browser.
 
-See [lib/Makefile](lib/Makefile) for more information on how dependencies are built.
+See the [Makefile](Makefile) and [mk/](mk) for how dependencies are built: each one is described in `mk/deps/<pkg>.mk`.
 
 ### Patches
 Cross-compiling Wireshark for emscripten/WASM isn't straightforward as it also depends on several other libraries to make it work, and those libraries also need to be ported to emscripten.

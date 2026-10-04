@@ -21,9 +21,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  EMSDK_VERSION: 3.1.31
-
 jobs:
   lint:
     runs-on: ubuntu-24.04
@@ -50,6 +47,10 @@ jobs:
       with:
         node-version: 22
         cache: 'npm'
+
+    # The Makefile is the single source of the emsdk version.
+    - name: Read emsdk version
+      run: echo "EMSDK_VERSION=$(sed -n 's/^EMSDK_VERSION := //p' Makefile)" >> "$GITHUB_ENV"
 
     - name: Stash old path
       run: echo "OLD_PATH=$PATH" >> "${GITHUB_ENV}"
@@ -87,18 +88,19 @@ jobs:
           built
           !built/bin/wiregasm.*
           !built/share/wiregasm
-        key: deps-emsdk-${{ env.EMSDK_VERSION }}-${{ hashFiles('patches/**', 'lib/Makefile', 'lib/crossfile.meson') }}
+        key: deps-emsdk-${{ env.EMSDK_VERSION }}-${{ hashFiles('Makefile', 'mk/**', 'patches/**', 'overlay/**', 'scripts/patches.mjs') }}
 
-    # On a cache hit, `-o .wireshark` tells make to treat the dependency chain
-    # as built and only compile lib/wiregasm against the restored prefix.
+    # On a cache hit, `-o build/stamp/wireshark.built` tells make to treat the
+    # dependency chain as built and only compile lib/wiregasm against the
+    # restored prefix.
     - name: Build WASM lib
       env:
         CACHE_HIT: ${{ steps.deps-cache.outputs.cache-hit }}
       run: |
         if [ "$CACHE_HIT" = "true" ]; then
-          make -C lib -j"$(nproc)" -o .wireshark
+          make -j"$(nproc)" -o build/stamp/wireshark.built
         else
-          make -C lib -j"$(nproc)"
+          make -j"$(nproc)"
         fi
 
     - name: Upload Artifacts
