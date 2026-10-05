@@ -72,7 +72,7 @@ bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, cha
 DownloadResponse wg_session_process_download(capture_file *cfile, const char *token);
 TapResponse wg_session_process_tap(capture_file *cfile, MapInput taps);
 IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input);
-vector<CompleteField> wg_session_process_complete(const char *field);
+std::vector<CompleteField> wg_session_process_complete(const char *field);
 void cf_close(capture_file *cf);
 
 #endif

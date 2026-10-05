@@ -69,34 +69,34 @@ void failure_message(const char *msg_format, va_list ap) {
   va_end(ap_copy);
 }
 
-void open_failure_message(const char *filename, int err, bool for_writing) {
+void open_failure_message(const char *filename _U_, int err _U_, bool for_writing _U_) {
 }
 
-void read_failure_message(const char *filename, int err) {
+void read_failure_message(const char *filename _U_, int err _U_) {
 }
 
-void write_failure_message(const char *filename, int err) {
+void write_failure_message(const char *filename _U_, int err _U_) {
 }
 
-void rename_failure_message(const char *old_filename, const char *new_filename, int err) {
+void rename_failure_message(const char *old_filename _U_, const char *new_filename _U_, int err _U_) {
 }
 
-void cfile_open_failure_message(const char *filename, int err, char *err_info) {
+void cfile_open_failure_message(const char *filename _U_, int err _U_, char *err_info _U_) {
 }
 
-void cfile_dump_open_failure_message(const char *filename, int err, char *err_info,
-                                     int file_type_subtype) {
+void cfile_dump_open_failure_message(const char *filename _U_, int err _U_, char *err_info _U_,
+                                     int file_type_subtype _U_) {
 }
 
-void cfile_read_failure_message(const char *filename, int err, char *err_info) {
+void cfile_read_failure_message(const char *filename _U_, int err _U_, char *err_info _U_) {
 }
 
-void cfile_write_failure_message(const char *in_filename, const char *out_filename,
-                                 int err, char *err_info,
-                                 uint64_t framenum, int file_type_subtype) {
+void cfile_write_failure_message(const char *in_filename _U_, const char *out_filename _U_,
+                                 int err _U_, char *err_info _U_,
+                                 uint64_t framenum _U_, int file_type_subtype _U_) {
 }
 
-void cfile_close_failure_message(const char *filename, int err, char *err_info) {
+void cfile_close_failure_message(const char *filename _U_, int err _U_, char *err_info _U_) {
 }
 
 static const struct report_message_routines wg_report_routines = {
@@ -714,7 +714,7 @@ struct HeurCollectorData {
 };
 
 // Callback for each heuristic entry within a table
-static void heur_entry_collector_cb(const char *table_name, struct heur_dtbl_entry *entry, void *user_data) {
+static void heur_entry_collector_cb(const char *table_name _U_, struct heur_dtbl_entry *entry, void *user_data) {
   HeurCollectorData *data = (HeurCollectorData *)user_data;
 
   HeuristicInfo info;
@@ -749,7 +749,7 @@ static void heur_entry_collector_cb(const char *table_name, struct heur_dtbl_ent
 }
 
 // Callback for each heuristic table
-static void heur_table_collector_cb(const char *table_name, struct heur_dissector_list *table, void *user_data) {
+static void heur_table_collector_cb(const char *table_name, struct heur_dissector_list *table _U_, void *user_data) {
   // Iterate all entries in this table
   heur_dissector_table_foreach(table_name, heur_entry_collector_cb, user_data);
 }
