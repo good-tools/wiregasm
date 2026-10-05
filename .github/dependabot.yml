@@ -1,0 +1,13 @@
+# Keeps the SHA-pinned GitHub Actions current. Library versions follow
+# Wireshark's pins instead (scripts/dep-versions.mjs).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci

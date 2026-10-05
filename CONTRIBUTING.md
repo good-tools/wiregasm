@@ -24,7 +24,7 @@ To build without Docker you need the tools from [docker/build.Dockerfile](docker
 ## Lint and format
 
 ```sh
-npm run lint       # Biome (TS/JS/JSON) and clang-format (C/C++). CI runs exactly this.
+npm run lint       # Biome (TS/JS/JSON), clang-format (C/C++), SPDX headers. CI runs this, plus actionlint.
 npm run fix        # applies both
 ```
 
