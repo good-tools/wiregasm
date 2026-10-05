@@ -108,6 +108,7 @@ session.delete(); // embind objects live on the wasm heap until deleted
   | `set_heuristic_enabled` | `setHeuristicEnabled` |
 
 * Node.js older than 22 is no longer supported.
+* `vectorToArray(vec)` frees `vec` after copying its elements (embind vectors live on the wasm heap until deleted). Don't use a vector after converting it.
 * Only the documented loader options are read from the object passed to `loadWiregasm`: `locateFile`, `print`, `printErr`, `handleStatus`, `wasmBinary` and `getPreloadedPackage`, plus Emscripten's standard ones such as `instantiateWasm`.
 
 ## Contributing
