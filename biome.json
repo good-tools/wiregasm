@@ -9,10 +9,12 @@
     "includes": [
       "src/**",
       "scripts/**",
+      "e2e/**",
       "lib/wiregasm/ext/**",
       "*.json",
       "!package.json",
-      "!package-lock.json"
+      "!package-lock.json",
+      "!e2e/.pkg"
     ]
   },
   "formatter": {

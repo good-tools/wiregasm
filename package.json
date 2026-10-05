@@ -17,7 +17,8 @@
     "lint:cpp": "git ls-files 'lib/wiregasm/*.cpp' 'lib/wiregasm/*.h' | xargs clang-format --dry-run --Werror",
     "fix": "biome check --write . && git ls-files 'lib/wiregasm/*.cpp' 'lib/wiregasm/*.h' | xargs clang-format -i",
     "size-check": "node scripts/size-check.mjs",
-    "dep-versions": "node scripts/dep-versions.mjs"
+    "dep-versions": "node scripts/dep-versions.mjs",
+    "test:e2e": "node e2e/pack.mjs && node e2e/node.mjs && playwright test -c e2e/playwright.config.mjs"
   },
   "keywords": [
     "pcap",
@@ -36,6 +37,7 @@
     "@biomejs/biome": "2.5.15",
     "@parcel/packager-ts": "^2.8.2",
     "@parcel/transformer-typescript-types": "^2.8.2",
+    "@playwright/test": "1.63.0",
     "@types/jest": "^29.2.5",
     "@types/node": "^22.19.11",
     "@types/pako": "^2.0.0",
