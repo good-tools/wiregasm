@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Manages wiregasm's changes to upstream sources, Brave-style: one patch per
 // modified upstream file in patches/<pkg>/, new files verbatim in overlay/<pkg>/.
 //

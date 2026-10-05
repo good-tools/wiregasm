@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Loads the packed @goodtools/wiregasm in a browser the way an app would,
 // dissects samples/http.cap and publishes a summary on window.result.
 import { Wiregasm } from "/pkg/dist/module.js";

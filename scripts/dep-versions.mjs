@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Checks that mk/deps/*.mk use the library versions Wireshark itself pins
 // (tools/macos-setup.sh at the tag of the Wireshark version we build).
 //
