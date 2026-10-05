@@ -1,4 +1,5 @@
-project('wiregasm', 'cpp')
+project('wiregasm', 'cpp',
+  default_options: ['cpp_std=c++20', 'warning_level=2', 'werror=true'])
 
 contrib_path = get_option('prefix')
 contrib_lib_dir = join_paths(contrib_path, 'lib')
@@ -36,6 +37,8 @@ include_directories = include_directories(
   join_paths(contrib_path, 'include/glib-2.0'),
   join_paths(contrib_path, 'lib/glib-2.0/include'),
   join_paths(contrib_path, 'include/wireshark'),
+  # dependency headers: their warnings are not ours
+  is_system: true
 )
 
 link_args = [
@@ -63,8 +66,9 @@ link_args = [
   '-s', 'EXPORTED_RUNTIME_METHODS=FS,HEAPU8',
 
   # Module properties the loader accepts: emscripten's defaults plus the ones
-  # WiregasmLibOverrides documents (wasmBinary, getPreloadedPackage)
-  '-s', 'INCOMING_MODULE_JS_API=ENVIRONMENT,arguments,canvas,dynamicLibraries,elementPointerLock,instantiateWasm,locateFile,monitorRunDependencies,noExitRuntime,noInitialRun,onAbort,onExit,onRuntimeInitialized,postRun,preInit,preRun,print,printErr,setStatus,statusMessage,stderr,stdin,stdout,thisProgram,wasm,websocket,wasmBinary,getPreloadedPackage',
+  # WiregasmLibOverrides documents (wasmBinary; getPreloadedPackage is read by
+  # the data package loader directly)
+  '-s', 'INCOMING_MODULE_JS_API=ENVIRONMENT,arguments,canvas,dynamicLibraries,elementPointerLock,instantiateWasm,locateFile,monitorRunDependencies,noExitRuntime,noInitialRun,onAbort,onExit,onRuntimeInitialized,postRun,preInit,preRun,print,printErr,setStatus,statusMessage,stderr,stdin,stdout,thisProgram,wasm,websocket,wasmBinary',
 
   # exported functions
   '-s', 'EXPORTED_FUNCTIONS=_malloc',

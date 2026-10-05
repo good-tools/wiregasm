@@ -298,6 +298,14 @@ describe("Wiregasm Library - Export Objects", () => {
     expect(second_file.download.file).toBe("download.html");
     expect(second_file.error).toBe("");
   });
+
+  test("download reports unknown export object types", async () => {
+    const ret = wg.load("http.cap", await fs.readFile("samples/http.cap"));
+    expect(ret.code).toEqual(0);
+    expect(wg.download("eo:nosuchtype_0").error).toBe(
+      "eo nosuchtype not found"
+    );
+  });
 });
 
 describe("Wiregasm Library - Tap", () => {

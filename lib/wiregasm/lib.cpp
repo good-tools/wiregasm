@@ -1,5 +1,7 @@
 #include "lib.h"
 
+using namespace std;
+
 static guint32 cum_bytes;
 static frame_data ref_frame;
 
@@ -88,7 +90,10 @@ wg_epan_new(capture_file *cf) {
       wg_get_frame_ts,
       cap_file_provider_get_interface_name,
       cap_file_provider_get_interface_description,
-      cap_file_provider_get_modified_block};
+      cap_file_provider_get_modified_block,
+      cap_file_provider_get_process_id,
+      cap_file_provider_get_process_name,
+      cap_file_provider_get_process_uuid};
 
   return epan_new(&cf->provider, &funcs);
 }
@@ -234,6 +239,9 @@ load_cap_file(capture_file *cf, int max_packet_count, gint64 max_byte_count, sum
   gint64 data_offset;
   wtap_rec rec;
   epan_dissect_t *edt = NULL;
+
+  // cumulative byte counts start again for each capture file
+  cum_bytes = 0;
 
   {
     /* Allocate a frame_data_sequence for all the frames. */
@@ -511,7 +519,7 @@ wg_session_follower_visit_cb(const void *key _U_, void *value, void *user_data) 
   return false;
 }
 
-void wg_session_process_frame_cb(capture_file *cfile, epan_dissect_t *edt, proto_tree *tree, struct epan_column_info *cinfo, const GSList *data_src, void *data) {
+void wg_session_process_frame_cb(capture_file *cfile, epan_dissect_t *edt, proto_tree *tree, struct epan_column_info *cinfo _U_, const GSList *data_src, void *data) {
   packet_info *pi = &edt->pi;
   frame_data *fdata = pi->fd;
   wtap_block_t pkt_block = fdata->has_modified_block ? cap_file_provider_get_modified_block(&cfile->provider, fdata) : pi->rec->block;
@@ -1111,7 +1119,7 @@ static GString *wg_session_eo_register_tap_listener(register_eo_t *eo, const cha
       NULL);
 }
 
-bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char *err_ret) {
+bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, char **err_ret) {
   bool ok = true;
   register_eo_t *eo = NULL;
   GString *tap_error = NULL;
@@ -1122,14 +1130,14 @@ bool wg_session_eo_retap_listener(capture_file *cfile, const char *tap_type, cha
   eo = get_eo_by_name(tap_type + 3);
   if (!eo) {
     ok = false;
-    err_ret = g_strdup_printf("eo %s not found", tap_type + 3);
+    *err_ret = g_strdup_printf("eo %s not found", tap_type + 3);
   }
 
   if (ok) {
     tap_error = wg_session_eo_register_tap_listener(eo, tap_type, NULL, NULL, &tap_data, &tap_free);
     if (tap_error) {
       ok = false;
-      err_ret = g_strdup_printf("error %s", tap_error->str);
+      *err_ret = g_strdup_printf("error %s", tap_error->str);
       g_string_free(tap_error, TRUE);
     }
   }
@@ -1178,12 +1186,13 @@ DownloadResponse wg_session_process_download(capture_file *cfile, const char *to
 
     // if eo:<name> not in wg_eo_list, retap
     if (!wg_eo_object_list_get_entry_by_type(wg_eo_list, tap_type) &&
-        !wg_session_eo_retap_listener(cfile, tap_type, err_ret)) {
+        !wg_session_eo_retap_listener(cfile, tap_type, &err_ret)) {
       g_free(tap_type);
       if (err_ret)
         res.error = err_ret;
       else
         res.error = "invalid token";
+      g_free(err_ret);
       return res;
     }
 
@@ -1376,7 +1385,7 @@ wg_session_process_tap_conv_cb(void *tapdata) {
   const struct wg_conv_tap_data *iu = (struct wg_conv_tap_data *)hash->user_data;
   const char *proto;
   int proto_with_port;
-  int i;
+  guint i;
   int with_geoip = 0;
   TapConvResponse buf;
   buf.tap = iu->type;
