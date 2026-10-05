@@ -22,6 +22,8 @@ export interface EmscriptenModule {
 export interface Vector<T> {
   size(): number;
   get(index: number): T;
+  /** Frees the vector on the wasm heap (embind handle). */
+  delete(): void;
 }
 
 export interface DataSource {

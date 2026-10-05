@@ -167,8 +167,8 @@ describe("Wiregasm Library Wrapper", () => {
   });
 
   test("filter validation works", async () => {
-    expect(wg.test_filter("tcp").ok).toBeTruthy();
-    expect(wg.test_filter("txx").ok).toBeFalsy();
+    expect(wg.testFilter("tcp").ok).toBeTruthy();
+    expect(wg.testFilter("txx").ok).toBeFalsy();
   });
 
   test("follow works", async () => {
@@ -191,15 +191,15 @@ describe("Wiregasm Library Wrapper", () => {
   });
 
   test("filter compilation works", async () => {
-    expect(wg.complete_filter("tcp").fields.length).toBeGreaterThan(0);
+    expect(wg.completeFilter("tcp").fields.length).toBeGreaterThan(0);
     expect(
-      wg.complete_filter("tcp").fields.find((f) => f.field === "tcp")
+      wg.completeFilter("tcp").fields.find((f) => f.field === "tcp")
     ).toEqual({
       field: "tcp",
       name: "Transmission Control Protocol",
       type: 1,
     });
-    expect(wg.complete_filter("txx").fields.length).toBe(0);
+    expect(wg.completeFilter("txx").fields.length).toBe(0);
   });
 });
 
@@ -779,12 +779,12 @@ describe("Wiregasm Library - Module Preferences", () => {
   });
 
   test("list modules works", async () => {
-    const modules = wg.list_modules();
+    const modules = wg.listModules();
     expect(modules.size()).toBeGreaterThan(0);
   });
 
   test("list prefs works", async () => {
-    const prefs = wg.list_prefs("http");
+    const prefs = wg.listPrefs("http");
     expect(prefs.size()).toBeGreaterThan(0);
   });
 });
@@ -802,35 +802,35 @@ describe("Wiregasm Library - Set Preferences", () => {
 
   test("setting unknown preference throws error", async () => {
     expect(() => {
-      wg.set_pref("http", "unknown", "value");
+      wg.setPref("http", "unknown", "value");
     }).toThrow();
   });
 
   test("getting unknown preference throws error", async () => {
     expect(() => {
-      wg.get_pref("http", "unknown");
+      wg.getPref("http", "unknown");
     }).toThrow();
   });
 
   test("set preferences works", async () => {
     // test defaults
-    const pref = wg.get_pref("http", "tcp.port");
+    const pref = wg.getPref("http", "tcp.port");
     expect(pref.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
     expect(pref.range_value).toBe(
       "80,3128,3132,5985,8080,8088,11371,1900,2869,2710"
     );
 
-    wg.set_pref("http", "tcp.port", "8001");
+    wg.setPref("http", "tcp.port", "8001");
 
-    const pref2 = wg.get_pref("http", "tcp.port");
+    const pref2 = wg.getPref("http", "tcp.port");
     expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
     expect(pref2.range_value).toContain("8001");
     // defaults should still be present
     expect(pref2.range_value).toContain("80");
 
     // setting it again should still preserve defaults
-    wg.set_pref("http", "tcp.port", "8002");
-    const pref3 = wg.get_pref("http", "tcp.port");
+    wg.setPref("http", "tcp.port", "8002");
+    const pref3 = wg.getPref("http", "tcp.port");
     expect(pref3.range_value.split(",")).toEqual(
       expect.arrayContaining(["80", "8002"])
     );
@@ -838,13 +838,13 @@ describe("Wiregasm Library - Set Preferences", () => {
   });
 
   test("set preferences works for diameter", async () => {
-    const pref = wg.get_pref("diameter", "tcp.port");
+    const pref = wg.getPref("diameter", "tcp.port");
     expect(pref.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
     expect(pref.range_value).toBe("3868");
 
-    wg.set_pref("diameter", "tcp.port", "3871");
+    wg.setPref("diameter", "tcp.port", "3871");
 
-    const pref2 = wg.get_pref("diameter", "tcp.port");
+    const pref2 = wg.getPref("diameter", "tcp.port");
     expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
     expect(pref2.range_value).toContain("3871");
     // default should still be present
@@ -862,13 +862,13 @@ describe("Wiregasm Library - Set Preferences", () => {
   });
 
   test("set preferences works for sip", async () => {
-    const pref = wg.get_pref("sip", "tcp.port");
+    const pref = wg.getPref("sip", "tcp.port");
     expect(pref.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
     expect(pref.range_value).toBe("5060");
 
-    wg.set_pref("sip", "tcp.port", "8001");
+    wg.setPref("sip", "tcp.port", "8001");
 
-    const pref2 = wg.get_pref("sip", "tcp.port");
+    const pref2 = wg.getPref("sip", "tcp.port");
     expect(pref2.type).toBe(PrefType.PREF_DECODE_AS_RANGE);
     expect(pref2.range_value).toContain("8001");
     // default should still be present
@@ -901,7 +901,7 @@ describe("Wiregasm Library - nghttp2", () => {
     );
 
     // set the keylog_file pref
-    wg.set_pref("tls", "keylog_file", "/uploads/pre_master_secret");
+    wg.setPref("tls", "keylog_file", "/uploads/pre_master_secret");
 
     const ret = wg.load("http2-16-ssl.pcapng", data);
 
@@ -977,9 +977,9 @@ describe("Wiregasm Library - Reloading Lua Plugins", () => {
 
   test("reloading lua plugins works", async () => {
     const dissector_data = await fs.readFile("samples/dissector.lua");
-    wg.add_plugin("dissector.lua", dissector_data);
+    wg.addPlugin("dissector.lua", dissector_data);
 
-    wg.reload_lua_plugins();
+    wg.reloadLuaPlugins();
 
     const data = await fs.readFile("samples/dns_port.pcap");
     const ret = wg.load("dns_port.pcap", data);
@@ -1005,7 +1005,7 @@ describe("Wiregasm Library - Heuristic Dissectors", () => {
   });
 
   test("list heuristic dissectors works", async () => {
-    const heuristics = wg.list_heuristic_dissectors();
+    const heuristics = wg.listHeuristicDissectors();
     expect(heuristics.length).toBeGreaterThan(0);
 
     // Find mac_nr_udp heuristic
@@ -1017,7 +1017,7 @@ describe("Wiregasm Library - Heuristic Dissectors", () => {
   });
 
   test("list protocols works", async () => {
-    const protocols = wg.list_protocols();
+    const protocols = wg.listProtocols();
     expect(protocols.length).toBeGreaterThan(0);
 
     // Find MAC-NR protocol
@@ -1028,29 +1028,29 @@ describe("Wiregasm Library - Heuristic Dissectors", () => {
 
   test("enable/disable heuristic dissector works", async () => {
     // Check initial state
-    let heuristics = wg.list_heuristic_dissectors();
+    let heuristics = wg.listHeuristicDissectors();
     let macNrUdp = heuristics.find((h) => h.short_name === "mac_nr_udp");
     expect(macNrUdp?.enabled).toBe(false);
 
     // Enable the heuristic
-    const result = wg.set_heuristic_enabled("mac_nr_udp", true);
+    const result = wg.setHeuristicEnabled("mac_nr_udp", true);
     expect(result).toBe(true);
 
     // Verify it's enabled
-    heuristics = wg.list_heuristic_dissectors();
+    heuristics = wg.listHeuristicDissectors();
     macNrUdp = heuristics.find((h) => h.short_name === "mac_nr_udp");
     expect(macNrUdp?.enabled).toBe(true);
 
     // Disable it again
-    wg.set_heuristic_enabled("mac_nr_udp", false);
-    heuristics = wg.list_heuristic_dissectors();
+    wg.setHeuristicEnabled("mac_nr_udp", false);
+    heuristics = wg.listHeuristicDissectors();
     macNrUdp = heuristics.find((h) => h.short_name === "mac_nr_udp");
     expect(macNrUdp?.enabled).toBe(false);
   });
 
   test("mac_nr_udp heuristic dissector decodes NR pcap correctly", async () => {
     // Enable the mac_nr_udp heuristic before loading
-    wg.set_heuristic_enabled("mac_nr_udp", true);
+    wg.setHeuristicEnabled("mac_nr_udp", true);
 
     // Load the NR capture file
     const data = await fs.readFile("samples/nr.pcapng");
@@ -1074,12 +1074,12 @@ describe("Wiregasm Library - Heuristic Dissectors", () => {
     expect(foundMacNr).toBe(true);
 
     // Disable the heuristic for cleanup
-    wg.set_heuristic_enabled("mac_nr_udp", false);
+    wg.setHeuristicEnabled("mac_nr_udp", false);
   });
 
   test("without heuristic enabled, MAC-NR is not detected", async () => {
     // Make sure heuristic is disabled
-    wg.set_heuristic_enabled("mac_nr_udp", false);
+    wg.setHeuristicEnabled("mac_nr_udp", false);
 
     // Load the NR capture file
     const data = await fs.readFile("samples/nr.pcapng");
@@ -1326,25 +1326,23 @@ describe("Wiregasm Library - Enabled protocols", () => {
   };
 
   test("disabling a protocol by name stops it from dissecting", async () => {
-    expect(wg.set_protocol_enabled_by_name("dhcp", false)).toBe(true);
-    expect(wg.list_protocols().find((p) => p.name === "dhcp")?.enabled).toBe(
+    expect(wg.setProtocolEnabledByName("dhcp", false)).toBe(true);
+    expect(wg.listProtocols().find((p) => p.name === "dhcp")?.enabled).toBe(
       false
     );
     expect(await dhcpLayers("disabled.pcap")).not.toContain("dhcp");
   });
 
   test("enabling a protocol by id restores it", async () => {
-    const dhcp = wg.list_protocols().find((p) => p.name === "dhcp");
+    const dhcp = wg.listProtocols().find((p) => p.name === "dhcp");
     expect(dhcp).toBeDefined();
-    expect(wg.set_protocol_enabled(dhcp?.id ?? -1, true)).toBe(true);
+    expect(wg.setProtocolEnabled(dhcp?.id ?? -1, true)).toBe(true);
     expect(await dhcpLayers("enabled.pcap")).toContain("dhcp");
   });
 
   test("unknown protocols are rejected", () => {
-    expect(wg.set_protocol_enabled_by_name("not_a_protocol", false)).toBe(
-      false
-    );
-    expect(wg.set_protocol_enabled(-1, false)).toBe(false);
+    expect(wg.setProtocolEnabledByName("not_a_protocol", false)).toBe(false);
+    expect(wg.setProtocolEnabled(-1, false)).toBe(false);
   });
 });
 
@@ -1360,9 +1358,9 @@ describe("Wiregasm Library - Apply preferences", () => {
   });
 
   test("apply_prefs keeps preferences that were set", () => {
-    wg.set_pref("http", "tcp.port", "8123");
-    wg.apply_prefs();
-    const ports = wg.get_pref("http", "tcp.port").range_value.split(",");
+    wg.setPref("http", "tcp.port", "8123");
+    wg.applyPrefs();
+    const ports = wg.getPref("http", "tcp.port").range_value.split(",");
     expect(ports).toEqual(expect.arrayContaining(["80", "8123"]));
   });
 });
