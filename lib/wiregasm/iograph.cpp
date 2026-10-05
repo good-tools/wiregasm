@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "lib_internal.h"
 
+#include <climits>
+
 using namespace std;
 
 #define WG_IOGRAPH_MAX_ITEMS 250000 /* 250k limit of items is taken from wireshark-qt, on x86_64 sizeof(io_graph_item_t) is 152, so single graph can take max 36 MB */
@@ -72,7 +74,8 @@ wg_iograph_packet(void *g, packet_info *pinfo, epan_dissect_t *edt, const void *
 IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input) {
   IoGraphResult buf;
   // interval should be an integer
-  const char *tok_interval = input["interval"].c_str();
+  auto interval_it = input.find("interval");
+  const char *tok_interval = interval_it != input.end() ? interval_it->second.c_str() : NULL;
   struct wg_iograph graphs[10];
   bool is_any_ok = false;
   int graph_count;
@@ -88,6 +91,12 @@ IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input) {
     return buf;
   }
 
+  /* Wireshark's IO graph APIs take the interval in microseconds, as an int. */
+  if (interval_ms > INT_MAX / 1000) {
+    buf.error = "The value for interval is too large";
+    return buf;
+  }
+
   for (i = graph_count = 0; i < (int)G_N_ELEMENTS(graphs); i++) {
     struct wg_iograph *graph = &graphs[graph_count];
 
@@ -97,12 +106,19 @@ IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input) {
     const char *field_name;
 
     snprintf(tok_format_buf, sizeof(tok_format_buf), "graph%d", i);
-    tok_graph = input[tok_format_buf].c_str();
-    if (!tok_graph)
+    auto graph_it = input.find(tok_format_buf);
+    if (graph_it == input.end()) {
+      if (i == 0) {
+        buf.error = "graph0 is mandatory";
+        return buf;
+      }
       break;
+    }
+    tok_graph = graph_it->second.c_str();
 
     snprintf(tok_format_buf, sizeof(tok_format_buf), "filter%d", i);
-    tok_filter = input[tok_format_buf].c_str();
+    auto filter_it = input.find(tok_format_buf);
+    tok_filter = filter_it != input.end() ? filter_it->second.c_str() : NULL;
 
     if (!strcmp(tok_graph, "packets"))
       graph->calc_type = IOG_ITEM_UNIT_PACKETS;
@@ -156,6 +172,13 @@ IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input) {
 
     if (graph->error) {
       buf.error = graph->error->str;
+      g_string_free(graph->error, true);
+      /* The earlier graphs registered tap listeners pointing into `graphs`,
+         which is about to go out of scope: remove them. */
+      for (int j = 0; j < graph_count - 1; j++) {
+        remove_tap_listener(&graphs[j]);
+        g_free(graphs[j].items);
+      }
       return buf;
     }
 

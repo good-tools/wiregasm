@@ -1249,6 +1249,34 @@ describe("Wiregasm Library - IoGraph", () => {
       });
     });
 
+    test("Interval too large", async () => {
+      const data = await fs.readFile("samples/http.cap");
+      const ret = wg.load("http.cap", data);
+      expect(ret.code).toEqual(0);
+      const res = wg.iograph({ graph0: "packets", interval: "3600000" });
+      expect(res).toStrictEqual({
+        error: "The value for interval is too large",
+        iograph: [],
+      });
+    });
+
+    test("A failing graph leaves no tap listener behind", async () => {
+      const data = await fs.readFile("samples/http.cap");
+      const ret = wg.load("http.cap", data);
+      expect(ret.code).toEqual(0);
+      const failed = wg.iograph({
+        graph0: "packets",
+        graph1: "sum:no.such.field",
+      });
+      expect(failed.error).not.toBe("");
+
+      // later retaps must not reach the failed request's graphs
+      expect(wg.tap({ tap0: "conv:TCP" }).taps.length).toBe(1);
+      const ok = wg.iograph({ graph0: "packets" });
+      expect(ok.error).toBe("");
+      expect(ok.iograph[0].items.length).toBeGreaterThan(0);
+    });
+
     test("Invalid interval", async () => {
       const data = await fs.readFile("samples/http.cap");
       const ret = wg.load("http.cap", data);
