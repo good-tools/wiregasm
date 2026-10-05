@@ -36,6 +36,10 @@ jobs:
     - run: npm ci
     - run: npm run lint
 
+    # workflow files: syntax, expressions, shellcheck of run: steps
+    - name: actionlint
+      run: docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint:1.7.12 -color
+
   # Cheap: download + prepare every dependency, no compile. Fails as soon as a
   # patch stops applying.
   check-patches:
