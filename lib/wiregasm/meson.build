@@ -84,7 +84,11 @@ link_args = [
 
 sources = files([
   'wiregasm.cpp',
-  'lib.cpp',
+  'capture.cpp',
+  'dissect.cpp',
+  'export_objects.cpp',
+  'taps.cpp',
+  'iograph.cpp',
   'bindings.cpp'
 ])
 
