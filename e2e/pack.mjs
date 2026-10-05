@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 // npm pack the package (as it would be published) into e2e/.pkg and unpack it.
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";

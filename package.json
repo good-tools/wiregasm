@@ -13,12 +13,13 @@
     "build": "parcel build && npm run copy-assets",
     "copy-assets": "cp built/bin/wiregasm.* dist/",
     "test": "jest --coverage",
-    "lint": "biome ci . && npm run lint:cpp",
+    "lint": "biome ci . && npm run lint:cpp && npm run lint:spdx",
     "lint:cpp": "git ls-files 'lib/wiregasm/*.cpp' 'lib/wiregasm/*.h' | xargs clang-format --dry-run --Werror",
     "fix": "biome check --write . && git ls-files 'lib/wiregasm/*.cpp' 'lib/wiregasm/*.h' | xargs clang-format -i",
     "size-check": "node scripts/size-check.mjs",
     "dep-versions": "node scripts/dep-versions.mjs",
-    "test:e2e": "node e2e/pack.mjs && node e2e/node.mjs && playwright test -c e2e/playwright.config.mjs"
+    "test:e2e": "node e2e/pack.mjs && node e2e/node.mjs && playwright test -c e2e/playwright.config.mjs",
+    "lint:spdx": "git ls-files 'src/*.ts' 'lib/wiregasm/*.cpp' 'lib/wiregasm/*.h' 'lib/wiregasm/*.js' 'lib/wiregasm/meson.build' 'scripts/*.mjs' 'e2e/*.mjs' 'e2e/*.js' | xargs grep -L 'SPDX-License-Identifier: GPL-2.0-or-later' | awk '{print \"missing SPDX header: \" $0; bad=1} END {exit bad}'"
   },
   "keywords": [
     "pcap",
@@ -32,7 +33,7 @@
     "type": "git",
     "url": "git+https://github.com/good-tools/wiregasm.git"
   },
-  "license": "GPLV2",
+  "license": "GPL-2.0-or-later",
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "@parcel/packager-ts": "^2.8.2",

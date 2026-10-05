@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 #include "wiregasm.h"
 #include "lib.h"
 #include <epan/packet.h>

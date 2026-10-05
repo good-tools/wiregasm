@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Fails if built/bin/wiregasm.{wasm,data}, gzipped, grew more than the budget
 // compared to the latest release published on npm.
 //

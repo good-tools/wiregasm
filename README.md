@@ -115,4 +115,6 @@ session.delete(); // embind objects live on the wasm heap until deleted
 Building, testing, the patch workflow and Wireshark upgrades are described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
-Wiregasm is a derivative work of the [Wireshark](https://github.com/wireshark/wireshark) project, hence it is licensed under the same [GNU GPLv2](LICENSE) license.
+Wiregasm is a derivative work of the [Wireshark](https://github.com/wireshark/wireshark) project and, like Wireshark, is licensed under the **GNU General Public License, version 2 or (at your option) any later version** (`GPL-2.0-or-later`). The full GPLv2 text is in [LICENSE](LICENSE), and each source file carries an `SPDX-License-Identifier: GPL-2.0-or-later` header.
+
+The upstream sources that the build downloads and patches (Wireshark, glib and the other dependencies) keep their own licenses; `patches/` and `overlay/` are modifications to them.

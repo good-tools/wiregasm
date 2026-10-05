@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 #ifndef WIREGASM_COMMON_H
 #define WIREGASM_COMMON_H
 

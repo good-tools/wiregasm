@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Minimal static server for the browser e2e test, on 127.0.0.1 only:
 //   /            -> e2e/
 //   /pkg/...     -> the packed package (e2e/.pkg/package)

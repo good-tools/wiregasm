@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Installs the packed package into a scratch project and uses it the way a
 // Node.js consumer would: require() the wrapper and the emscripten loader,
 // dissect a capture.

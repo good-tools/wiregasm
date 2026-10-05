@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Loads the packed package in Chromium from a plain HTML page (e2e/index.html)
 // and checks a capture is dissected end to end.
 import { expect, test } from "@playwright/test";
