@@ -13,6 +13,27 @@ Demo it on [good.tools](https://good.tools/packet-dissector).
 The module is built with Emscripten 6.
 
 ### Upgrading from 1.x
+* The `Wiregasm` wrapper methods are camelCase:
+
+  | 1.x | 2.x |
+  |---|---|
+  | `list_modules` | `listModules` |
+  | `list_prefs` | `listPrefs` |
+  | `apply_prefs` | `applyPrefs` |
+  | `set_pref` | `setPref` |
+  | `get_pref` | `getPref` |
+  | `test_filter` | `testFilter` |
+  | `complete_filter` | `completeFilter` |
+  | `reload_lua_plugins` | `reloadLuaPlugins` |
+  | `add_plugin` | `addPlugin` |
+  | `is_eo_tap` | `isEoTap` |
+  | `is_conv_tap` | `isConvTap` |
+  | `list_protocols` | `listProtocols` |
+  | `set_protocol_enabled` | `setProtocolEnabled` |
+  | `set_protocol_enabled_by_name` | `setProtocolEnabledByName` |
+  | `list_heuristic_dissectors` | `listHeuristicDissectors` |
+  | `set_heuristic_enabled` | `setHeuristicEnabled` |
+
 * Node.js older than 22 is no longer supported.
 * Only the documented loader options are read from the object passed to `loadWiregasm`: `locateFile`, `print`, `printErr`, `handleStatus`, `wasmBinary` and `getPreloadedPackage`, plus Emscripten's standard ones such as `instantiateWasm`.
 

@@ -7,6 +7,7 @@ import {
   type Follow,
   type Frame,
   type FramesResponse,
+  type IoGraphResult,
   type HeuristicInfo,
   type LoadResponse,
   type MapInput,
@@ -22,7 +23,7 @@ import {
   type WiregasmLibOverrides,
   type WiregasmLoader,
 } from "./types";
-import { preferenceSetCodeToError, vectorToArray } from "./utils";
+import { free, preferenceSetCodeToError, vectorToArray } from "./utils";
 
 const ALLOWED_TAP_KEYS = new Set([
   ...Array.from({ length: 15 }, (_, i) => `tap${i}`),
@@ -82,19 +83,19 @@ export class Wiregasm {
     this.initialized = true;
   }
 
-  list_modules(): Vector<PrefModule> {
+  listModules(): Vector<PrefModule> {
     return this.lib.listModules();
   }
 
-  list_prefs(module: string): Vector<Pref> {
+  listPrefs(module: string): Vector<Pref> {
     return this.lib.listPreferences(module);
   }
 
-  apply_prefs() {
+  applyPrefs() {
     this.lib.applyPreferences();
   }
 
-  set_pref(module: string, key: string, value: string) {
+  setPref(module: string, key: string, value: string) {
     const ret = this.lib.setPref(module, key, value);
 
     if (ret.code !== PrefSetResult.PREFS_SET_OK) {
@@ -106,7 +107,7 @@ export class Wiregasm {
     }
   }
 
-  get_pref(module: string, key: string): Pref {
+  getPref(module: string, key: string): Pref {
     const response = this.lib.getPref(module, key);
     if (response.code !== 0) {
       throw new Error(`Failed to get preference (${module}.${key})`);
@@ -119,11 +120,11 @@ export class Wiregasm {
    *
    * @param filter A display filter expression
    */
-  test_filter(filter: string): CheckFilterResponse {
+  testFilter(filter: string): CheckFilterResponse {
     return this.lib.checkFilter(filter);
   }
 
-  complete_filter(filter: string): { fields: CompleteField[] } {
+  completeFilter(filter: string): { fields: CompleteField[] } {
     const out = this.lib.completeFilter(filter);
     return {
       fields: vectorToArray(out.fields),
@@ -149,13 +150,18 @@ export class Wiregasm {
       args.set(k, v);
     }
 
-    const response = session.tap(args);
+    let response: ReturnType<DissectSession["tap"]>;
+    try {
+      response = session.tap(args);
+    } finally {
+      free(args);
+    }
     return {
       error: response.error,
       taps: vectorToArray(response.taps).map((tap) => {
         // biome-ignore lint/suspicious/noExplicitAny: keeps the public return type of tap() unchanged
         let res: any;
-        if (this.is_conv_tap(tap)) {
+        if (this.isConvTap(tap)) {
           res = {
             proto: tap.proto,
             tap: tap.tap,
@@ -164,7 +170,7 @@ export class Wiregasm {
             convs: vectorToArray(tap.convs),
             hosts: vectorToArray(tap.hosts),
           };
-        } else if (this.is_eo_tap(tap)) {
+        } else if (this.isEoTap(tap)) {
           res = {
             proto: tap.proto,
             tap: tap.tap,
@@ -172,10 +178,10 @@ export class Wiregasm {
             objects: vectorToArray(tap.objects),
           };
         } else {
-          (tap as { delete: () => void }).delete();
+          free(tap);
           throw new Error("Unknown tap result");
         }
-        (tap as TapResponse & { delete: () => void }).delete();
+        free(tap);
         return res;
       }),
     };
@@ -204,7 +210,12 @@ export class Wiregasm {
       args.set(k, v);
     }
 
-    const out = session.iograph(args);
+    let out: IoGraphResult;
+    try {
+      out = session.iograph(args);
+    } finally {
+      free(args);
+    }
     return {
       ...out,
       iograph: vectorToArray(out.iograph).map((t) => ({
@@ -213,11 +224,11 @@ export class Wiregasm {
     };
   }
 
-  reload_lua_plugins() {
+  reloadLuaPlugins() {
     this.lib.reloadLuaPlugins();
   }
 
-  add_plugin(name: string, data: string | ArrayBufferView, opts: object = {}) {
+  addPlugin(name: string, data: string | ArrayBufferView, opts: object = {}) {
     const path = `${this.pluginsDir}/${name}`;
     this.lib.FS.writeFile(path, data, opts);
   }
@@ -303,11 +314,11 @@ export class Wiregasm {
     return vectorToArray(vec);
   }
 
-  is_eo_tap(tap: any): tap is TapExportObjectResponse {
+  isEoTap(tap: any): tap is TapExportObjectResponse {
     return tap instanceof this.lib.TapExportObject;
   }
 
-  is_conv_tap(tap: any): tap is TapConvResponse {
+  isConvTap(tap: any): tap is TapConvResponse {
     return tap instanceof this.lib.TapConvResponse;
   }
 
@@ -318,13 +329,8 @@ export class Wiregasm {
    *
    * @returns Array of all protocols with their enabled state
    */
-  list_protocols(): ProtocolInfo[] {
-    const vec = this.lib.listProtocols();
-    try {
-      return vectorToArray(vec);
-    } finally {
-      (vec as unknown as { delete(): void }).delete();
-    }
+  listProtocols(): ProtocolInfo[] {
+    return vectorToArray(this.lib.listProtocols());
   }
 
   /**
@@ -334,7 +340,7 @@ export class Wiregasm {
    * @param enabled Whether to enable or disable the protocol
    * @returns true if successful, false otherwise
    */
-  set_protocol_enabled(protoId: number, enabled: boolean): boolean {
+  setProtocolEnabled(protoId: number, enabled: boolean): boolean {
     return this.lib.setProtocolEnabled(protoId, enabled);
   }
 
@@ -345,7 +351,7 @@ export class Wiregasm {
    * @param enabled Whether to enable or disable the protocol
    * @returns true if successful, false otherwise
    */
-  set_protocol_enabled_by_name(protoName: string, enabled: boolean): boolean {
+  setProtocolEnabledByName(protoName: string, enabled: boolean): boolean {
     return this.lib.setProtocolEnabledByName(protoName, enabled);
   }
 
@@ -356,13 +362,8 @@ export class Wiregasm {
    *
    * @returns Array of all heuristic dissectors with their enabled state
    */
-  list_heuristic_dissectors(): HeuristicInfo[] {
-    const vec = this.lib.listHeuristicDissectors();
-    try {
-      return vectorToArray(vec);
-    } finally {
-      (vec as unknown as { delete(): void }).delete();
-    }
+  listHeuristicDissectors(): HeuristicInfo[] {
+    return vectorToArray(this.lib.listHeuristicDissectors());
   }
 
   /**
@@ -372,7 +373,7 @@ export class Wiregasm {
    * @param enabled Whether to enable or disable the heuristic
    * @returns true if successful, false otherwise
    */
-  set_heuristic_enabled(shortName: string, enabled: boolean): boolean {
+  setHeuristicEnabled(shortName: string, enabled: boolean): boolean {
     return this.lib.setHeuristicEnabled(shortName, enabled);
   }
 }

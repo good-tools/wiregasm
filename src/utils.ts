@@ -1,13 +1,25 @@
 import { PrefSetResult, type Vector } from "./types";
 
 /**
- * Converts a Vector to a JS array
+ * Converts a Vector to a JS array and frees the Vector
  *
  * @param vec Vector
  * @returns JS array of the Vector contents
  */
 export function vectorToArray<T>(vec: Vector<T>): T[] {
-  return new Array(vec.size()).fill(0).map((_, id) => vec.get(id));
+  try {
+    return Array.from({ length: vec.size() }, (_, i) => vec.get(i));
+  } finally {
+    // the elements are copied out; free the vector on the wasm heap
+    vec.delete();
+  }
+}
+
+/**
+ * Frees an embind object (class instance, vector or map) on the wasm heap.
+ */
+export function free(handle: unknown): void {
+  (handle as { delete(): void }).delete();
 }
 
 export function preferenceSetCodeToError(code: number): string {
