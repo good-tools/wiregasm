@@ -57,12 +57,21 @@ static epan_t *
 wg_epan_new(capture_file *cf) {
   static const struct packet_provider_funcs funcs = {
       wg_get_frame_ts,
+      cap_file_provider_get_start_ts,
+      cap_file_provider_get_end_ts,
       cap_file_provider_get_interface_name,
       cap_file_provider_get_interface_description,
       cap_file_provider_get_modified_block,
       cap_file_provider_get_process_id,
       cap_file_provider_get_process_name,
-      cap_file_provider_get_process_uuid};
+      cap_file_provider_get_process_uuid,
+      cap_file_provider_get_process_path,
+      cap_file_provider_get_process_cmdline,
+      cap_file_provider_get_process_parent_id,
+      cap_file_provider_get_process_user_id,
+      cap_file_provider_get_process_user_name,
+      cap_file_provider_get_process_start_time,
+      cap_file_provider_find_process_info};
 
   return epan_new(&cf->provider, &funcs);
 }
@@ -72,7 +81,7 @@ cf_open(capture_file *cf, const char *fname, unsigned int type, gboolean is_temp
   wtap *wth;
   gchar *err_info;
 
-  wth = wtap_open_offline(fname, type, err, &err_info, TRUE);
+  wth = wtap_open_offline(fname, type, err, &err_info, TRUE, WG_APP_ENV_PREFIX);
   if (wth == NULL)
     goto fail;
 

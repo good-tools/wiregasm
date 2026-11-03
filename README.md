@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/@goodtools/wiregasm)](https://www.npmjs.com/package/@goodtools/wiregasm)
 [![Downloads](https://img.shields.io/npm/dm/@goodtools/wiregasm)](https://www.npmjs.com/package/@goodtools/wiregasm)
 
-Packet analyzer powered by [Wireshark](https://www.wireshark.org/) (4.6) compiled to WebAssembly. Load a capture, list and filter its packets, and get Wireshark's full protocol tree, follow streams, conversations, export objects and IO graphs, in the browser or in Node.js.
+Packet analyzer powered by [Wireshark](https://www.wireshark.org/) (5.0) compiled to WebAssembly. Load a capture, list and filter its packets, and get Wireshark's full protocol tree, follow streams, conversations, export objects and IO graphs, in the browser or in Node.js.
 
 Demo it on [good.tools](https://good.tools/packet-dissector).
 

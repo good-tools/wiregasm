@@ -1,6 +1,9 @@
-wireshark_VERSION := 4.6.9
-wireshark_URL     := https://www.wireshark.org/download/src/all-versions/wireshark-$(wireshark_VERSION).tar.xz
-wireshark_SHA512  := dde86fafc38132c834fb28865f66351aa7cdaccaabc7612731fd418014cf8624471a2a20a5b3a6546bf4b1c397f04d35271bd92a6e4680d63caeabee90cab6aa
+# 5.0.0 isn't tagged yet: build the release-5.0 branch at a fixed commit, from
+# GitLab's archive of it. Go back to the release tarball once 5.0.0 is out.
+wireshark_VERSION := 5.0.0
+wireshark_COMMIT  := 6e6de0a7ed3689401a5297799c297548126483ed
+wireshark_URL     := https://gitlab.com/wireshark/wireshark/-/archive/$(wireshark_COMMIT)/wireshark-$(wireshark_COMMIT).tar.gz
+wireshark_SHA512  := 721879d90aa0de32131731d886b5d4af714c5096f03fc6becab85fa26dd4dfb0bad599d6e218ae00a74ae93077b1109b3580028c2bc79db2d2e20f8f0a7af820
 wireshark_BUILD   := cmake
 wireshark_DEPS    := c-ares gcrypt glib libxml2 nghttp2
 # only libwireshark (epan) is needed: no tools, no C plugins (not loadable in

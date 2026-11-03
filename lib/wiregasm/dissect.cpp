@@ -51,7 +51,7 @@ wg_session_process_frame_cb_tree(epan_dissect_t *edt, proto_tree *tree, tvbuff_t
 
     t.start = 0, t.length = 0;
 
-    if (finfo->start >= 0 && finfo->length > 0) {
+    if (finfo->length > 0) {
       t.start = finfo->start, t.length = finfo->length;
     }
 
@@ -268,7 +268,7 @@ void wg_session_process_frames_cb(capture_file *cfile, epan_dissect_t *edt, prot
   FrameMeta f;
   f.number = pi->num;
 
-  for (int col = 0; col < cinfo->num_cols; ++col) {
+  for (unsigned col = 0; col < cinfo->num_cols; ++col) {
     f.columns.push_back(string(get_column_text(cinfo, col)));
   }
 

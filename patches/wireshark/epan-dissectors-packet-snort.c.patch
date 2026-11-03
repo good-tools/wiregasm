@@ -1,10 +1,10 @@
 Why: Disable the Snort dissector: it spawns a process, which WebAssembly cannot do.
 
 diff --git a/epan/dissectors/packet-snort.c b/epan/dissectors/packet-snort.c
-index 7f16a696d0e32e4efe0b59ad9ed522f45ced3592..da092da8b0ca61490822c1f805767d15dc77381c 100644
+index 0c5a4059a556966a7483c706b2c00e3397b8b92d..5920c057f91887482b800f7ae622a62880545ec2 100644
 --- a/epan/dissectors/packet-snort.c
 +++ b/epan/dissectors/packet-snort.c
-@@ -1341,6 +1341,12 @@ static void snort_start(void)
+@@ -1336,6 +1336,12 @@ static void snort_start(void)
      return;
  #endif
  

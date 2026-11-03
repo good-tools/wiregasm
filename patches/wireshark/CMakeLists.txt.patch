@@ -1,10 +1,10 @@
 Why: expose the ui/ helpers wiregasm uses (summary, io_graph_item) as a wireshark_common library and install their headers.
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index ecc4265f5c21d41d9db8c7991eb9c9899b00b4fb..3ce25413a52ee01fcb88c7e865a529725d4bb2c7 100644
+index d08b8459cd8c3ad6271ff507ac710edb43276b92..6ef6b5bd1624ebbdfc09f015511af6672a9ee5ca 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -427,7 +427,6 @@ set(STRATOSHARK_RC_VERSION ${STRATOSHARK_MAJOR_VERSION},${STRATOSHARK_MINOR_VERS
+@@ -567,7 +567,6 @@ set(STRATOSHARK_RC_VERSION ${STRATOSHARK_MAJOR_VERSION},${STRATOSHARK_MINOR_VERS
  
  message(STATUS "V: ${PROJECT_VERSION}, MaV: ${PROJECT_MAJOR_VERSION}, MiV: ${PROJECT_MINOR_VERSION}, PL: ${PROJECT_PATCH_VERSION}, EV: ${PROJECT_VERSION_EXTENSION}.")
  
@@ -12,7 +12,7 @@ index ecc4265f5c21d41d9db8c7991eb9c9899b00b4fb..3ce25413a52ee01fcb88c7e865a52972
  include(UseMakePluginReg)
  include(UseMakeTaps)
  include(UseExecutableResources)
-@@ -1346,6 +1345,7 @@ reset_find_package(PCRE2 PCRE2_DEBUG_LIBRARY)
+@@ -1528,6 +1527,7 @@ reset_find_package(PCRE2 PCRE2_DEBUG_LIBRARY)
  find_package(PCRE2 REQUIRED)
  reset_find_package(LibXml2)
  find_package(LibXml2 "2.9.7" REQUIRED)
@@ -20,9 +20,9 @@ index ecc4265f5c21d41d9db8c7991eb9c9899b00b4fb..3ce25413a52ee01fcb88c7e865a52972
  
  if (NOT WIN32)
  	find_package(Gettext)
-@@ -2791,6 +2791,34 @@ add_library(shark_common OBJECT
- )
- add_library(cli_main OBJECT cli_main.c)
+@@ -3014,6 +3014,33 @@ set(EXTCAP_SUPPORT_SRC
+ add_library(extcap_support OBJECT ${EXTCAP_SUPPORT_SRC})
+ target_compile_options(extcap_support PRIVATE ${WERROR_COMMON_FLAGS})
  
 +set(COMMON_PUBLIC_HEADERS
 +	ui/summary.h
@@ -37,7 +37,6 @@ index ecc4265f5c21d41d9db8c7991eb9c9899b00b4fb..3ce25413a52ee01fcb88c7e865a52972
 +add_library(wireshark_common
 +	ui/summary.c
 +	ui/io_graph_item.c
-+	$<TARGET_OBJECTS:shark_common>
 +)
 +
 +target_include_directories(wireshark_common

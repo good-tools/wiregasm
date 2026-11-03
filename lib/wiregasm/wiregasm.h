@@ -2,12 +2,12 @@
 #ifndef WIREGASM_H
 #define WIREGASM_H
 
+#include <epan/cfile.h>
 #include <glib.h>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <wireshark/cfile.h>
 
 struct ProtoTree {
   std::string label;

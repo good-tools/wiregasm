@@ -6,6 +6,7 @@
 #include <common/io_graph_item.h>
 #include <common/summary.h>
 #include <epan/addr_resolv.h>
+#include <epan/cfile.h>
 #include <epan/color_filters.h>
 #include <epan/column.h>
 #include <epan/conversation_table.h>
@@ -22,11 +23,15 @@
 #include <epan/timestamp.h>
 #include <epan/tvbuff.h>
 #include <glib.h>
-#include <wireshark/cfile.h>
 #include <wiretap/wtap.h>
 #include <wsutil/filesystem.h>
 #include <wsutil/str_util.h>
 #include <wsutil/strtoi.h>
+
+// Wireshark 5.0 no longer has a global application flavor: each call that
+// reads the configuration (<prefix>_CONFIG_DIR, ...) takes the application's
+// environment variable prefix. Wiregasm uses Wireshark's.
+#define WG_APP_ENV_PREFIX "WIRESHARK"
 
 // callbacks, defined in lib.js (added through --js-library)
 
