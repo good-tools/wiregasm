@@ -213,6 +213,16 @@ Follow wg_session_process_follow(capture_file *cfile, const char *tok_follow, co
   follow_info = g_new0(follow_info_t, 1);
   /* gui_data, filter_out_filter not set, but not used by dissector */
 
+  /* Since Wireshark 5.0 the TCP, TLS, UDP, DCCP and UDX listeners only take
+   * packets of follow_info->stream_id: take it from the "<proto>.stream eq N"
+   * filter. The filter selects the sub-stream (HTTP/2, QUIC), if any. */
+  follow_info->substream_id = SUBSTREAM_UNUSED;
+  const char *stream_eq = tok_filter ? strstr(tok_filter, ".stream eq ") : NULL;
+  if (stream_eq) {
+    const char *end;
+    ws_strtou64(stream_eq + strlen(".stream eq "), &end, &follow_info->stream_id);
+  }
+
   tap_error = register_tap_listener(get_follow_tap_string(follower), follow_info, tok_filter, 0, NULL, get_follow_tap_handler(follower), NULL, NULL);
   if (tap_error) {
     *err_ret = g_strdup_printf("name=%s error=%s", tok_follow, tap_error->str);

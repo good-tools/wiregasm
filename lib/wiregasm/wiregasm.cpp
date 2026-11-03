@@ -192,6 +192,10 @@ bool wg_init() {
   init_process_policies();
   relinquish_special_privs_perm();
 
+  // Wireshark 5.0 looks for plugins in <program dir>/plugins/wireshark when it
+  // doesn't run from a "bin" directory, as here. Keep them in /plugins.
+  g_setenv(WG_APP_ENV_PREFIX "_PLUGIN_DIR", DEFAULT_PLUGINS_DIR, TRUE);
+
   char *cerr_msg = configuration_init("/wiregasm", "wireshark");
   if (cerr_msg != NULL) {
     on_status(ERROR, cerr_msg);

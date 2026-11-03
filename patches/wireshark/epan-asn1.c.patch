@@ -1,0 +1,20 @@
+Why: WebAssembly has no floating-point exception flags, so Emscripten's fenv.h has no FE_OVERFLOW/FE_UNDERFLOW; check the ldexp result instead.
+
+diff --git a/epan/asn1.c b/epan/asn1.c
+index 461dd3a2fa29d86169efb9c9301607f5cf561ca7..52337c22eae67f10d8742da8bd74bdc650e9d719 100644
+--- a/epan/asn1.c
++++ b/epan/asn1.c
+@@ -359,7 +359,13 @@ double asn1_get_real(const uint8_t *real_ptr, int len, int *err) {
+       errno = 0;
+       feclearexcept(FE_ALL_EXCEPT);
+       val = ldexp((double) S * N, exp);
++#if defined(FE_OVERFLOW) && defined(FE_UNDERFLOW)
+       if (errno || fetestexcept(FE_OVERFLOW | FE_UNDERFLOW)) {
++#else
++      /* No floating-point exception flags (WebAssembly): a nonzero
++       * mantissa that doesn't give a normal number over- or underflowed. */
++      if (errno || (N != 0 && !isnormal(val))) {
++#endif
+         *err = ERANGE;
+       }
+ #ifndef _MSC_VER
