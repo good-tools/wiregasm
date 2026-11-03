@@ -51,7 +51,7 @@ static guint wg_apply_decode_as_module_cb(module_t *module, gpointer user_data _
 }
 
 static void wg_apply_decode_as_defaults() {
-  prefs_modules_foreach(wg_apply_decode_as_module_cb, NULL);
+  prefs_modules_foreach(prefs_get_module_tree(), wg_apply_decode_as_module_cb, NULL);
 }
 
 void failure_message(const char *msg_format, va_list ap) {
@@ -130,7 +130,7 @@ string wg_get_plugins_dir() {
 
   // get_plugins_dir relies on configuration_init being called
   // which only happens in wg_init
-  return string(get_plugins_dir());
+  return string(get_plugins_dir(WG_APP_ENV_PREFIX));
 }
 
 vector<string> wg_get_columns() {
@@ -139,7 +139,7 @@ vector<string> wg_get_columns() {
   column_info *cinfo = NULL;
   build_column_format_array(cinfo, prefs_p->num_cols, TRUE);
 
-  for (int i = 0; i < cinfo->num_cols; i++) {
+  for (unsigned i = 0; i < cinfo->num_cols; i++) {
     if (!get_column_visible(i))
       continue;
 
@@ -169,7 +169,7 @@ bool wg_reload_lua_plugins() {
     return false;
   }
 
-  wslua_reload_plugins(NULL, NULL);
+  wslua_reload_plugins(NULL, NULL, WG_APP_ENV_PREFIX);
 
   on_status(INFO, "Reload complete!");
 
@@ -192,14 +192,18 @@ bool wg_init() {
   init_process_policies();
   relinquish_special_privs_perm();
 
-  char *cerr_msg = configuration_init("/wiregasm");
+  // Wireshark 5.0 looks for plugins in <program dir>/plugins/wireshark when it
+  // doesn't run from a "bin" directory, as here. Keep them in /plugins.
+  g_setenv(WG_APP_ENV_PREFIX "_PLUGIN_DIR", DEFAULT_PLUGINS_DIR, TRUE);
+
+  char *cerr_msg = configuration_init("/wiregasm", "wireshark");
   if (cerr_msg != NULL) {
     on_status(ERROR, cerr_msg);
     g_free(cerr_msg);
     return false;
   }
 
-  const char *plugin_dir = get_plugins_dir();
+  const char *plugin_dir = get_plugins_dir(WG_APP_ENV_PREFIX);
 
   if (plugin_dir == NULL || strlen(plugin_dir) == 0) {
     on_status(ERROR, "Failed to get plugins dir");
@@ -211,12 +215,27 @@ bool wg_init() {
   timestamp_set_type(TS_RELATIVE);
   timestamp_set_precision(TS_PREC_AUTO);
   timestamp_set_seconds_type(TS_SECONDS_DEFAULT);
-  wtap_init(TRUE);
+  // no file extension list: wiregasm has no file dialogs to fill
+  wtap_init(TRUE, WG_APP_ENV_PREFIX, NULL, 0);
 
   on_status(INFO, "Registering all dissectors");
 
+  // Wireshark 5.0 leaves the default columns and the dissector registration
+  // to the application. Keep the columns Wireshark 4.x defaulted to.
+  static const char *col_fmt[] = {
+      "No.", "%m", "Time", "%t",
+      "Source", "%s", "Destination", "%d",
+      "Protocol", "%p", "Length", "%L",
+      "Info", "%i"};
+  epan_app_data_t app_data = {};
+  app_data.env_var_prefix = WG_APP_ENV_PREFIX;
+  app_data.col_fmt = col_fmt;
+  app_data.num_cols = G_N_ELEMENTS(col_fmt) / 2;
+  app_data.register_func = register_all_protocols;
+  app_data.handoff_func = register_all_protocol_handoffs;
+
   // register all dissectors
-  if (!epan_init(NULL, NULL, TRUE)) {
+  if (!epan_init(NULL, NULL, TRUE, &app_data)) {
     on_status(INFO, "Failure registering dissectors");
     return false;
   }
@@ -231,7 +250,7 @@ bool wg_init() {
   on_status(INFO, "Initializing color filters");
 
   gchar *err_msg;
-  if (!color_filters_init(&err_msg, NULL)) {
+  if (!color_filters_init(&err_msg, NULL, WG_APP_ENV_PREFIX)) {
     on_status(WARN, err_msg);
     g_free(err_msg);
   }
@@ -409,7 +428,7 @@ guint wg_list_modules_cb(module_t *module, gpointer user_data) {
   }
 
   if (prefs_module_has_submodules(module)) {
-    prefs_modules_foreach_submodules(module, wg_list_modules_cb, &subholder);
+    prefs_modules_foreach_submodules(module->submodules, wg_list_modules_cb, &subholder);
     m.submodules = subholder.modules;
   }
 
@@ -421,7 +440,7 @@ guint wg_list_modules_cb(module_t *module, gpointer user_data) {
 vector<PrefModule> wg_list_modules() {
   PrefModuleHolder holder;
   holder.root = true;
-  prefs_modules_foreach(wg_list_modules_cb, &holder);
+  prefs_modules_foreach(prefs_get_module_tree(), wg_list_modules_cb, &holder);
   return holder.modules;
 }
 

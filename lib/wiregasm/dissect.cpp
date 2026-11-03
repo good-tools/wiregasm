@@ -51,7 +51,7 @@ wg_session_process_frame_cb_tree(epan_dissect_t *edt, proto_tree *tree, tvbuff_t
 
     t.start = 0, t.length = 0;
 
-    if (finfo->start >= 0 && finfo->length > 0) {
+    if (finfo->length > 0) {
       t.start = finfo->start, t.length = finfo->length;
     }
 
@@ -213,6 +213,16 @@ Follow wg_session_process_follow(capture_file *cfile, const char *tok_follow, co
   follow_info = g_new0(follow_info_t, 1);
   /* gui_data, filter_out_filter not set, but not used by dissector */
 
+  /* Since Wireshark 5.0 the TCP, TLS, UDP, DCCP and UDX listeners only take
+   * packets of follow_info->stream_id: take it from the "<proto>.stream eq N"
+   * filter. The filter selects the sub-stream (HTTP/2, QUIC), if any. */
+  follow_info->substream_id = SUBSTREAM_UNUSED;
+  const char *stream_eq = tok_filter ? strstr(tok_filter, ".stream eq ") : NULL;
+  if (stream_eq) {
+    const char *end;
+    ws_strtou64(stream_eq + strlen(".stream eq "), &end, &follow_info->stream_id);
+  }
+
   tap_error = register_tap_listener(get_follow_tap_string(follower), follow_info, tok_filter, 0, NULL, get_follow_tap_handler(follower), NULL, NULL);
   if (tap_error) {
     *err_ret = g_strdup_printf("name=%s error=%s", tok_follow, tap_error->str);
@@ -268,7 +278,7 @@ void wg_session_process_frames_cb(capture_file *cfile, epan_dissect_t *edt, prot
   FrameMeta f;
   f.number = pi->num;
 
-  for (int col = 0; col < cinfo->num_cols; ++col) {
+  for (unsigned col = 0; col < cinfo->num_cols; ++col) {
     f.columns.push_back(string(get_column_text(cinfo, col)));
   }
 

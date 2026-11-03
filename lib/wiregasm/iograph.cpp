@@ -151,7 +151,7 @@ IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input) {
     graph->interval = interval_ms * 1000;
 
     graph->hf_index = -1;
-    graph->error = check_field_unit(field_name, &graph->hf_index, graph->calc_type);
+    graph->error = check_field_unit(field_name, &graph->hf_index, graph->calc_type, "Packets");
 
     graph->space_items = 0; /* TODO, can avoid realloc()s in wg_iograph_packet() by calculating: capture_time / interval */
     graph->num_items = 0;

@@ -67,7 +67,7 @@ Prefer putting logic in `lib/wiregasm` over patching upstream, and keep patches 
 
 ## Bumping Wireshark
 
-Library versions follow the ones Wireshark pins for the release we build (`tools/macos-setup.sh`).
+Library versions follow the ones Wireshark pins for the macOS builds of the release we build (the prebuilt libraries in `cmake/modules/FetchArtifacts.cmake`; `tools/macos-setup.sh` before 5.0).
 
 1. `make src PKG=wireshark` (still on the old version)
 2. Update `wireshark_VERSION` and `wireshark_SHA512` in `mk/deps/wireshark.mk`
