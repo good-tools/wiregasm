@@ -9,7 +9,7 @@ import {
   type WiregasmLoader,
 } from ".";
 
-import { vectorToArray } from "./utils";
+import { encodeFrames, vectorToArray } from "./utils";
 import pako from "pako";
 
 // The emscripten output has no type declarations; it is a WiregasmLoader.
@@ -1380,6 +1380,75 @@ describe("Wiregasm Library - Enabled protocols", () => {
   test("unknown protocols are rejected", () => {
     expect(wg.setProtocolEnabledByName("not_a_protocol", false)).toBe(false);
     expect(wg.setProtocolEnabled(-1, false)).toBe(false);
+  });
+});
+
+describe("Wiregasm Library - Live frames", () => {
+  const wg = new Wiregasm();
+
+  // Ethernet II ARP "who has 10.0.0.<target>", 42 bytes.
+  const arpFrame = (target: number) =>
+    // biome-ignore format: laid out as the wire format
+    new Uint8Array([
+      0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // dst
+      0x02, 0x00, 0x00, 0x00, 0x00, 0x01, // src
+      0x08, 0x06,                         // ethertype ARP
+      0x00, 0x01, 0x08, 0x00, 0x06, 0x04, 0x00, 0x01,
+      0x02, 0x00, 0x00, 0x00, 0x00, 0x01, // sender mac
+      0x0a, 0x00, 0x00, 0x01,             // sender ip 10.0.0.1
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // target mac
+      0x0a, 0x00, 0x00, target,           // target ip
+    ]);
+
+  beforeAll(() => {
+    return wg.init(loadWiregasm, buildTestOverrides());
+  });
+
+  afterAll(() => {
+    wg.destroy();
+  });
+
+  test("appendFrames() dissects frames without re-reading the earlier ones", () => {
+    expect(wg.openLive().summary.packet_count).toEqual(0);
+
+    const first = wg.appendFrames(
+      encodeFrames([{ ts: 1700000000.5, data: arpFrame(2) }])
+    );
+    expect(first.code).toEqual(0);
+    expect(first.summary.packet_count).toEqual(1);
+
+    // Appending must extend the dissection, not restart it.
+    const second = wg.appendFrames(
+      encodeFrames([
+        { ts: 1700000001, data: arpFrame(3) },
+        { ts: 1700000002, data: arpFrame(4) },
+      ])
+    );
+    expect(second.code).toEqual(0);
+    expect(second.summary.packet_count).toEqual(3);
+
+    const frames = vectorToArray(wg.frames("arp").frames);
+    expect(frames.map((f) => f.number)).toEqual([1, 2, 3]);
+    const firstCols = vectorToArray(frames[0].columns);
+    expect(firstCols).toContain("ARP");
+    expect(firstCols).toContain("Who has 10.0.0.2? Tell 10.0.0.1");
+
+    // Frame 1 has no file offset; it must still re-dissect from the live store.
+    const frame = wg.frame(1);
+    expect(frame.number).toEqual(1);
+    expect(frame.data_sources.size()).toBeGreaterThan(0);
+    expect(vectorToArray(frame.tree).length).toBeGreaterThan(0);
+
+    expect(wg.frames("arp.dst.proto_ipv4 == 10.0.0.4").matched).toEqual(1);
+  });
+
+  test("appendFrames() reports a truncated record", () => {
+    wg.openLive();
+    const records = encodeFrames([{ data: arpFrame(2) }]);
+    const ret = wg.appendFrames(records.subarray(0, records.length - 4));
+    expect(ret.code).not.toEqual(0);
+    expect(ret.error).toEqual("Truncated frame record");
+    expect(ret.summary.packet_count).toEqual(0);
   });
 });
 

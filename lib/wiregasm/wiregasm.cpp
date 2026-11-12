@@ -574,6 +574,65 @@ LoadResponse DissectSession::load() {
   return r;
 }
 
+/* summary_fill_in() reads provider.wth, which a live session does not have. */
+static void wg_live_summary(capture_file *cf, Summary &s) {
+  s.filename = "live";
+  s.file_type = string(wtap_file_type_subtype_description(cf->cd_t));
+  s.file_encap_type = string(wtap_encap_description(cf->lnk_t));
+  s.file_length = (unsigned int)cf->f_datalen;
+  s.packet_count = cf->count;
+  s.start_time = 0;
+  s.stop_time = 0;
+  s.elapsed_time = nstime_to_sec(&cf->elapsed_time);
+
+  if (cf->count > 0) {
+    frame_data *first = wg_get_frame(cf, 1);
+    frame_data *last = wg_get_frame(cf, cf->count);
+
+    if (first)
+      s.start_time = nstime_to_sec(&first->abs_ts);
+    if (last)
+      s.stop_time = nstime_to_sec(&last->abs_ts);
+  }
+}
+
+LoadResponse DissectSession::openLive() {
+  LoadResponse r;
+
+  wg_live_open(&this->capture_file);
+  g_hash_table_remove_all(this->filter_table);
+
+  r.code = 0;
+  wg_live_summary(&this->capture_file, r.summary);
+
+  return r;
+}
+
+LoadResponse DissectSession::appendFrames(int buffer_ptr, size_t size) {
+  char *err_ret = NULL;
+  guint32 added = 0;
+
+  LoadResponse r;
+
+  /* Caller allocated with Module._malloc; we free so JS need not export _free. */
+  r.code = wg_live_append(&this->capture_file, (const guint8 *)buffer_ptr, size,
+                          &added, &err_ret);
+  free((void *)(uintptr_t)buffer_ptr);
+
+  if (err_ret) {
+    r.error = string(err_ret);
+    g_free(err_ret);
+  }
+
+  /* Cached filter results are bitmaps sized for the old frame count. */
+  if (added > 0)
+    g_hash_table_remove_all(this->filter_table);
+
+  wg_live_summary(&this->capture_file, r.summary);
+
+  return r;
+}
+
 Follow DissectSession::follow(string follow, string filter) {
   char *err_ret = NULL;
   Follow ret = wg_process_follow(&this->capture_file, follow.c_str(), filter.c_str(), &err_ret);
@@ -619,6 +678,8 @@ DownloadResponse DissectSession::download(string token) {
 }
 
 DissectSession::~DissectSession() {
+  wg_live_close(&this->capture_file);
+
   if (this->capture_file.provider.frames != NULL) {
     free_frame_data_sequence(this->capture_file.provider.frames);
     this->capture_file.provider.frames = NULL;
