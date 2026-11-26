@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/good-tools/wiregasm/compare/v2.0.0...v2.0.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **deps:** bump Wireshark to 4.6.10 ([#62](https://github.com/good-tools/wiregasm/issues/62)) ([5cb3492](https://github.com/good-tools/wiregasm/commit/5cb3492edf25ec81d397c6febfbf9e6a218b8f76))
+
 ## [2.0.0](https://github.com/good-tools/wiregasm/compare/v1.9.1...v2.0.0) (2026-10-05)
 
 
