@@ -321,7 +321,7 @@ wg_dissect_request(capture_file *cfile, guint32 framenum, guint32 frame_ref_num,
   if (fdata == NULL)
     return DISSECT_REQUEST_NO_SUCH_FRAME;
 
-  if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, rec, err, err_info)) {
+  if (!wg_read_frame(cfile, fdata, rec, err, err_info)) {
     if (cinfo != NULL)
       col_fill_in_error(cinfo, fdata, FALSE, FALSE /* fill_fd_columns */);
     return DISSECT_REQUEST_READ_ERROR; /* error reading the record */
@@ -408,7 +408,7 @@ int wg_filter(capture_file *cfile, const char *dftext, guint8 **result, guint *p
       passed_bits = 0;
     }
 
-    if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, &rec, &err, &err_info))
+    if (!wg_read_frame(cfile, fdata, &rec, &err, &err_info))
       break;
 
     /* frame_data_set_before_dissect */

@@ -36,6 +36,8 @@ EMSCRIPTEN_BINDINGS(DissectSession) {
   class_<DissectSession>("DissectSession")
       .constructor<std::string>()
       .function("load", &DissectSession::load)
+      .function("openLive", &DissectSession::openLive)
+      .function("appendFrames", &DissectSession::appendFrames)
       .function("getFrames", &DissectSession::getFrames)
       .function("getFrame", &DissectSession::getFrame)
       .function("tap", &DissectSession::tap)

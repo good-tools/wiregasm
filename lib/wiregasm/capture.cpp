@@ -6,6 +6,37 @@ using namespace std;
 static guint32 cum_bytes;
 static frame_data ref_frame;
 
+/* A live frame has no file offset, so the only copy of its bytes is this one.
+   Keyed by capture_file because wg_read_frame() is reached from the dissect
+   paths, which carry nothing else to identify the session. */
+struct wg_live_frame {
+  nstime_t ts;
+  vector<guint8> data;
+};
+
+static map<const capture_file *, map<guint32, wg_live_frame>> wg_live_sessions;
+
+/* Build the record wtap_read() would have produced for this frame. */
+static void
+wg_fill_packet_rec(wtap_rec *rec, int encap, const nstime_t *ts,
+                   const guint8 *data, guint32 len) {
+  wtap_rec_reset(rec);
+  ws_buffer_clean(&rec->data);
+
+  wtap_setup_packet_rec(rec, encap);
+  rec->block = wtap_block_create(WTAP_BLOCK_PACKET);
+  rec->presence_flags = WTAP_HAS_TS | WTAP_HAS_CAP_LEN;
+  rec->section_number = 0;
+  rec->tsprec = WTAP_TSPREC_USEC;
+  rec->ts = *ts;
+  nstime_set_zero(&rec->ts_rel_cap);
+  rec->ts_rel_cap_valid = false;
+  rec->rec_header.packet_header.caplen = len;
+  rec->rec_header.packet_header.len = len;
+
+  ws_buffer_append(&rec->data, data, len);
+}
+
 void cf_close(capture_file *cf) {
   if (cf->state == FILE_CLOSED)
     return; /* Nothing to do */
@@ -201,6 +232,142 @@ process_packet(capture_file *cf, epan_dissect_t *edt,
   return passed;
 }
 
+void wg_live_open(capture_file *cf) {
+  /* cumulative byte counts start again for each capture */
+  cum_bytes = 0;
+
+  if (cf->provider.wth != NULL) {
+    wtap_close(cf->provider.wth);
+    cf->provider.wth = NULL;
+  }
+  if (cf->provider.frames != NULL)
+    free_frame_data_sequence(cf->provider.frames);
+  cf->provider.frames = new_frame_data_sequence();
+
+  g_free(cf->filename);
+  cf->filename = g_strdup("live");
+  cf->is_tempfile = FALSE;
+  cf->unsaved_changes = FALSE;
+  cf->f_datalen = 0;
+  cf->count = 0;
+  cf->drops_known = FALSE;
+  cf->drops = 0;
+  cf->snap = 0;
+  cf->open_type = WTAP_TYPE_AUTO;
+  /* Frames are handed to us as pcap-shaped records of Ethernet II. */
+  cf->cd_t = wtap_pcap_file_type_subtype();
+  cf->lnk_t = WTAP_ENCAP_ETHERNET;
+  nstime_set_zero(&cf->elapsed_time);
+  cf->provider.ref = NULL;
+  cf->provider.prev_dis = NULL;
+  cf->provider.prev_cap = NULL;
+
+  epan_free(cf->epan);
+  cf->epan = wg_epan_new(cf);
+
+  cf->state = FILE_READ_DONE;
+
+  wg_live_sessions[cf].clear();
+}
+
+void wg_live_close(capture_file *cf) {
+  wg_live_sessions.erase(cf);
+}
+
+int wg_live_append(capture_file *cf, const guint8 *buf, size_t size,
+                   guint32 *added, char **err_ret) {
+  epan_dissect_t *edt;
+  gboolean create_proto_tree;
+  wtap_rec rec;
+  size_t off = 0;
+  int ret = 0;
+
+  *added = 0;
+
+  auto session = wg_live_sessions.find(cf);
+  if (session == wg_live_sessions.end()) {
+    *err_ret = g_strdup("No live session: call openLive() first");
+    return 1;
+  }
+  map<guint32, wg_live_frame> &store = session->second;
+
+  create_proto_tree =
+      (cf->rfcode != NULL || cf->dfcode != NULL || postdissectors_want_hfids());
+  edt = epan_dissect_new(cf->epan, create_proto_tree, FALSE);
+
+  wtap_rec_init(&rec, 1514);
+
+  while (off + WG_LIVE_REC_HEADER <= size) {
+    guint32 ts_sec = pletohu32(buf + off);
+    guint32 ts_usec = pletohu32(buf + off + 4);
+    guint32 len = pletohu16(buf + off + 8);
+
+    if (off + WG_LIVE_REC_HEADER + len > size) {
+      *err_ret = g_strdup("Truncated frame record");
+      ret = 1;
+      break;
+    }
+    off += WG_LIVE_REC_HEADER;
+
+    /* process_packet() will give the frame this number. */
+    guint32 framenum = cf->count + 1;
+    wg_live_frame &frame = store[framenum];
+    frame.ts.secs = (time_t)ts_sec;
+    frame.ts.nsecs = (int)(ts_usec % 1000000) * 1000;
+    frame.data.assign(buf + off, buf + off + len);
+
+    wg_fill_packet_rec(&rec, cf->lnk_t, &frame.ts, frame.data.data(), len);
+
+    TRY {
+      /* Offsets are fake but monotonic, which keeps cf->f_datalen a running
+         byte total the summary can report. */
+      if (process_packet(cf, edt, cf->f_datalen, &rec))
+        (*added)++;
+      else
+        store.erase(framenum);
+    }
+    CATCH(OutOfMemoryError) {
+      store.erase(framenum);
+      *err_ret = g_strdup("Append failed, out of memory");
+      ret = ENOMEM;
+    }
+    ENDTRY;
+
+    wtap_rec_reset(&rec);
+    off += len;
+
+    if (ret != 0)
+      break;
+  }
+
+  wtap_rec_cleanup(&rec);
+  epan_dissect_free(edt);
+
+  return ret;
+}
+
+bool wg_read_frame(capture_file *cf, const frame_data *fdata, wtap_rec *rec,
+                   int *err, gchar **err_info) {
+  auto session = wg_live_sessions.find(cf);
+  if (session != wg_live_sessions.end()) {
+    auto frame = session->second.find(fdata->num);
+    if (frame != session->second.end()) {
+      wg_fill_packet_rec(rec, cf->lnk_t, &frame->second.ts,
+                         frame->second.data.data(),
+                         (guint32)frame->second.data.size());
+      return true;
+    }
+  }
+
+  if (cf->provider.wth == NULL) {
+    *err = WTAP_ERR_INTERNAL;
+    *err_info = g_strdup("Frame is neither in the capture file nor in the live buffer");
+    return false;
+  }
+
+  return wtap_seek_read(cf->provider.wth, fdata->file_off, rec, err, err_info);
+}
+
 static int
 load_cap_file(capture_file *cf, int max_packet_count, gint64 max_byte_count, summary_tally *summary) {
   int err;
@@ -325,7 +492,7 @@ int wg_retap(capture_file *cfile) {
   for (framenum = 1; framenum <= cfile->count; framenum++) {
     fdata = wg_get_frame(cfile, framenum);
 
-    if (!wtap_seek_read(cfile->provider.wth, fdata->file_off, &rec, &err, &err_info))
+    if (!wg_read_frame(cfile, fdata, &rec, &err, &err_info))
       break;
 
     fdata->ref_time = FALSE;

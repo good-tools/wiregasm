@@ -282,6 +282,22 @@ export interface DissectSession {
   load(): LoadResponse;
 
   /**
+   * Start an empty session that frames are pushed into with appendFrames()
+   * instead of being read from a file. The constructor path is ignored.
+   */
+  openLive(): LoadResponse;
+
+  /**
+   * Dissect frames and append them to the session, keeping the dissection
+   * built so far.
+   *
+   * @param ptr Pointer to frame records on the wasm heap, see encodeFrames()
+   * @param size Length of the records in bytes
+   * @returns Response containing the status and the updated summary
+   */
+  appendFrames(ptr: number, size: number): LoadResponse;
+
+  /**
    * Get Packet List information for a range of packets.
    *
    * @param filter Output those frames that pass this filter expression

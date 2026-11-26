@@ -25,6 +25,7 @@
 #include <wireshark/cfile.h>
 #include <wiretap/wtap.h>
 #include <wsutil/filesystem.h>
+#include <wsutil/pint.h>
 #include <wsutil/str_util.h>
 #include <wsutil/strtoi.h>
 
@@ -75,5 +76,16 @@ TapResponse wg_session_process_tap(capture_file *cfile, MapInput taps);
 IoGraphResult wg_session_process_iograph(capture_file *cfile, MapInput input);
 std::vector<CompleteField> wg_session_process_complete(const char *field);
 void cf_close(capture_file *cf);
+
+/* Live sessions: frames arrive one at a time instead of being read from a file.
+   Wire format of the buffer handed to wg_live_append(), repeated per frame,
+   little-endian: ts_sec u32, ts_usec u32, caplen u16, pad u16, caplen bytes. */
+#define WG_LIVE_REC_HEADER 12
+
+void wg_live_open(capture_file *cfile);
+int wg_live_append(capture_file *cfile, const guint8 *buf, size_t size, guint32 *added, char **err_ret);
+void wg_live_close(capture_file *cfile);
+bool wg_read_frame(capture_file *cfile, const frame_data *fdata, wtap_rec *rec, int *err, gchar **err_info);
+frame_data *wg_get_frame(capture_file *cfile, guint32 framenum);
 
 #endif

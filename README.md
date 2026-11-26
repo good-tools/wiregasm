@@ -44,7 +44,7 @@ const frame = wg.frame(1);              // protocol tree, data sources, follow c
 wg.destroy();
 ```
 
-Other methods include `follow`, `tap` (conversations, endpoints, export objects), `download` (export object payloads), `iograph`, `testFilter`, `completeFilter`, the preference methods (`listModules`, `listPrefs`, `getPref`, `setPref`, `applyPrefs`), `listProtocols`/`setProtocolEnabled(ByName)` and `listHeuristicDissectors`/`setHeuristicEnabled`. See `src/index.ts` and the typings for the full API.
+Other methods include `openLive`/`appendFrames` (and `encodeFrames` for the wire format) to push Ethernet frames into a session without reloading a capture, `follow`, `tap` (conversations, endpoints, export objects), `download` (export object payloads), `iograph`, `testFilter`, `completeFilter`, the preference methods (`listModules`, `listPrefs`, `getPref`, `setPref`, `applyPrefs`), `listProtocols`/`setProtocolEnabled(ByName)` and `listHeuristicDissectors`/`setHeuristicEnabled`. See `src/index.ts` and the typings for the full API.
 
 ### Loading the asset files
 

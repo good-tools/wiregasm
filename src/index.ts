@@ -263,6 +263,45 @@ export class Wiregasm {
   }
 
   /**
+   * Start a session that frames are pushed into with appendFrames(), instead
+   * of loading a capture file.
+   *
+   * @returns Response containing the status and summary
+   */
+  openLive(): LoadResponse {
+    if (this.session != null) {
+      this.session.delete();
+    }
+
+    this.session = new this.lib.DissectSession("");
+
+    const response = this.session.openLive();
+    if (response.code !== 0) {
+      this.session.delete();
+      this.session = null;
+    }
+    return response;
+  }
+
+  /**
+   * Dissect frames and append them to the session, keeping the dissection
+   * built so far. Only valid after openLive().
+   *
+   * @param records Frame records as produced by encodeFrames()
+   * @returns Response containing the status and the updated summary
+   */
+  appendFrames(records: Uint8Array): LoadResponse {
+    const session = this.loadedSession();
+
+    // appendFrames frees the pointer (Module only exports _malloc, not _free).
+    const ptr = this.lib._malloc(records.byteLength);
+    new Uint8Array(this.lib.HEAPU8.buffer, ptr, records.byteLength).set(
+      records
+    );
+    return session.appendFrames(ptr, records.byteLength);
+  }
+
+  /**
    * Get Packet List information for a range of packets.
    *
    * @param filter Output those frames that pass this filter expression

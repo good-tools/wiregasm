@@ -322,6 +322,12 @@ private:
 public:
   DissectSession(std::string _path);
   LoadResponse load();
+  /* Start an empty session that frames are pushed into instead of read from
+     a file. The path given to the constructor is ignored. */
+  LoadResponse openLive();
+  /* Dissect and append frames, keeping the dissection built so far.
+     Takes ownership of buffer_ptr (from Module._malloc) and frees it. */
+  LoadResponse appendFrames(int buffer_ptr, size_t size);
   FramesResponse getFrames(std::string filter, int skip, int limit);
   Frame getFrame(int number);
   Follow follow(std::string follow, std::string filter);
