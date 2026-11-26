@@ -1,7 +1,7 @@
 Why: expose the ui/ helpers wiregasm uses (summary, io_graph_item) as a wireshark_common library and install their headers.
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index ecc4265f5c21d41d9db8c7991eb9c9899b00b4fb..3ce25413a52ee01fcb88c7e865a529725d4bb2c7 100644
+index 4e63d95ecaaa2c0abfd891624272659b01f061bd..eb0f93a64875f9c49bb7336de65b0e1b91feca5d 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -427,7 +427,6 @@ set(STRATOSHARK_RC_VERSION ${STRATOSHARK_MAJOR_VERSION},${STRATOSHARK_MINOR_VERS
@@ -20,7 +20,7 @@ index ecc4265f5c21d41d9db8c7991eb9c9899b00b4fb..3ce25413a52ee01fcb88c7e865a52972
  
  if (NOT WIN32)
  	find_package(Gettext)
-@@ -2791,6 +2791,34 @@ add_library(shark_common OBJECT
+@@ -2796,6 +2796,34 @@ add_library(shark_common OBJECT
  )
  add_library(cli_main OBJECT cli_main.c)
  
